@@ -21,6 +21,14 @@ allprojects {
     }
 }
 
+// Inject the bundled Maven repository into the root project so the host app
+// can resolve the DiditSDK dependency without any manual configuration.
+rootProject.allprojects {
+    repositories {
+        maven { url = uri("${project(":didit_sdk").projectDir}/repo") }
+    }
+}
+
 plugins {
     id("com.android.library")
     id("kotlin-android")
@@ -50,7 +58,7 @@ android {
     }
 
     defaultConfig {
-        minSdk = 24
+        minSdk = 23
     }
 
     testOptions {
@@ -71,6 +79,10 @@ android {
 }
 
 dependencies {
+    implementation("me.didit:didit-sdk:3.0.0")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
+
     testImplementation("org.jetbrains.kotlin:kotlin-test")
     testImplementation("org.mockito:mockito-core:5.0.0")
 }

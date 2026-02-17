@@ -1,18 +1,22 @@
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:sdk_flutter/sdk_flutter_method_channel.dart';
+import 'package:didit_sdk/sdk_flutter_method_channel.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  MethodChannelSdkFlutter platform = MethodChannelSdkFlutter();
-  const MethodChannel channel = MethodChannel('sdk_flutter');
+  final platform = MethodChannelSdkFlutter();
+  const channel = MethodChannel('didit_sdk');
 
   setUp(() {
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
         .setMockMethodCallHandler(channel, (MethodCall methodCall) async {
-          return '42';
-        });
+      return <String, dynamic>{
+        'type': 'completed',
+        'sessionId': 'test-session-id',
+        'status': 'Approved',
+      };
+    });
   });
 
   tearDown(() {
@@ -20,7 +24,9 @@ void main() {
         .setMockMethodCallHandler(channel, null);
   });
 
-  test('getPlatformVersion', () async {
-    expect(await platform.getPlatformVersion(), '42');
+  test('startVerification returns result map', () async {
+    final result = await platform.startVerification('test-token', null);
+    expect(result['type'], 'completed');
+    expect(result['sessionId'], 'test-session-id');
   });
 }

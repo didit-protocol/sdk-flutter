@@ -3,17 +3,41 @@ import 'package:flutter/services.dart';
 
 import 'sdk_flutter_platform_interface.dart';
 
-/// An implementation of [SdkFlutterPlatform] that uses method channels.
+/// MethodChannel implementation of [SdkFlutterPlatform].
 class MethodChannelSdkFlutter extends SdkFlutterPlatform {
-  /// The method channel used to interact with the native platform.
   @visibleForTesting
-  final methodChannel = const MethodChannel('sdk_flutter');
+  final methodChannel = const MethodChannel('didit_sdk');
 
   @override
-  Future<String?> getPlatformVersion() async {
-    final version = await methodChannel.invokeMethod<String>(
-      'getPlatformVersion',
-    );
-    return version;
+  Future<Map<String, dynamic>> startVerification(
+    String token,
+    Map<String, dynamic>? config,
+  ) async {
+    final result = await methodChannel.invokeMethod<Map>('startVerification', {
+      'token': token,
+      if (config != null) 'config': config,
+    });
+    return Map<String, dynamic>.from(result ?? {});
+  }
+
+  @override
+  Future<Map<String, dynamic>> startVerificationWithWorkflow(
+    String workflowId,
+    String? vendorData,
+    String? metadata,
+    Map<String, dynamic>? contactDetails,
+    Map<String, dynamic>? expectedDetails,
+    Map<String, dynamic>? config,
+  ) async {
+    final result = await methodChannel
+        .invokeMethod<Map>('startVerificationWithWorkflow', {
+      'workflowId': workflowId,
+      if (vendorData != null) 'vendorData': vendorData,
+      if (metadata != null) 'metadata': metadata,
+      if (contactDetails != null) 'contactDetails': contactDetails,
+      if (expectedDetails != null) 'expectedDetails': expectedDetails,
+      if (config != null) 'config': config,
+    });
+    return Map<String, dynamic>.from(result ?? {});
   }
 }
