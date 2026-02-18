@@ -1,3 +1,9 @@
+## 3.2.0
+
+* Align with native SDK v3.2.0 for both iOS and Android
+* Translation fixes (Uzbek escaping)
+* Updated native dependencies: iOS DiditSDK 3.2.0, Android didit-sdk 3.2.0
+
 ## 0.1.0
 
 * Initial release
