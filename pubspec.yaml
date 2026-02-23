@@ -1,6 +1,6 @@
 name: didit_sdk
 description: Didit Identity Verification SDK for Flutter. Wraps native iOS and Android SDKs for document scanning, NFC passport reading, face verification, and liveness detection.
-version: 3.2.0
+version: 3.2.1
 homepage: https://didit.me
 repository: https://github.com/didit-protocol/sdk-flutter
 issue_tracker: https://github.com/didit-protocol/sdk-flutter/issues

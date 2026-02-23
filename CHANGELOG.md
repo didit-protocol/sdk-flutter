@@ -1,3 +1,9 @@
+## 3.2.1
+
+* Align with native SDK v3.2.1 for both iOS and Android
+* Fix Swift 6 build error on iOS
+* Fix Montenegrin (cnr) language code issue on Android
+
 ## 3.2.0
 
 * Align with native SDK v3.2.0 for both iOS and Android
