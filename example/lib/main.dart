@@ -29,7 +29,7 @@ class VerificationScreen extends StatefulWidget {
 }
 
 class _VerificationScreenState extends State<VerificationScreen> {
-  final _tokenController = TextEditingController();
+  final _tokenController = TextEditingController(text: 'Y6jHLOSXFTOA');
   final _workflowController = TextEditingController();
   bool _loading = false;
   VerificationResult? _result;

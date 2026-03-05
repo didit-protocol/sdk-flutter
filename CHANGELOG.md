@@ -1,7 +1,13 @@
-## 3.2.2
+## 3.3.2
+
+* Fix camera permission handling for active liveness on Android
+* Update native Android SDK to 3.3.2
+
+## 3.3.1
 
 * Fix Android 16KB page alignment issue for Android 15+ devices
 * Update native Android SDK to 3.3.1 (MediaPipe 0.10.29, CameraX 1.4.2)
+* Align Flutter SDK version with native Android SDK version
 
 ## 3.2.1
 
