@@ -1,3 +1,10 @@
+## 3.3.3
+
+* Fix backend-only step handling (AML, DATABASE_VALIDATION, IP_ANALYSIS) on Android
+* Fix iOS SDK freeze on Continue button after KYC+AML flow
+* Update native Android SDK to 3.3.3
+* Update native iOS SDK to 3.2.3
+
 ## 3.3.2
 
 * Fix camera permission handling for active liveness on Android
