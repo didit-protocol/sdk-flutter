@@ -59,6 +59,7 @@ android {
 
     defaultConfig {
         minSdk = 23
+        consumerProguardFiles("consumer-proguard-rules.pro")
     }
 
     testOptions {
