@@ -1,3 +1,8 @@
+## 3.3.4
+
+* Add consumer ProGuard/R8 rules to prevent release build crashes
+* Fix `java.lang.Class cannot be cast to java.lang.reflect.ParameterizedType` in release mode
+
 ## 3.3.3
 
 * Fix backend-only step handling (AML, DATABASE_VALIDATION, IP_ANALYSIS) on Android
