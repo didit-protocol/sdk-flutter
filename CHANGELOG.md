@@ -1,3 +1,12 @@
+## 3.4.2
+
+* update native android sdk to 3.4.2
+* fix document back upload loop when backend returns ocr_back on back side
+* fix step transition freeze when same step type repeats
+* fix questionnaire translations and file upload on samsung devices
+* fix responsive navigation bar insets on samsung and other devices
+* add configurable close/exit behavior (showCloseButton, showExitConfirmation, closeOnComplete)
+
 ## 3.4.1
 
 * update readme with correct api references and integration naming
