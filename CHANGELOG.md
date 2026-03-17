@@ -1,3 +1,7 @@
+## 3.4.1
+
+* update readme with correct api references and integration naming
+
 ## 3.4.0
 
 * update native android sdk to 3.4.0
