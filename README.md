@@ -17,7 +17,7 @@ Add the dependency to your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  didit_sdk: ^3.3.3
+  didit_sdk: ^3.4.0
 ```
 
 Then run:
@@ -137,9 +137,12 @@ switch (result) {
 
 The SDK supports two integration methods:
 
-### Method 1: Session Token (Recommended for Production)
+### Method 1: API Integration (Recommended for Production)
 
-Create a session on your backend using the [Create Verification Session API](https://docs.didit.me/sessions-api/create-session), then pass the token to the SDK:
+Your backend creates a session via the Didit API and returns the session token. This gives you full control over session creation, user tracking, and security.
+
+Read more about how the create session API works here:
+https://docs.didit.me/reference/create-session-verification-sessions
 
 ```dart
 // Your backend creates a session and returns the token
@@ -152,21 +155,22 @@ final result = await DiditSdk.startVerification(sessionToken);
 This approach gives you full control over:
 
 - Associating sessions with your users (`vendor_data`)
-- Setting custom metadata
+- Setting contact details, expected details, and metadata
 - Configuring callbacks per session
 
-### Method 2: Workflow ID (Simpler Integration)
+### Method 2: Unilink Integration (Simpler)
 
-For simpler integrations, the SDK can create sessions directly using your workflow ID:
+For simpler integrations, the SDK can create sessions directly using your workflow ID — no backend needed:
 
 ```dart
 final result = await DiditSdk.startVerificationWithWorkflow(
   'your-workflow-id',
   vendorData: 'user-123',
-  contactDetails: ContactDetails(email: 'user@example.com'),
   config: DiditConfig(loggingEnabled: true),
 );
 ```
+
+> **Note:** Advanced session parameters (`contact_details`, `expected_details`, `metadata`) are only available through the API Integration method, where your backend calls the [Create Session API](https://docs.didit.me/sessions-api/create-session) directly.
 
 ## Configuration
 
@@ -257,75 +261,20 @@ The SDK supports **40+ languages**. If no language is specified, the SDK uses th
 | Georgian | `ka` | Chinese (Traditional) | `zh-TW` |
 | Montenegrin | `cnr` | Somali | `so` |
 
-## Advanced Options
+## Advanced Session Parameters
 
-These options are only available with `startVerificationWithWorkflow`, where the SDK creates the session on your behalf.
+Parameters like `contact_details`, `expected_details`, and `metadata` are only supported through the **API Integration** method. Your backend creates the session with full parameter support, then passes the `session_token` to the SDK.
 
-### Contact Details (Prefill & Notifications)
-
-Provide contact details to prefill verification forms and enable email notifications:
-
-```dart
-final result = await DiditSdk.startVerificationWithWorkflow(
-  'your-workflow-id',
-  contactDetails: ContactDetails(
-    email: 'user@example.com',
-    sendNotificationEmails: true,
-    emailLang: 'en',
-    phone: '+14155552671',
-  ),
-);
-```
-
-| Field | Type | Description |
-|-------|------|-------------|
-| `email` | `String?` | Email address for verification notifications |
-| `sendNotificationEmails` | `bool?` | Whether to send status update emails |
-| `emailLang` | `String?` | ISO 639-1 language code for notification emails |
-| `phone` | `String?` | Phone number in E.164 format (e.g. `"+14155552671"`) |
-
-### Expected Details (Cross-Validation)
-
-Provide expected user details for automatic cross-validation with extracted document data:
+Read more about how the create session API works here:
+https://docs.didit.me/reference/create-session-verification-sessions
 
 ```dart
-final result = await DiditSdk.startVerificationWithWorkflow(
-  'your-workflow-id',
-  expectedDetails: ExpectedDetails(
-    firstName: 'John',
-    lastName: 'Doe',
-    dateOfBirth: '1990-05-15',
-    nationality: 'USA',
-    country: 'USA',
-  ),
-);
-```
+// Your backend handles the full session creation:
+// POST /v3/session/ with contact_details, expected_details, metadata, etc.
+final sessionToken = await yourBackend.createSession(userId);
 
-| Field | Type | Format | Description |
-|-------|------|--------|-------------|
-| `firstName` | `String?` | — | Expected first name |
-| `lastName` | `String?` | — | Expected last name |
-| `dateOfBirth` | `String?` | `YYYY-MM-DD` | Expected date of birth |
-| `gender` | `String?` | — | Expected gender |
-| `nationality` | `String?` | ISO 3166-1 alpha-3 | Expected nationality (e.g. `"USA"`, `"GBR"`) |
-| `country` | `String?` | ISO 3166-1 alpha-3 | Expected country of residence |
-| `address` | `String?` | — | Expected address |
-| `identificationNumber` | `String?` | — | Expected document ID number |
-| `ipAddress` | `String?` | — | Expected IP address |
-| `portraitImage` | `String?` | — | Base64-encoded portrait image for face comparison |
-
-All fields are optional.
-
-### Custom Metadata
-
-Store custom JSON metadata with the session (not displayed to user):
-
-```dart
-final result = await DiditSdk.startVerificationWithWorkflow(
-  'your-workflow-id',
-  vendorData: 'user-123',
-  metadata: '{"internalId": "abc123", "source": "mobile-app"}',
-);
+// The SDK only needs the token
+final result = await DiditSdk.startVerification(sessionToken);
 ```
 
 ## Verification Results
@@ -416,15 +365,12 @@ Returns: `Future<VerificationResult>`
 
 ### `DiditSdk.startVerificationWithWorkflow(workflowId, {...})`
 
-Start verification by creating a new session with a workflow ID.
+Start verification by creating a new session with a workflow ID (Unilink Integration).
 
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
 | `workflowId` | `String` | Yes | Workflow ID that defines verification steps |
 | `vendorData` | `String?` | No | Your user identifier or reference |
-| `metadata` | `String?` | No | Custom JSON metadata for the session |
-| `contactDetails` | `ContactDetails?` | No | Prefill contact information |
-| `expectedDetails` | `ExpectedDetails?` | No | Expected identity details for cross-validation |
 | `config` | `DiditConfig?` | No | SDK configuration options |
 
 Returns: `Future<VerificationResult>`
