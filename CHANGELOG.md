@@ -1,3 +1,14 @@
+## 3.4.0
+
+* update native android sdk to 3.4.0
+* fix r8/proguard crashes in release builds (mediapipe, flogger, gson, retrofit)
+* fix verification activity theme crash on android
+* resolve native android sdk from remote github maven repository
+* remove bundled aar from plugin package
+* align ios swift bridge with native sdk api changes
+* fix: remove invalid contactdetails, expecteddetails, and metadata parameters from workflow verification
+* bump ios podspec to 3.4.0
+
 ## 3.3.4
 
 * Add consumer ProGuard/R8 rules to prevent release build crashes

@@ -51,18 +51,12 @@ class DiditSdk {
   static Future<VerificationResult> startVerificationWithWorkflow(
     String workflowId, {
     String? vendorData,
-    String? metadata,
-    ContactDetails? contactDetails,
-    ExpectedDetails? expectedDetails,
     DiditConfig? config,
   }) async {
     final raw =
         await SdkFlutterPlatform.instance.startVerificationWithWorkflow(
       workflowId,
       vendorData,
-      metadata,
-      contactDetails?.toMap(),
-      expectedDetails?.toMap(),
       config?.toMap(),
     );
     return VerificationResult.fromMap(raw);

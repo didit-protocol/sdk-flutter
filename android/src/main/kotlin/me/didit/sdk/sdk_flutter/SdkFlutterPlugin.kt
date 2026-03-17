@@ -21,8 +21,6 @@ import me.didit.sdk.VerificationError
 import me.didit.sdk.VerificationResult
 import me.didit.sdk.VerificationStatus
 import me.didit.sdk.core.localization.SupportedLanguage
-import me.didit.sdk.models.ContactDetails
-import me.didit.sdk.models.ExpectedDetails
 
 class SdkFlutterPlugin :
     FlutterPlugin,
@@ -116,17 +114,12 @@ class SdkFlutterPlugin :
         }
 
         val config = parseConfiguration(call.argument<Map<String, Any>>("config"))
-        val contact = parseContactDetails(call.argument<Map<String, Any>>("contactDetails"))
-        val expected = parseExpectedDetails(call.argument<Map<String, Any>>("expectedDetails"))
 
         scope.launch {
             try {
                 DiditSdk.startVerification(
                     workflowId = workflowId,
                     vendorData = call.argument<String>("vendorData"),
-                    metadata = call.argument<String>("metadata"),
-                    contactDetails = contact,
-                    expectedDetails = expected,
                     configuration = config
                 ) { verificationResult ->
                     result.success(mapVerificationResult(verificationResult))
@@ -179,34 +172,6 @@ class SdkFlutterPlugin :
             languageLocale = language,
             fontFamily = map["fontFamily"] as? String,
             loggingEnabled = map["loggingEnabled"] as? Boolean ?: false
-        )
-    }
-
-    private fun parseContactDetails(map: Map<String, Any>?): ContactDetails? {
-        if (map == null) return null
-
-        return ContactDetails(
-            email = map["email"] as? String,
-            sendNotificationEmails = map["sendNotificationEmails"] as? Boolean,
-            emailLang = map["emailLang"] as? String,
-            phone = map["phone"] as? String
-        )
-    }
-
-    private fun parseExpectedDetails(map: Map<String, Any>?): ExpectedDetails? {
-        if (map == null) return null
-
-        return ExpectedDetails(
-            firstName = map["firstName"] as? String,
-            lastName = map["lastName"] as? String,
-            dateOfBirth = map["dateOfBirth"] as? String,
-            gender = map["gender"] as? String,
-            nationality = map["nationality"] as? String,
-            country = map["country"] as? String,
-            address = map["address"] as? String,
-            identificationNumber = map["identificationNumber"] as? String,
-            ipAddress = map["ipAddress"] as? String,
-            portraitImage = map["portraitImage"] as? String
         )
     }
 

@@ -1,35 +1,79 @@
-# Didit SDK — consumer ProGuard/R8 rules
-# These rules are automatically applied to apps that depend on this library.
+# ── Didit SDK Consumer ProGuard / R8 Rules ──────────────────────────────────
+# These rules mirror the native AAR's consumer rules. Flutter's Gradle
+# integration does not always propagate proguard.txt from transitive AAR
+# dependencies, so the Flutter plugin must re-declare them here.
+# ─────────────────────────────────────────────────────────────────────────────
 
-# Keep all Didit SDK classes (models, API, UI)
+# ── SDK Classes ─────────────────────────────────────────────────────────────
 -keep class me.didit.sdk.** { *; }
 -keepclassmembers class me.didit.sdk.** { *; }
 
-# Preserve generic type information needed for JSON deserialization
+# ── Type Information (required for Gson/Retrofit generic type resolution) ───
 -keepattributes Signature
--keepattributes *Annotation*
--keepattributes EnclosingMethod
+-keepattributes Exceptions
 -keepattributes InnerClasses
+-keepattributes EnclosingMethod
+-keepattributes *Annotation*
 
-# Kotlin coroutines
--keep class kotlinx.coroutines.** { *; }
--dontwarn kotlinx.coroutines.**
-
-# OkHttp / Retrofit (common networking deps)
--dontwarn okhttp3.**
--dontwarn okio.**
--dontwarn retrofit2.**
--keep class retrofit2.** { *; }
+# ── Gson ────────────────────────────────────────────────────────────────────
+-keep class com.google.gson.** { *; }
+-keep class com.google.gson.reflect.TypeToken { *; }
+-keep class * extends com.google.gson.reflect.TypeToken
+-keepclassmembers class * extends com.google.gson.reflect.TypeToken {
+    <fields>;
+    <methods>;
+}
 -keepclassmembers,allowobfuscation class * {
     @com.google.gson.annotations.SerializedName <fields>;
 }
 
-# Gson
--keep class com.google.gson.** { *; }
--keep class * implements com.google.gson.TypeAdapterFactory
--keep class * implements com.google.gson.JsonSerializer
--keep class * implements com.google.gson.JsonDeserializer
+# ── Retrofit ────────────────────────────────────────────────────────────────
+-keep,allowobfuscation,allowshrinking interface retrofit2.Call
+-keep,allowobfuscation,allowshrinking class retrofit2.Response
+-keep,allowobfuscation,allowshrinking class kotlin.coroutines.Continuation
+-keepclassmembers,allowshrinking,allowobfuscation interface * {
+    @retrofit2.http.* <methods>;
+}
+-dontwarn retrofit2.**
 
-# BouncyCastle (NFC cryptography)
+# ── OkHttp / Okio ──────────────────────────────────────────────────────────
+-dontwarn okhttp3.**
+-dontwarn okio.**
+-keep class okhttp3.** { *; }
+-keep class okio.** { *; }
+
+# ── Kotlin Coroutines ───────────────────────────────────────────────────────
+-keepnames class kotlinx.coroutines.internal.MainDispatcherFactory {}
+-keepnames class kotlinx.coroutines.CoroutineExceptionHandler {}
+-keepclassmembers class kotlinx.coroutines.** {
+    volatile <fields>;
+}
+
+# ── NFC ePassport Libraries ─────────────────────────────────────────────────
+-keep class org.jmrtd.** { *; }
+-dontwarn org.jmrtd.**
+
+-keep class net.sf.scuba.** { *; }
+-dontwarn net.sf.scuba.**
+
 -keep class org.bouncycastle.** { *; }
 -dontwarn org.bouncycastle.**
+
+# ── Google Flogger (logging framework used by MediaPipe) ────────────────────
+# Flogger's FluentLogger uses stack-walking to locate the calling class.
+# R8 must preserve its class names to prevent IllegalStateException.
+-keep class com.google.common.flogger.** { *; }
+-keepnames class com.google.common.flogger.** { *; }
+-dontwarn com.google.common.flogger.**
+
+# ── MediaPipe ───────────────────────────────────────────────────────────────
+# MediaPipe's Graph class uses stack-walking to find the caller for native
+# library loading. All framework classes and their names must be preserved.
+-keep class com.google.mediapipe.** { *; }
+-keepnames class com.google.mediapipe.** { *; }
+-keep class com.google.mediapipe.framework.** { *; }
+-dontwarn com.google.mediapipe.**
+
+# Protobuf Lite (used internally by MediaPipe)
+-keep class com.google.protobuf.** { *; }
+-dontwarn com.google.protobuf.**

@@ -28,9 +28,6 @@ abstract class SdkFlutterPlatform extends PlatformInterface {
   Future<Map<String, dynamic>> startVerificationWithWorkflow(
     String workflowId,
     String? vendorData,
-    String? metadata,
-    Map<String, dynamic>? contactDetails,
-    Map<String, dynamic>? expectedDetails,
     Map<String, dynamic>? config,
   ) {
     throw UnimplementedError(

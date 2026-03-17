@@ -55,17 +55,12 @@ public class SdkFlutterPlugin: NSObject, FlutterPlugin {
         }
 
         let config = parseConfiguration(args["config"] as? [String: Any])
-        let contact = parseContactDetails(args["contactDetails"] as? [String: Any])
-        let expected = parseExpectedDetails(args["expectedDetails"] as? [String: Any])
 
         DispatchQueue.main.async { [weak self] in
             self?.presentVerification(result: result) {
                 DiditSdk.shared.startVerification(
                     workflowId: workflowId,
                     vendorData: args["vendorData"] as? String,
-                    metadata: args["metadata"] as? String,
-                    contactDetails: contact,
-                    expectedDetails: expected,
                     configuration: config
                 )
             }
@@ -139,34 +134,6 @@ public class SdkFlutterPlugin: NSObject, FlutterPlugin {
             languageLocale: language,
             fontFamily: dict["fontFamily"] as? String,
             loggingEnabled: dict["loggingEnabled"] as? Bool ?? false
-        )
-    }
-
-    private func parseContactDetails(_ dict: [String: Any]?) -> ContactDetails? {
-        guard let dict = dict else { return nil }
-
-        return ContactDetails(
-            email: dict["email"] as? String,
-            sendNotificationEmails: dict["sendNotificationEmails"] as? Bool,
-            emailLang: dict["emailLang"] as? String,
-            phone: dict["phone"] as? String
-        )
-    }
-
-    private func parseExpectedDetails(_ dict: [String: Any]?) -> ExpectedDetails? {
-        guard let dict = dict else { return nil }
-
-        return ExpectedDetails(
-            firstName: dict["firstName"] as? String,
-            lastName: dict["lastName"] as? String,
-            dateOfBirth: dict["dateOfBirth"] as? String,
-            gender: dict["gender"] as? String,
-            nationality: dict["nationality"] as? String,
-            country: dict["country"] as? String,
-            address: dict["address"] as? String,
-            identificationNumber: dict["identificationNumber"] as? String,
-            ipAddress: dict["ipAddress"] as? String,
-            portraitImage: dict["portraitImage"] as? String
         )
     }
 

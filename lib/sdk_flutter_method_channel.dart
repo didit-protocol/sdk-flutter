@@ -24,18 +24,12 @@ class MethodChannelSdkFlutter extends SdkFlutterPlatform {
   Future<Map<String, dynamic>> startVerificationWithWorkflow(
     String workflowId,
     String? vendorData,
-    String? metadata,
-    Map<String, dynamic>? contactDetails,
-    Map<String, dynamic>? expectedDetails,
     Map<String, dynamic>? config,
   ) async {
     final result = await methodChannel
         .invokeMethod<Map>('startVerificationWithWorkflow', {
       'workflowId': workflowId,
       if (vendorData != null) 'vendorData': vendorData,
-      if (metadata != null) 'metadata': metadata,
-      if (contactDetails != null) 'contactDetails': contactDetails,
-      if (expectedDetails != null) 'expectedDetails': expectedDetails,
       if (config != null) 'config': config,
     });
     return Map<String, dynamic>.from(result ?? {});
