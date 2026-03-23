@@ -10,12 +10,21 @@ with document scanning, NFC passport reading, and liveness detection.
   s.license          = { :file => '../LICENSE' }
   s.author           = { 'Didit' => 'support@didit.me' }
   s.source           = { :path => '.' }
+
   s.source_files = 'Classes/**/*'
+
+  s.resource_bundles = {
+    'didit_sdk_privacy' => ['Resources/PrivacyInfo.xcprivacy']
+  }
+
   s.dependency 'Flutter'
   s.dependency 'DiditSDK', '~> 3.2'
   s.platform = :ios, '13.0'
   s.static_framework = true
   s.swift_version = '5.0'
 
-  s.pod_target_xcconfig = { 'DEFINES_MODULE' => 'YES', 'EXCLUDED_ARCHS[sdk=iphonesimulator*]' => 'i386' }
+  s.pod_target_xcconfig = { 
+    'DEFINES_MODULE' => 'YES',
+    'EXCLUDED_ARCHS[sdk=iphonesimulator*]' => 'i386'
+  }
 end
