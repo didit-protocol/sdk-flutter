@@ -79,7 +79,7 @@ android {
 }
 
 dependencies {
-    implementation("me.didit:didit-sdk:3.4.2")
+    implementation("me.didit:didit-sdk:3.4.3")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
 
