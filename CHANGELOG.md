@@ -1,3 +1,8 @@
+## 3.4.3
+
+* Update native Android SDK to 3.4.3 (Kyrgyz language support, new session step fields)
+* Update native iOS SDK to 3.2.8 (fix SPM + Xcode 26 Archive signature failure)
+
 ## 3.4.2
 
 * update native android sdk to 3.4.2
