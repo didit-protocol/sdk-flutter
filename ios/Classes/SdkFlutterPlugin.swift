@@ -1,7 +1,7 @@
 import Flutter
 import UIKit
 import SwiftUI
-import DiditSDK
+@preconcurrency import DiditSDK
 
 public class SdkFlutterPlugin: NSObject, FlutterPlugin {
 
@@ -144,6 +144,7 @@ public class SdkFlutterPlugin: NSObject, FlutterPlugin {
         case .approved: return "Approved"
         case .pending: return "Pending"
         case .declined: return "Declined"
+        @unknown default: return "Pending"
         }
     }
 
@@ -175,6 +176,13 @@ public class SdkFlutterPlugin: NSObject, FlutterPlugin {
                 dict["status"] = statusString(session.status)
             }
             return dict
+
+        @unknown default:
+            return [
+                "type": "failed",
+                "errorType": "unknown",
+                "errorMessage": "Unrecognized verification result"
+            ]
         }
     }
 
@@ -184,6 +192,7 @@ public class SdkFlutterPlugin: NSObject, FlutterPlugin {
         case .networkError: return "networkError"
         case .cameraAccessDenied: return "cameraAccessDenied"
         case .unknown: return "unknown"
+        @unknown default: return "unknown"
         }
     }
 }

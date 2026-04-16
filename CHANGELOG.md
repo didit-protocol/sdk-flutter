@@ -1,3 +1,9 @@
+## 3.4.4
+
+* Fix Swift 6 compile error: add @unknown default to exhaustive switch on DiditSDK enums
+* Update native iOS SDK to 3.2.11 (fix PDF file upload in questionnaire on iOS 26)
+* Update native Android SDK to 3.4.4
+
 ## 3.4.3
 
 * Update native Android SDK to 3.4.3 (Kyrgyz language support, new session step fields)
