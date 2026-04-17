@@ -29,6 +29,7 @@ enum VerificationErrorType {
   cameraAccessDenied,
   notInitialized,
   apiError,
+  retryBlocked,
   unknown;
 
   static VerificationErrorType fromString(String? value) {
@@ -43,6 +44,8 @@ enum VerificationErrorType {
         return VerificationErrorType.notInitialized;
       case 'apiError':
         return VerificationErrorType.apiError;
+      case 'retryBlocked':
+        return VerificationErrorType.retryBlocked;
       default:
         return VerificationErrorType.unknown;
     }

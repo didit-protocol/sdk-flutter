@@ -1,3 +1,7 @@
+## 3.4.5
+
+* Handle new RetryBlocked error variant from native Android SDK 3.4.4
+
 ## 3.4.4
 
 * Fix Swift 6 compile error: add @unknown default to exhaustive switch on DiditSDK enums
