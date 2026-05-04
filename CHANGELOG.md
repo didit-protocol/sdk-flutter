@@ -1,3 +1,20 @@
+## 3.5.0
+
+* Update native Android SDK to 3.5.5
+* Update native iOS SDK to 3.3.4
+* Add native KYB verification flow support
+* Add Kazakh language support and expand KYB/session translations
+* Add awaiting-users flow support with full next-step routing
+* Add redesigned native start screen with feature icons, legal consent, and close button
+* Improve backend step recovery after interrupted, ambiguous, or failed responses
+* Improve document capture quality, cropping, compression, and upload readability
+* Fix verification flow getting stuck after upload fallback recovery
+* Fix active liveness WebView language handling
+* Fix Android document and face overflow detection
+* Fix Android close button visibility and native input/text color styling
+* Fix Android white-label theme flash on completion
+* Add iOS SDK version/integration metadata and camera/video error LOG events
+
 ## 3.4.5
 
 * Handle new RetryBlocked error variant from native Android SDK 3.4.4
