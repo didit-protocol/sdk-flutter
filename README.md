@@ -44,7 +44,15 @@ pod install
 
 ### Android Setup
 
-Add the following packaging rule to your `android/app/build.gradle.kts` inside the `android` block:
+By default, the Flutter plugin depends on the full Android SDK, including NFC passport reading. To build an Android app without NFC dependencies, add this to `android/gradle.properties`:
+
+```properties
+diditSdkAndroidNfcEnabled=false
+```
+
+This switches the Android dependency from `me.didit:didit-sdk` to `me.didit:didit-sdk-core`, removing the NFC reader module and its JMRTD/SCUBA/BouncyCastle dependencies. Leave the property unset, or set it to `true`, to keep the full NFC-enabled SDK.
+
+If NFC is enabled, add the following packaging rule to your `android/app/build.gradle.kts` inside the `android` block:
 
 ```kotlin
 android {
@@ -56,7 +64,7 @@ android {
 }
 ```
 
-This resolves a duplicate metadata file shipped by the SDK's cryptography dependencies (BouncyCastle). Without it the build will fail with a `mergeDebugJavaResource` error.
+This resolves a duplicate metadata file shipped by the SDK's cryptography dependencies (BouncyCastle). Without it the build will fail with a `mergeDebugJavaResource` error. This rule is not needed when `diditSdkAndroidNfcEnabled=false`.
 
 ## Permissions
 
@@ -103,7 +111,7 @@ The following permissions are declared in the native SDK's `AndroidManifest.xml`
 | `CAMERA` | Document scanning and face verification | Yes |
 | `NFC` | Read NFC chips in passports/ID cards | If using NFC |
 
-Camera and NFC hardware features are declared as optional (`android:required="false"`), so your app can be installed on devices without these features.
+Camera and NFC hardware features are declared as optional (`android:required="false"`), so your app can be installed on devices without these features. When `diditSdkAndroidNfcEnabled=false`, the Android NFC permission and feature are not added by the SDK.
 
 #### Runtime Permissions
 

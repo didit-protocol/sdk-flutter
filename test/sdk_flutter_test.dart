@@ -8,7 +8,9 @@ class MockSdkFlutterPlatform
     implements SdkFlutterPlatform {
   @override
   Future<Map<String, dynamic>> startVerification(
-      String token, Map<String, dynamic>? config) async {
+    String token,
+    Map<String, dynamic>? config,
+  ) async {
     return {
       'type': 'completed',
       'sessionId': 'test-session-id',
@@ -20,9 +22,6 @@ class MockSdkFlutterPlatform
   Future<Map<String, dynamic>> startVerificationWithWorkflow(
     String workflowId,
     String? vendorData,
-    String? metadata,
-    Map<String, dynamic>? contactDetails,
-    Map<String, dynamic>? expectedDetails,
     Map<String, dynamic>? config,
   ) async {
     return {

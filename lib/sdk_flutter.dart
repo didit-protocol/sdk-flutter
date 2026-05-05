@@ -1,5 +1,3 @@
-library didit_sdk;
-
 import 'sdk_flutter_platform_interface.dart';
 import 'src/types.dart';
 
@@ -53,8 +51,7 @@ class DiditSdk {
     String? vendorData,
     DiditConfig? config,
   }) async {
-    final raw =
-        await SdkFlutterPlatform.instance.startVerificationWithWorkflow(
+    final raw = await SdkFlutterPlatform.instance.startVerificationWithWorkflow(
       workflowId,
       vendorData,
       config?.toMap(),

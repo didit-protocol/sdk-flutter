@@ -1,6 +1,18 @@
 group = "me.didit.sdk.sdk_flutter"
 version = "1.0-SNAPSHOT"
 
+val diditSdkAndroidVersion = "3.5.5"
+val diditSdkAndroidNfcEnabled = (
+    rootProject.findProperty("diditSdkAndroidNfcEnabled")
+        ?: findProperty("diditSdkAndroidNfcEnabled")
+        ?: "true"
+    ).toString().toBooleanStrictOrNull() ?: true
+val diditSdkAndroidArtifact = if (diditSdkAndroidNfcEnabled) "didit-sdk" else "didit-sdk-core"
+val diditSdkAndroidRepositoryUrl = (
+    rootProject.findProperty("diditSdkAndroidRepositoryUrl")
+        ?: findProperty("diditSdkAndroidRepositoryUrl")
+    )?.toString()
+
 buildscript {
     val kotlinVersion = "2.2.20"
     repositories {
@@ -24,6 +36,9 @@ allprojects {
 // Resolve the native DiditSDK Android AAR from the public GitHub Maven repository.
 rootProject.allprojects {
     repositories {
+        diditSdkAndroidRepositoryUrl?.let {
+            maven { url = uri(it) }
+        }
         maven { url = uri("https://raw.githubusercontent.com/didit-protocol/sdk-android/main/repository") }
     }
 }
@@ -59,6 +74,9 @@ android {
     defaultConfig {
         minSdk = 23
         consumerProguardFiles("consumer-proguard-rules.pro")
+        if (diditSdkAndroidNfcEnabled) {
+            consumerProguardFiles("consumer-proguard-rules-nfc.pro")
+        }
     }
 
     testOptions {
@@ -79,7 +97,7 @@ android {
 }
 
 dependencies {
-    implementation("me.didit:didit-sdk:3.5.5")
+    implementation("me.didit:$diditSdkAndroidArtifact:$diditSdkAndroidVersion")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
 
