@@ -37,10 +37,12 @@ public class SdkFlutterPlugin: NSObject, FlutterPlugin {
 
         DispatchQueue.main.async { [weak self] in
             self?.presentVerification(result: result) {
-                DiditSdk.shared.startVerification(
-                    token: token,
-                    configuration: config
-                )
+                MainActor.assumeIsolated {
+                    DiditSdk.shared.startVerification(
+                        token: token,
+                        configuration: config
+                    )
+                }
             }
         }
     }
@@ -58,11 +60,13 @@ public class SdkFlutterPlugin: NSObject, FlutterPlugin {
 
         DispatchQueue.main.async { [weak self] in
             self?.presentVerification(result: result) {
-                DiditSdk.shared.startVerification(
-                    workflowId: workflowId,
-                    vendorData: args["vendorData"] as? String,
-                    configuration: config
-                )
+                MainActor.assumeIsolated {
+                    DiditSdk.shared.startVerification(
+                        workflowId: workflowId,
+                        vendorData: args["vendorData"] as? String,
+                        configuration: config
+                    )
+                }
             }
         }
     }
