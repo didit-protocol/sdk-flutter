@@ -17,7 +17,7 @@ Add the dependency to your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  didit_sdk: ^3.4.4
+  didit_sdk: ^3.5.0
 ```
 
 Then run:
@@ -44,7 +44,15 @@ pod install
 
 ### Android Setup
 
-Add the following packaging rule to your `android/app/build.gradle.kts` inside the `android` block:
+By default, the Flutter plugin depends on the full Android SDK, including NFC passport reading. To build an Android app without NFC dependencies, add this to `android/gradle.properties`:
+
+```properties
+diditSdkAndroidNfcEnabled=false
+```
+
+This switches the Android dependency from `me.didit:didit-sdk` to `me.didit:didit-sdk-core`, removing the NFC reader module and its JMRTD/SCUBA/BouncyCastle dependencies. Leave the property unset, or set it to `true`, to keep the full NFC-enabled SDK.
+
+If NFC is enabled, add the following packaging rule to your `android/app/build.gradle.kts` inside the `android` block:
 
 ```kotlin
 android {
@@ -56,7 +64,7 @@ android {
 }
 ```
 
-This resolves a duplicate metadata file shipped by the SDK's cryptography dependencies (BouncyCastle). Without it the build will fail with a `mergeDebugJavaResource` error.
+This resolves a duplicate metadata file shipped by the SDK's cryptography dependencies (BouncyCastle). Without it the build will fail with a `mergeDebugJavaResource` error. This rule is not needed when `diditSdkAndroidNfcEnabled=false`.
 
 ## Permissions
 
@@ -103,7 +111,7 @@ The following permissions are declared in the native SDK's `AndroidManifest.xml`
 | `CAMERA` | Document scanning and face verification | Yes |
 | `NFC` | Read NFC chips in passports/ID cards | If using NFC |
 
-Camera and NFC hardware features are declared as optional (`android:required="false"`), so your app can be installed on devices without these features.
+Camera and NFC hardware features are declared as optional (`android:required="false"`), so your app can be installed on devices without these features. When `diditSdkAndroidNfcEnabled=false`, the Android NFC permission and feature are not added by the SDK.
 
 #### Runtime Permissions
 
@@ -230,36 +238,39 @@ await DiditSdk.startVerification(token, config: DiditConfig(loggingEnabled: true
 
 ### Language Support
 
-The SDK supports **40+ languages**. If no language is specified, the SDK uses the device locale with English as fallback.
+The SDK supports **53 languages**. If no language is specified, the SDK uses the device locale with English as fallback.
 
 #### Supported Languages
 
 | Language | Code | Language | Code |
 |----------|------|----------|------|
-| English | `en` | Korean | `ko` |
-| Arabic | `ar` | Lithuanian | `lt` |
-| Bulgarian | `bg` | Latvian | `lv` |
-| Bengali | `bn` | Macedonian | `mk` |
+| Albanian | `sq` | Kazakh | `kk` |
+| Arabic | `ar` | Korean | `ko` |
+| Armenian | `hy` | Kyrgyz | `ky` |
+| Bengali | `bn` | Latvian | `lv` |
+| Bosnian | `bs` | Lithuanian | `lt` |
+| Bulgarian | `bg` | Macedonian | `mk` |
 | Catalan | `ca` | Malay | `ms` |
-| Czech | `cs` | Dutch | `nl` |
-| Danish | `da` | Norwegian | `no` |
-| German | `de` | Polish | `pl` |
-| Greek | `el` | Portuguese | `pt` |
-| Spanish | `es` | Portuguese (Brazil) | `pt-BR` |
-| Estonian | `et` | Romanian | `ro` |
-| Persian | `fa` | Russian | `ru` |
+| Chinese | `zh` | Montenegrin | `cnr` |
+| Chinese (Simplified) | `zh-CN` | Norwegian | `no` |
+| Chinese (Traditional) | `zh-TW` | Persian | `fa` |
+| Croatian | `hr` | Polish | `pl` |
+| Czech | `cs` | Portuguese | `pt` |
+| Danish | `da` | Portuguese (Brazil) | `pt-BR` |
+| Dutch | `nl` | Romanian | `ro` |
+| English | `en` | Russian | `ru` |
+| Estonian | `et` | Serbian | `sr` |
 | Finnish | `fi` | Slovak | `sk` |
 | French | `fr` | Slovenian | `sl` |
-| Hebrew | `he` | Serbian | `sr` |
-| Hindi | `hi` | Swedish | `sv` |
-| Croatian | `hr` | Thai | `th` |
-| Hungarian | `hu` | Turkish | `tr` |
-| Armenian | `hy` | Ukrainian | `uk` |
+| Georgian | `ka` | Somali | `so` |
+| German | `de` | Spanish | `es` |
+| Greek | `el` | Swedish | `sv` |
+| Hebrew | `he` | Thai | `th` |
+| Hindi | `hi` | Turkish | `tr` |
+| Hungarian | `hu` | Ukrainian | `uk` |
 | Indonesian | `id` | Uzbek | `uz` |
 | Italian | `it` | Vietnamese | `vi` |
-| Japanese | `ja` | Chinese (Simplified) | `zh` |
-| Georgian | `ka` | Chinese (Traditional) | `zh-TW` |
-| Montenegrin | `cnr` | Somali | `so` |
+| Japanese | `ja` |  |  |
 
 ## Advanced Session Parameters
 

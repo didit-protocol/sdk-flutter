@@ -49,16 +49,6 @@
     volatile <fields>;
 }
 
-# ── NFC ePassport Libraries ─────────────────────────────────────────────────
--keep class org.jmrtd.** { *; }
--dontwarn org.jmrtd.**
-
--keep class net.sf.scuba.** { *; }
--dontwarn net.sf.scuba.**
-
--keep class org.bouncycastle.** { *; }
--dontwarn org.bouncycastle.**
-
 # ── Google Flogger (logging framework used by MediaPipe) ────────────────────
 # Flogger's FluentLogger uses stack-walking to locate the calling class.
 # R8 must preserve its class names to prevent IllegalStateException.

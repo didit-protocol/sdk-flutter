@@ -15,7 +15,7 @@ class MethodChannelSdkFlutter extends SdkFlutterPlatform {
   ) async {
     final result = await methodChannel.invokeMethod<Map>('startVerification', {
       'token': token,
-      if (config != null) 'config': config,
+      'config': ?config,
     });
     return Map<String, dynamic>.from(result ?? {});
   }
@@ -26,12 +26,10 @@ class MethodChannelSdkFlutter extends SdkFlutterPlatform {
     String? vendorData,
     Map<String, dynamic>? config,
   ) async {
-    final result = await methodChannel
-        .invokeMethod<Map>('startVerificationWithWorkflow', {
-      'workflowId': workflowId,
-      if (vendorData != null) 'vendorData': vendorData,
-      if (config != null) 'config': config,
-    });
+    final result = await methodChannel.invokeMethod<Map>(
+      'startVerificationWithWorkflow',
+      {'workflowId': workflowId, 'vendorData': ?vendorData, 'config': ?config},
+    );
     return Map<String, dynamic>.from(result ?? {});
   }
 }
