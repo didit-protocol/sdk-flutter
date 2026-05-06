@@ -1,4 +1,5 @@
-platform :ios, '13.0'
+didit_sdk_ios_nfc_enabled = ENV.fetch('DIDIT_SDK_IOS_NFC_ENABLED', 'true').downcase != 'false'
+platform :ios, didit_sdk_ios_nfc_enabled ? '15.0' : '13.0'
 
 # CocoaPods analytics sends network stats synchronously affecting flutter build latency.
 ENV['COCOAPODS_DISABLE_STATS'] = 'true'
@@ -26,11 +27,17 @@ require File.expand_path(File.join('packages', 'flutter_tools', 'bin', 'podhelpe
 
 flutter_ios_podfile_setup
 
+didit_sdk_ios_pod = didit_sdk_ios_nfc_enabled ? 'DiditSDK' : 'DiditSDK/Core'
+didit_sdk_ios_podspec = ENV.fetch(
+  'DIDIT_SDK_IOS_PODSPEC',
+  'https://raw.githubusercontent.com/didit-protocol/sdk-ios/main/DiditSDK.podspec'
+)
+
 target 'Runner' do
   use_frameworks!
 
   # DiditSDK is not on CocoaPods trunk; pull it from the GitHub-hosted podspec.
-  pod 'DiditSDK', :podspec => 'https://raw.githubusercontent.com/didit-protocol/sdk-ios/main/DiditSDK.podspec'
+  pod didit_sdk_ios_pod, :podspec => didit_sdk_ios_podspec
 
   flutter_install_all_ios_pods File.dirname(File.realpath(__FILE__))
   target 'RunnerTests' do
@@ -41,5 +48,8 @@ end
 post_install do |installer|
   installer.pods_project.targets.each do |target|
     flutter_additional_ios_build_settings(target)
+    target.build_configurations.each do |config|
+      config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = didit_sdk_ios_nfc_enabled ? '15.0' : '13.0'
+    end
   end
 end

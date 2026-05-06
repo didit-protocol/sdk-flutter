@@ -1,6 +1,6 @@
 Pod::Spec.new do |s|
   s.name             = 'didit_sdk'
-  s.version          = '3.5.0'
+  s.version          = '3.6.0'
   s.summary          = 'Didit Identity Verification SDK for Flutter'
   s.description      = <<-DESC
 Flutter plugin wrapping the native DiditSDK for identity verification
@@ -12,7 +12,11 @@ with document scanning, NFC passport reading, and liveness detection.
   s.source           = { :path => '.' }
   s.source_files = 'Classes/**/*'
   s.dependency 'Flutter'
-  s.dependency 'DiditSDK', '~> 3.3'
+
+  didit_sdk_ios_nfc_enabled = ENV.fetch('DIDIT_SDK_IOS_NFC_ENABLED', 'true').downcase != 'false'
+  didit_sdk_ios_pod = didit_sdk_ios_nfc_enabled ? 'DiditSDK' : 'DiditSDK/Core'
+  s.dependency didit_sdk_ios_pod, '~> 3.4'
+
   s.platform = :ios, '13.0'
   s.static_framework = true
   s.swift_version = '5.0'

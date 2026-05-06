@@ -17,7 +17,7 @@ Add the dependency to your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  didit_sdk: ^3.5.0
+  didit_sdk: ^3.6.0
 ```
 
 Then run:
@@ -28,18 +28,60 @@ flutter pub get
 
 ### iOS Setup
 
-Add the DiditSDK podspec to your `ios/Podfile` (it's not on CocoaPods trunk):
+The Flutter plugin selects the native iOS SDK variant from `DIDIT_SDK_IOS_NFC_ENABLED`. Configure your `ios/Podfile` with the DiditSDK podspec URL (it's not on CocoaPods trunk):
 
 ```ruby
-# Inside your target block:
-pod 'DiditSDK', :podspec => 'https://raw.githubusercontent.com/didit-protocol/sdk-ios/main/DiditSDK.podspec'
+didit_sdk_ios_nfc_enabled = ENV.fetch('DIDIT_SDK_IOS_NFC_ENABLED', 'true').downcase != 'false'
+platform :ios, didit_sdk_ios_nfc_enabled ? '15.0' : '13.0'
+
+didit_sdk_ios_pod = didit_sdk_ios_nfc_enabled ? 'DiditSDK' : 'DiditSDK/Core'
+didit_sdk_ios_podspec = 'https://raw.githubusercontent.com/didit-protocol/sdk-ios/main/DiditSDK.podspec'
+
+target 'Runner' do
+  use_frameworks!
+
+  pod didit_sdk_ios_pod, :podspec => didit_sdk_ios_podspec
+
+  flutter_install_all_ios_pods File.dirname(File.realpath(__FILE__))
+end
+
+post_install do |installer|
+  installer.pods_project.targets.each do |target|
+    flutter_additional_ios_build_settings(target)
+    target.build_configurations.each do |config|
+      config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = didit_sdk_ios_nfc_enabled ? '15.0' : '13.0'
+    end
+  end
+end
 ```
 
-Then install dependencies:
+Set `DIDIT_SDK_IOS_NFC_ENABLED=false` before running `pod install` to switch the Flutter plugin dependency from `DiditSDK` to `DiditSDK/Core`, removing `NFCPassportReader`, CoreNFC-linked NFC reader code, and the OpenSSL framework used by the NFC reader. Leave the value unset, or set it to `true`, to keep the full NFC-enabled SDK. NFC-enabled iOS builds require a deployment target of iOS 15.0 or newer; core-only builds can target iOS 13.0.
+
+Use the default full SDK with NFC:
 
 ```bash
 cd ios
 pod install
+```
+
+Use the core SDK without NFC:
+
+```bash
+cd ios
+DIDIT_SDK_IOS_NFC_ENABLED=false pod install
+```
+
+When switching between NFC-enabled and no-NFC builds, clean CocoaPods first so the previous native SDK variant is not reused:
+
+```bash
+cd ios
+rm -rf Pods Podfile.lock
+
+# Full SDK with NFC
+pod install
+
+# Or core SDK without NFC
+DIDIT_SDK_IOS_NFC_ENABLED=false pod install
 ```
 
 ### Android Setup
@@ -75,17 +117,25 @@ Add the following keys to your app's `Info.plist`:
 | Permission | Info.plist Key | Description | Required |
 |------------|----------------|-------------|----------|
 | Camera | `NSCameraUsageDescription` | Document scanning and face verification | Yes |
+| Microphone | `NSMicrophoneUsageDescription` | Video recording for liveness checks | Yes |
+| Photo Library | `NSPhotoLibraryUsageDescription` | Upload documents from device gallery | Yes |
 | NFC | `NFCReaderUsageDescription` | Read NFC chips in passports/ID cards | If using NFC |
 | Location | `NSLocationWhenInUseUsageDescription` | Geolocation for fraud prevention | Optional |
 
 ```xml
 <key>NSCameraUsageDescription</key>
 <string>Camera access is required for identity verification.</string>
+<key>NSMicrophoneUsageDescription</key>
+<string>Microphone access is required for liveness verification.</string>
+<key>NSPhotoLibraryUsageDescription</key>
+<string>Photo library access is required to upload documents.</string>
 <key>NFCReaderUsageDescription</key>
 <string>NFC is used to read passport chip data for identity verification.</string>
 <key>NSLocationWhenInUseUsageDescription</key>
 <string>Location access is used to detect your country for identity verification.</string>
 ```
+
+If any required iOS privacy key is missing, iOS terminates the app as soon as the SDK tries to access that protected resource. For example, missing `NSCameraUsageDescription` causes a crash when the user taps the document camera's take photo button.
 
 #### NFC Configuration (for passport/ID chip reading)
 
@@ -96,9 +146,24 @@ Add the following keys to your app's `Info.plist`:
    ```xml
    <key>com.apple.developer.nfc.readersession.iso7816.select-identifiers</key>
    <array>
+       <string>D23300000045737445494420763335</string>
        <string>A0000002471001</string>
+       <string>A0000002472001</string>
+       <string>00000000000000</string>
    </array>
    ```
+
+3. **Add an entitlements file** with NFC tag reading enabled:
+   ```xml
+   <key>com.apple.developer.nfc.readersession.formats</key>
+   <array>
+       <string>TAG</string>
+   </array>
+   ```
+
+Make sure the app's provisioning profile includes the NFC Tag Reading capability. If the bundle ID is not configured for NFC in your Apple Developer account, Xcode will fail signing with a missing `com.apple.developer.nfc.readersession.formats` entitlement.
+
+This NFC configuration is not needed when `DIDIT_SDK_IOS_NFC_ENABLED=false`.
 
 ### Android
 

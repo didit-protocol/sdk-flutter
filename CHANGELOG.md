@@ -1,3 +1,10 @@
+## 3.6.0
+
+* Update native iOS SDK to 3.4.1
+* Add iOS no-NFC installation support through `DIDIT_SDK_IOS_NFC_ENABLED=false`
+* Keep iOS NFC enabled by default while allowing apps to remove `NFCPassportReader`, CoreNFC-linked reader code, and OpenSSL by selecting `DiditSDK/Core`
+* Document iOS privacy keys, NFC entitlements, provisioning requirements, and CocoaPods cleanup when switching NFC modes
+
 ## 3.5.0
 
 * Update native Android SDK to 3.5.5
