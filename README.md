@@ -17,7 +17,7 @@ Add the dependency to your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  didit_sdk: ^3.6.0
+  didit_sdk: ^3.7.0
 ```
 
 Then run:

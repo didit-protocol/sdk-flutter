@@ -1,3 +1,8 @@
+## 3.7.0
+
+* Update native iOS SDK to 3.6.0
+* Update native Android SDK to 3.5.7
+
 ## 3.6.0
 
 * Update native iOS SDK to 3.4.1
