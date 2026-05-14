@@ -1,3 +1,8 @@
+## 3.7.1
+
+* Update native Android SDK to 3.5.8
+* Fix front camera anti-spoofing selfie capture stalling on Oppo, Realme, and Huawei devices
+
 ## 3.7.0
 
 * Update native iOS SDK to 3.6.0

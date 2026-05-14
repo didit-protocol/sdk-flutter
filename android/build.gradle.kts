@@ -1,7 +1,7 @@
 group = "me.didit.sdk.sdk_flutter"
 version = "1.0-SNAPSHOT"
 
-val diditSdkAndroidVersion = "3.5.7"
+val diditSdkAndroidVersion = "3.5.8"
 val diditSdkAndroidNfcEnabled = (
     rootProject.findProperty("diditSdkAndroidNfcEnabled")
         ?: findProperty("diditSdkAndroidNfcEnabled")
