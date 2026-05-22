@@ -17,7 +17,7 @@ Add the dependency to your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  didit_sdk: ^3.7.1
+  didit_sdk: ^3.7.2
 ```
 
 Then run:
@@ -303,7 +303,7 @@ await DiditSdk.startVerification(token, config: DiditConfig(loggingEnabled: true
 
 ### Language Support
 
-The SDK supports **53 languages**. If no language is specified, the SDK uses the device locale with English as fallback.
+The SDK supports **54 languages**. If no language is specified, the SDK uses the device locale with English as fallback.
 
 #### Supported Languages
 
@@ -316,26 +316,26 @@ The SDK supports **53 languages**. If no language is specified, the SDK uses the
 | Bosnian | `bs` | Lithuanian | `lt` |
 | Bulgarian | `bg` | Macedonian | `mk` |
 | Catalan | `ca` | Malay | `ms` |
-| Chinese | `zh` | Montenegrin | `cnr` |
-| Chinese (Simplified) | `zh-CN` | Norwegian | `no` |
-| Chinese (Traditional) | `zh-TW` | Persian | `fa` |
-| Croatian | `hr` | Polish | `pl` |
-| Czech | `cs` | Portuguese | `pt` |
-| Danish | `da` | Portuguese (Brazil) | `pt-BR` |
-| Dutch | `nl` | Romanian | `ro` |
-| English | `en` | Russian | `ru` |
-| Estonian | `et` | Serbian | `sr` |
-| Finnish | `fi` | Slovak | `sk` |
-| French | `fr` | Slovenian | `sl` |
-| Georgian | `ka` | Somali | `so` |
-| German | `de` | Spanish | `es` |
-| Greek | `el` | Swedish | `sv` |
-| Hebrew | `he` | Thai | `th` |
-| Hindi | `hi` | Turkish | `tr` |
-| Hungarian | `hu` | Ukrainian | `uk` |
-| Indonesian | `id` | Uzbek | `uz` |
-| Italian | `it` | Vietnamese | `vi` |
-| Japanese | `ja` |  |  |
+| Chinese | `zh` | Mongolian | `mn` |
+| Chinese (Simplified) | `zh-CN` | Montenegrin | `cnr` |
+| Chinese (Traditional) | `zh-TW` | Norwegian | `no` |
+| Croatian | `hr` | Persian | `fa` |
+| Czech | `cs` | Polish | `pl` |
+| Danish | `da` | Portuguese | `pt` |
+| Dutch | `nl` | Portuguese (Brazil) | `pt-BR` |
+| English | `en` | Romanian | `ro` |
+| Estonian | `et` | Russian | `ru` |
+| Finnish | `fi` | Serbian | `sr` |
+| French | `fr` | Slovak | `sk` |
+| Georgian | `ka` | Slovenian | `sl` |
+| German | `de` | Somali | `so` |
+| Greek | `el` | Spanish | `es` |
+| Hebrew | `he` | Swedish | `sv` |
+| Hindi | `hi` | Thai | `th` |
+| Hungarian | `hu` | Turkish | `tr` |
+| Indonesian | `id` | Ukrainian | `uk` |
+| Italian | `it` | Uzbek | `uz` |
+| Japanese | `ja` | Vietnamese | `vi` |
 
 ## Advanced Session Parameters
 

@@ -1,3 +1,16 @@
+## 3.7.2
+
+* Update native Android SDK to 3.5.10
+* Update native iOS SDK to 3.6.2
+* Add Mongolian language support on Android and iOS
+* Fix iOS start-screen EXC_BAD_ACCESS crash on iOS 13-17 caused by a Swift runtime symbol unavailable before iOS 18
+* Fix Android front-camera anti-spoofing selfie capture stalling on Oppo, Realme, and Huawei devices
+* Fix Android questionnaire crashes when graph branches omit optional IDs
+* Improve Android header back arrow behavior in phone, email, and questionnaire flows
+* Improve Android white-label colors for country selectors, questionnaire inputs, and KYB chips
+* Add device fingerprint headers on Android verification API calls
+* Add localized translations for special-case countries
+
 ## 3.7.1
 
 * Update native Android SDK to 3.5.8
