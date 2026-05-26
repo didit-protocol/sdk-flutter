@@ -1,5 +1,11 @@
-didit_sdk_ios_variant = ENV.fetch('DIDIT_SDK_IOS_VARIANT', 'all').downcase
-didit_sdk_ios_deployment_target = ['all', 'nfc'].include?(didit_sdk_ios_variant) ? '15.0' : '13.0'
+# Pick the native iOS SDK variant for both this Podfile and the didit_sdk plugin
+# podspec by setting a single Ruby global. CocoaPods re-reads the Podfile on every
+# `pod install` (including the implicit ones `flutter build` runs), so this choice
+# survives without depending on shell env vars. Edit this line to switch variants;
+# valid values: 'all', 'core', 'autodetection', 'nfc'.
+$DiditSdkIosVariant = ENV.fetch('DIDIT_SDK_IOS_VARIANT', 'all').downcase
+
+didit_sdk_ios_deployment_target = ['all', 'nfc'].include?($DiditSdkIosVariant) ? '15.0' : '13.0'
 platform :ios, didit_sdk_ios_deployment_target
 
 # CocoaPods analytics sends network stats synchronously affecting flutter build latency.
@@ -28,7 +34,7 @@ require File.expand_path(File.join('packages', 'flutter_tools', 'bin', 'podhelpe
 
 flutter_ios_podfile_setup
 
-didit_sdk_ios_pod = case didit_sdk_ios_variant
+didit_sdk_ios_pod = case $DiditSdkIosVariant
                     when 'all'
                       'DiditSDK/All'
                     when 'core'
@@ -38,7 +44,7 @@ didit_sdk_ios_pod = case didit_sdk_ios_variant
                     when 'nfc'
                       'DiditSDK/NFC'
                     else
-                      raise "Invalid DIDIT_SDK_IOS_VARIANT '#{didit_sdk_ios_variant}'. Supported values: all, core, autodetection, nfc."
+                      raise "Invalid $DiditSdkIosVariant '#{$DiditSdkIosVariant}'. Supported values: all, core, autodetection, nfc."
                     end
 didit_sdk_ios_podspec = ENV.fetch(
   'DIDIT_SDK_IOS_PODSPEC',

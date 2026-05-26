@@ -39,14 +39,16 @@ The Flutter plugin can install the same native SDK variants exposed by the iOS a
 
 ### iOS Setup
 
-The Flutter plugin selects the native iOS SDK variant from `DIDIT_SDK_IOS_VARIANT`. Configure your `ios/Podfile` with the DiditSDK podspec URL (it's not on CocoaPods trunk):
+The Flutter plugin picks the native iOS SDK variant from `$DiditSdkIosVariant`, a Ruby global you set in your app's `ios/Podfile`. The plugin's `didit_sdk.podspec` reads the same global, so the choice is consistent and — critically — it survives every implicit `pod install` that `flutter build` triggers. Configure your `ios/Podfile` like this:
 
 ```ruby
-didit_sdk_ios_variant = ENV.fetch('DIDIT_SDK_IOS_VARIANT', 'all').downcase
-didit_sdk_ios_deployment_target = ['all', 'nfc'].include?(didit_sdk_ios_variant) ? '15.0' : '13.0'
+# Pick one: 'all', 'core', 'autodetection', 'nfc'
+$DiditSdkIosVariant = 'all'
+
+didit_sdk_ios_deployment_target = ['all', 'nfc'].include?($DiditSdkIosVariant) ? '15.0' : '13.0'
 platform :ios, didit_sdk_ios_deployment_target
 
-didit_sdk_ios_pod = case didit_sdk_ios_variant
+didit_sdk_ios_pod = case $DiditSdkIosVariant
                     when 'all'
                       'DiditSDK/All'
                     when 'core'
@@ -56,7 +58,7 @@ didit_sdk_ios_pod = case didit_sdk_ios_variant
                     when 'nfc'
                       'DiditSDK/NFC'
                     else
-                      raise "Invalid DIDIT_SDK_IOS_VARIANT '#{didit_sdk_ios_variant}'. Supported values: all, core, autodetection, nfc."
+                      raise "Invalid $DiditSdkIosVariant '#{$DiditSdkIosVariant}'. Supported values: all, core, autodetection, nfc."
                     end
 didit_sdk_ios_podspec = 'https://raw.githubusercontent.com/didit-protocol/sdk-ios/main/DiditSDK.podspec'
 
@@ -80,32 +82,15 @@ end
 
 The default variant is `all`. Variants `all` and `nfc` require an iOS 15.0+ deployment target. Variants `core` and `autodetection` can target iOS 13.0+.
 
-Use the default full SDK:
-
-```bash
-cd ios
-pod install
-```
-
-Use a specific iOS variant:
-
-```bash
-cd ios
-DIDIT_SDK_IOS_VARIANT=autodetection pod install
-```
-
-When switching variants, clean CocoaPods first so the previous native SDK variant is not reused:
+To change variant, edit the `$DiditSdkIosVariant` line, then refresh CocoaPods so the previous variant's binaries are not reused:
 
 ```bash
 cd ios
 rm -rf Pods Podfile.lock
-
-# Full SDK
 pod install
-
-# Or a smaller variant
-DIDIT_SDK_IOS_VARIANT=core pod install
 ```
+
+`$DiditSdkIosVariant` is the only mechanism that reliably survives `flutter build` / `flutter run`. The plugin also accepts a `DIDIT_SDK_IOS_VARIANT` environment variable as a CI fallback, but env vars set inline in a shell command (`DIDIT_SDK_IOS_VARIANT=nfc flutter build ...`) are typically lost the next time Flutter spawns CocoaPods. Prefer the Podfile global.
 
 ### Android Setup
 
@@ -186,7 +171,7 @@ If any required iOS privacy key is missing, iOS terminates the app as soon as th
 
 Make sure the app's provisioning profile includes the NFC Tag Reading capability. If the bundle ID is not configured for NFC in your Apple Developer account, Xcode will fail signing with a missing `com.apple.developer.nfc.readersession.formats` entitlement.
 
-This NFC configuration is not needed when `DIDIT_SDK_IOS_NFC_ENABLED=false`.
+This NFC configuration is not needed when `$DiditSdkIosVariant` is `'core'` or `'autodetection'`.
 
 ### Android
 

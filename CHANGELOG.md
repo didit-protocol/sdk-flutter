@@ -1,3 +1,9 @@
+## 4.0.1
+
+* Fix iOS variant selection getting silently downgraded to `all` whenever `flutter build` ran. Inline env vars set on the host shell do not survive `flutter build`'s implicit `pod install`, so a `DIDIT_SDK_IOS_VARIANT=core flutter build` would still ship the full 38 MB MediaPipe binary instead of the 6 MB Core slice. The iOS variant is now selected via `$DiditSdkIosVariant` set in the host app's `ios/Podfile`, which CocoaPods re-reads on every install. `DIDIT_SDK_IOS_VARIANT` is kept as a CI fallback.
+* Verified end-to-end on a Flutter Release build per variant: `core` produces a 6.0 MB DiditSDK Mach-O, `nfc` 6.6 MB, both with zero MediaPipe symbols.
+* See the iOS Setup section in the README for the new snippet to copy into your `ios/Podfile`.
+
 ## 4.0.0
 
 * Update native Android SDK to 4.0.0
