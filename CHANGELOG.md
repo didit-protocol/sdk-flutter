@@ -1,3 +1,14 @@
+## 4.0.0
+
+* Update native Android SDK to 4.0.0
+* Update native iOS SDK to 4.0.0
+* Add explicit native SDK variant selection on Android and iOS: `all`, `core`, `autodetection`, and `nfc`
+* Keep `all` as the default full SDK variant
+* Add lightweight `core` variants for apps that only need manual capture
+* Add `autodetection` variants for apps that need automatic capture without NFC
+* Add `nfc` variants for apps that need passport chip reading without automatic capture
+* Remove legacy NFC-only variant switches in favor of explicit variant selection
+
 ## 3.7.2
 
 * Update native Android SDK to 3.5.10

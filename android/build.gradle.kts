@@ -1,13 +1,22 @@
 group = "me.didit.sdk.sdk_flutter"
 version = "1.0-SNAPSHOT"
 
-val diditSdkAndroidVersion = "3.5.10"
-val diditSdkAndroidNfcEnabled = (
-    rootProject.findProperty("diditSdkAndroidNfcEnabled")
-        ?: findProperty("diditSdkAndroidNfcEnabled")
-        ?: "true"
-    ).toString().toBooleanStrictOrNull() ?: true
-val diditSdkAndroidArtifact = if (diditSdkAndroidNfcEnabled) "didit-sdk" else "didit-sdk-core"
+val diditSdkAndroidVersion = "4.0.0"
+val diditSdkAndroidVariant = (
+    rootProject.findProperty("diditSdkAndroidVariant")
+        ?: findProperty("diditSdkAndroidVariant")
+        ?: "all"
+    ).toString().lowercase()
+val diditSdkAndroidArtifact = when (diditSdkAndroidVariant) {
+    "all" -> "didit-sdk"
+    "core" -> "didit-sdk-core"
+    "autodetection" -> "didit-sdk-autodetection"
+    "nfc" -> "didit-sdk-nfc"
+    else -> error(
+        "Invalid diditSdkAndroidVariant '$diditSdkAndroidVariant'. " +
+            "Supported values: all, core, autodetection, nfc."
+    )
+}
 val diditSdkAndroidRepositoryUrl = (
     rootProject.findProperty("diditSdkAndroidRepositoryUrl")
         ?: findProperty("diditSdkAndroidRepositoryUrl")
@@ -74,7 +83,7 @@ android {
     defaultConfig {
         minSdk = 23
         consumerProguardFiles("consumer-proguard-rules.pro")
-        if (diditSdkAndroidNfcEnabled) {
+        if (diditSdkAndroidVariant == "all" || diditSdkAndroidVariant == "nfc") {
             consumerProguardFiles("consumer-proguard-rules-nfc.pro")
         }
     }

@@ -17,7 +17,7 @@ Add the dependency to your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  didit_sdk: ^3.7.2
+  didit_sdk: ^4.0.0
 ```
 
 Then run:
@@ -26,15 +26,38 @@ Then run:
 flutter pub get
 ```
 
+### Native SDK Variants
+
+The Flutter plugin can install the same native SDK variants exposed by the iOS and Android SDKs:
+
+| Variant | Automatic capture | NFC passport reading | Use when |
+|---------|-------------------|----------------------|----------|
+| `all` | Yes | Yes | You want the complete SDK (default) |
+| `core` | No | No | You only need manual capture and the smallest binary |
+| `autodetection` | Yes | No | You need automatic capture without NFC |
+| `nfc` | No | Yes | You need NFC passport reading without automatic capture |
+
 ### iOS Setup
 
-The Flutter plugin selects the native iOS SDK variant from `DIDIT_SDK_IOS_NFC_ENABLED`. Configure your `ios/Podfile` with the DiditSDK podspec URL (it's not on CocoaPods trunk):
+The Flutter plugin selects the native iOS SDK variant from `DIDIT_SDK_IOS_VARIANT`. Configure your `ios/Podfile` with the DiditSDK podspec URL (it's not on CocoaPods trunk):
 
 ```ruby
-didit_sdk_ios_nfc_enabled = ENV.fetch('DIDIT_SDK_IOS_NFC_ENABLED', 'true').downcase != 'false'
-platform :ios, didit_sdk_ios_nfc_enabled ? '15.0' : '13.0'
+didit_sdk_ios_variant = ENV.fetch('DIDIT_SDK_IOS_VARIANT', 'all').downcase
+didit_sdk_ios_deployment_target = ['all', 'nfc'].include?(didit_sdk_ios_variant) ? '15.0' : '13.0'
+platform :ios, didit_sdk_ios_deployment_target
 
-didit_sdk_ios_pod = didit_sdk_ios_nfc_enabled ? 'DiditSDK' : 'DiditSDK/Core'
+didit_sdk_ios_pod = case didit_sdk_ios_variant
+                    when 'all'
+                      'DiditSDK/All'
+                    when 'core'
+                      'DiditSDK/Core'
+                    when 'autodetection'
+                      'DiditSDK/AutoDetection'
+                    when 'nfc'
+                      'DiditSDK/NFC'
+                    else
+                      raise "Invalid DIDIT_SDK_IOS_VARIANT '#{didit_sdk_ios_variant}'. Supported values: all, core, autodetection, nfc."
+                    end
 didit_sdk_ios_podspec = 'https://raw.githubusercontent.com/didit-protocol/sdk-ios/main/DiditSDK.podspec'
 
 target 'Runner' do
@@ -49,52 +72,52 @@ post_install do |installer|
   installer.pods_project.targets.each do |target|
     flutter_additional_ios_build_settings(target)
     target.build_configurations.each do |config|
-      config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = didit_sdk_ios_nfc_enabled ? '15.0' : '13.0'
+      config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = didit_sdk_ios_deployment_target
     end
   end
 end
 ```
 
-Set `DIDIT_SDK_IOS_NFC_ENABLED=false` before running `pod install` to switch the Flutter plugin dependency from `DiditSDK` to `DiditSDK/Core`, removing `NFCPassportReader`, CoreNFC-linked NFC reader code, and the OpenSSL framework used by the NFC reader. Leave the value unset, or set it to `true`, to keep the full NFC-enabled SDK. NFC-enabled iOS builds require a deployment target of iOS 15.0 or newer; core-only builds can target iOS 13.0.
+The default variant is `all`. Variants `all` and `nfc` require an iOS 15.0+ deployment target. Variants `core` and `autodetection` can target iOS 13.0+.
 
-Use the default full SDK with NFC:
+Use the default full SDK:
 
 ```bash
 cd ios
 pod install
 ```
 
-Use the core SDK without NFC:
+Use a specific iOS variant:
 
 ```bash
 cd ios
-DIDIT_SDK_IOS_NFC_ENABLED=false pod install
+DIDIT_SDK_IOS_VARIANT=autodetection pod install
 ```
 
-When switching between NFC-enabled and no-NFC builds, clean CocoaPods first so the previous native SDK variant is not reused:
+When switching variants, clean CocoaPods first so the previous native SDK variant is not reused:
 
 ```bash
 cd ios
 rm -rf Pods Podfile.lock
 
-# Full SDK with NFC
+# Full SDK
 pod install
 
-# Or core SDK without NFC
-DIDIT_SDK_IOS_NFC_ENABLED=false pod install
+# Or a smaller variant
+DIDIT_SDK_IOS_VARIANT=core pod install
 ```
 
 ### Android Setup
 
-By default, the Flutter plugin depends on the full Android SDK, including NFC passport reading. To build an Android app without NFC dependencies, add this to `android/gradle.properties`:
+The Flutter plugin selects the native Android SDK variant from `diditSdkAndroidVariant`. The default variant is `all`. To choose another variant, add this to `android/gradle.properties`:
 
 ```properties
-diditSdkAndroidNfcEnabled=false
+diditSdkAndroidVariant=autodetection
 ```
 
-This switches the Android dependency from `me.didit:didit-sdk` to `me.didit:didit-sdk-core`, removing the NFC reader module and its JMRTD/SCUBA/BouncyCastle dependencies. Leave the property unset, or set it to `true`, to keep the full NFC-enabled SDK.
+Supported values are `all`, `core`, `autodetection`, and `nfc`.
 
-If NFC is enabled, add the following packaging rule to your `android/app/build.gradle.kts` inside the `android` block:
+If you use `all` or `nfc`, add the following packaging rule to your `android/app/build.gradle.kts` inside the `android` block:
 
 ```kotlin
 android {
@@ -106,7 +129,7 @@ android {
 }
 ```
 
-This resolves a duplicate metadata file shipped by the SDK's cryptography dependencies (BouncyCastle). Without it the build will fail with a `mergeDebugJavaResource` error. This rule is not needed when `diditSdkAndroidNfcEnabled=false`.
+This resolves a duplicate metadata file shipped by the SDK's cryptography dependencies (BouncyCastle). Without it the build will fail with a `mergeDebugJavaResource` error. This rule is not needed for `core` or `autodetection`.
 
 ## Permissions
 

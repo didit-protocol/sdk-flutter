@@ -1,6 +1,6 @@
 Pod::Spec.new do |s|
   s.name             = 'didit_sdk'
-  s.version          = '3.7.2'
+  s.version          = '4.0.0'
   s.summary          = 'Didit Identity Verification SDK for Flutter'
   s.description      = <<-DESC
 Flutter plugin wrapping the native DiditSDK for identity verification
@@ -13,9 +13,20 @@ with document scanning, NFC passport reading, and liveness detection.
   s.source_files = 'Classes/**/*'
   s.dependency 'Flutter'
 
-  didit_sdk_ios_nfc_enabled = ENV.fetch('DIDIT_SDK_IOS_NFC_ENABLED', 'true').downcase != 'false'
-  didit_sdk_ios_pod = didit_sdk_ios_nfc_enabled ? 'DiditSDK' : 'DiditSDK/Core'
-  s.dependency didit_sdk_ios_pod, '~> 3.6.2'
+  didit_sdk_ios_variant = ENV.fetch('DIDIT_SDK_IOS_VARIANT', 'all').downcase
+  didit_sdk_ios_pod = case didit_sdk_ios_variant
+                      when 'all'
+                        'DiditSDK/All'
+                      when 'core'
+                        'DiditSDK/Core'
+                      when 'autodetection'
+                        'DiditSDK/AutoDetection'
+                      when 'nfc'
+                        'DiditSDK/NFC'
+                      else
+                        raise "Invalid DIDIT_SDK_IOS_VARIANT '#{didit_sdk_ios_variant}'. Supported values: all, core, autodetection, nfc."
+                      end
+  s.dependency didit_sdk_ios_pod, '~> 4.0'
 
   s.platform = :ios, '13.0'
   s.static_framework = true
