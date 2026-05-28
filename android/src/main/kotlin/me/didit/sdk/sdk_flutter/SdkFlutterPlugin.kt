@@ -13,6 +13,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import me.didit.sdk.CameraLens
 import me.didit.sdk.Configuration
 import me.didit.sdk.DiditSdk
 import me.didit.sdk.DiditSdkState
@@ -168,11 +169,29 @@ class SdkFlutterPlugin :
             language = SupportedLanguage.fromCode(code)
         }
 
+        val defaultDocumentCamera = parseCameraLens(map["defaultDocumentCamera"] as? String)
+            ?: CameraLens.BACK
+        val defaultLivenessCamera = parseCameraLens(map["defaultLivenessCamera"] as? String)
+            ?: CameraLens.FRONT
+
         return Configuration(
             languageLocale = language,
             fontFamily = map["fontFamily"] as? String,
-            loggingEnabled = map["loggingEnabled"] as? Boolean ?: false
+            loggingEnabled = map["loggingEnabled"] as? Boolean ?: false,
+            showCloseButton = map["showCloseButton"] as? Boolean ?: true,
+            showExitConfirmation = map["showExitConfirmation"] as? Boolean ?: true,
+            closeOnComplete = map["closeOnComplete"] as? Boolean ?: false,
+            defaultDocumentCamera = defaultDocumentCamera,
+            defaultLivenessCamera = defaultLivenessCamera,
+            showDocumentCameraSwitchButton = map["showDocumentCameraSwitchButton"] as? Boolean ?: true,
+            showLivenessCameraSwitchButton = map["showLivenessCameraSwitchButton"] as? Boolean ?: true
         )
+    }
+
+    private fun parseCameraLens(value: String?): CameraLens? = when (value?.lowercase()) {
+        "front" -> CameraLens.FRONT
+        "back" -> CameraLens.BACK
+        else -> null
     }
 
     // ── Result Mapping ───────────────────────────────────────────────────────

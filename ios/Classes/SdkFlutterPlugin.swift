@@ -134,11 +134,29 @@ public class SdkFlutterPlugin: NSObject, FlutterPlugin {
             language = SupportedLanguage.allCases.first { $0.code == code }
         }
 
+        let defaultDocumentCamera = Self.parseCameraLens(dict["defaultDocumentCamera"] as? String) ?? .back
+        let defaultLivenessCamera = Self.parseCameraLens(dict["defaultLivenessCamera"] as? String) ?? .front
+
         return DiditSdk.Configuration(
             languageLocale: language,
             fontFamily: dict["fontFamily"] as? String,
-            loggingEnabled: dict["loggingEnabled"] as? Bool ?? false
+            loggingEnabled: dict["loggingEnabled"] as? Bool ?? false,
+            showCloseButton: dict["showCloseButton"] as? Bool ?? true,
+            showExitConfirmation: dict["showExitConfirmation"] as? Bool ?? true,
+            closeOnComplete: dict["closeOnComplete"] as? Bool ?? false,
+            defaultDocumentCamera: defaultDocumentCamera,
+            defaultLivenessCamera: defaultLivenessCamera,
+            showDocumentCameraSwitchButton: dict["showDocumentCameraSwitchButton"] as? Bool ?? true,
+            showLivenessCameraSwitchButton: dict["showLivenessCameraSwitchButton"] as? Bool ?? true
         )
+    }
+
+    private static func parseCameraLens(_ value: String?) -> CameraLens? {
+        switch value?.lowercased() {
+        case "front": return .front
+        case "back": return .back
+        default: return nil
+        }
     }
 
     // MARK: - Result Mapping

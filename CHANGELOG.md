@@ -1,3 +1,23 @@
+## 4.0.2
+
+* Update native Android SDK to 4.0.2
+* Update native iOS SDK to 4.0.2
+* Add native `Tax Card` (`TC`) document type support (data-driven, no Flutter API change) so document selectors on both platforms now match the web frontend's full document list, including the India `PAN Card (Permanent Account Number)` override
+* Honor the session-level `expected_document_types` whitelist so a session that restricts allowed document types now applies the same filter natively on both platforms
+* Add new public `CameraLens` enum (`front` / `back`) and four new `DiditConfig` options that expose the native camera configuration:
+  * `defaultDocumentCamera` (defaults to native `back`) — lens used when first entering the document capture screen
+  * `defaultLivenessCamera` (defaults to native `front`) — lens used when first entering the liveness (passive face) capture screen
+  * `showDocumentCameraSwitchButton` (defaults to `true`) — hide to lock the user to `defaultDocumentCamera`
+  * `showLivenessCameraSwitchButton` (defaults to `true`) — hide to lock the user to `defaultLivenessCamera`
+  * Falls back to whichever camera is available when the requested lens isn't present on the device, and the in-capture switcher is automatically hidden on single-camera devices regardless of the `show…SwitchButton` flag
+* Add three previously-unbridged `DiditConfig` options that mirror the native Configuration surface:
+  * `showCloseButton` (defaults to `true`) — show the close (X) button on verification step screens
+  * `showExitConfirmation` (defaults to `true`) — show a confirmation dialog when the user attempts to exit
+  * `closeOnComplete` (defaults to `false`) — auto-dismiss the verification UI when complete
+* Fix iOS selected-country / selected-document badges on the upload screen to use the white-label `bc-pill-text` token for the title text (was incorrectly using `bc-primary`)
+* Fix iOS manual capture button disappearing after the user switches the camera mid-session on the liveness and document capture screens — the same delayed re-show timer used on first appear now also fires after each lens swap
+* No breaking changes: all new `DiditConfig` fields are optional with defaults matching the native SDKs
+
 ## 4.0.1
 
 * Fix iOS variant selection getting silently downgraded to `all` whenever `flutter build` ran. Inline env vars set on the host shell do not survive `flutter build`'s implicit `pod install`, so a `DIDIT_SDK_IOS_VARIANT=core flutter build` would still ship the full 38 MB MediaPipe binary instead of the 6 MB Core slice. The iOS variant is now selected via `$DiditSdkIosVariant` set in the host app's `ios/Podfile`, which CocoaPods re-reads on every install. `DIDIT_SDK_IOS_VARIANT` is kept as a CI fallback.

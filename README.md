@@ -17,7 +17,7 @@ Add the dependency to your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  didit_sdk: ^4.0.0
+  didit_sdk: ^4.0.2
 ```
 
 Then run:
@@ -275,8 +275,15 @@ final result = await DiditSdk.startVerification(
 | `languageCode` | `String?` | Device locale | ISO 639-1 language code (e.g. `"en"`, `"fr"`, `"ar"`) |
 | `fontFamily` | `String?` | System font | Custom font family name |
 | `loggingEnabled` | `bool` | `false` | Enable SDK debug logging |
+| `showCloseButton` | `bool` | `true` | Show the close (X) button on verification step screens |
+| `showExitConfirmation` | `bool` | `true` | Show a confirmation dialog when the user attempts to exit |
+| `closeOnComplete` | `bool` | `false` | Auto-dismiss the verification UI when complete |
+| `defaultDocumentCamera` | `CameraLens?` | Native default (`back`) | Lens used when first entering the document capture screen |
+| `defaultLivenessCamera` | `CameraLens?` | Native default (`front`) | Lens used when first entering the liveness (passive face) capture screen |
+| `showDocumentCameraSwitchButton` | `bool` | `true` | Show the in-capture camera switcher on the document screen |
+| `showLivenessCameraSwitchButton` | `bool` | `true` | Show the in-capture camera switcher on the liveness screen |
 
-All fields are optional. If no config is provided, the SDK uses sensible defaults.
+All fields are optional. If no config is provided, the SDK uses sensible defaults matching the native iOS and Android SDKs.
 
 ### `languageCode`
 
@@ -344,6 +351,24 @@ The SDK supports **54 languages**. If no language is specified, the SDK uses the
 | Indonesian | `id` | Ukrainian | `uk` |
 | Italian | `it` | Uzbek | `uz` |
 | Japanese | `ja` | Vietnamese | `vi` |
+
+### Camera Settings
+
+Control which camera lens opens by default on the document and liveness capture screens, and whether the in-capture camera switcher is shown to the user.
+
+```dart
+final result = await DiditSdk.startVerification(
+  'your-session-token',
+  config: DiditConfig(
+    defaultDocumentCamera: CameraLens.back,        // back is the default
+    defaultLivenessCamera: CameraLens.front,       // front is the default
+    showDocumentCameraSwitchButton: true,          // false to lock to the chosen lens
+    showLivenessCameraSwitchButton: true,
+  ),
+);
+```
+
+If the requested lens isn't present on the device (for example a tablet with no front camera), the native SDK transparently falls back to the first available camera so capture still works. The in-capture camera switcher is also hidden automatically on devices that expose only one camera, regardless of the `show…SwitchButton` flag.
 
 ## Advanced Session Parameters
 
