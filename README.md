@@ -17,7 +17,7 @@ Add the dependency to your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  didit_sdk: ^4.0.2
+  didit_sdk: ^4.0.3
 ```
 
 Then run:
@@ -60,7 +60,7 @@ didit_sdk_ios_pod = case $DiditSdkIosVariant
                     else
                       raise "Invalid $DiditSdkIosVariant '#{$DiditSdkIosVariant}'. Supported values: all, core, autodetection, nfc."
                     end
-didit_sdk_ios_podspec = 'https://raw.githubusercontent.com/didit-protocol/sdk-ios/main/DiditSDK.podspec'
+didit_sdk_ios_podspec = 'https://raw.githubusercontent.com/didit-protocol/sdk-ios/4.0.3/DiditSDK.podspec'
 
 target 'Runner' do
   use_frameworks!
@@ -128,7 +128,6 @@ Add the following keys to your app's `Info.plist`:
 | Microphone | `NSMicrophoneUsageDescription` | Video recording for liveness checks | Yes |
 | Photo Library | `NSPhotoLibraryUsageDescription` | Upload documents from device gallery | Yes |
 | NFC | `NFCReaderUsageDescription` | Read NFC chips in passports/ID cards | If using NFC |
-| Location | `NSLocationWhenInUseUsageDescription` | Geolocation for fraud prevention | Optional |
 
 ```xml
 <key>NSCameraUsageDescription</key>
@@ -139,8 +138,6 @@ Add the following keys to your app's `Info.plist`:
 <string>Photo library access is required to upload documents.</string>
 <key>NFCReaderUsageDescription</key>
 <string>NFC is used to read passport chip data for identity verification.</string>
-<key>NSLocationWhenInUseUsageDescription</key>
-<string>Location access is used to detect your country for identity verification.</string>
 ```
 
 If any required iOS privacy key is missing, iOS terminates the app as soon as the SDK tries to access that protected resource. For example, missing `NSCameraUsageDescription` causes a crash when the user taps the document camera's take photo button.

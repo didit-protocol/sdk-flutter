@@ -1,3 +1,19 @@
+## 4.0.3
+
+* Update native Android SDK to 4.0.3
+* Update native iOS SDK to 4.0.3
+* Pin both native SDKs to an exact `4.0.3` version — the iOS dependency was previously a floating `~> 4.0`, and the iOS podspec source is now tag-pinned to `4.0.3` — so a given plugin release always resolves the same tested native SDKs on both platforms
+* Add an active-liveness backend-processing loader shown natively after the liveness step while the session finishes processing on the backend — rotating localized status messages with a smooth transition into the next step (data-driven, no Flutter API change)
+* Add native `Social Security Card` (`SSC`) document type support so document selectors on both platforms match the web frontend's full document list (data-driven, no Flutter API change)
+* Fix front-camera document capture being saved mirrored — the captured and uploaded document image is now un-mirrored on the front lens, while the live preview and selfie/liveness capture stay mirrored as before
+* Add proper retry error messaging for liveness and face-match failures, translated across all supported locales
+* iOS: fix an active-liveness failure that could occur when the network connection (Wi-Fi) dropped during the liveness WebView flow
+* iOS: remove the unused Location usage — the SDK no longer links `CoreLocation` or requests location, so you can drop `NSLocationWhenInUseUsageDescription` from your app's `Info.plist`
+* Android: KYB document upload now only requests the required document subtypes
+* Android: stop emitting a false worker-service failure log event (auto-detection not bundled, or running on API < 24, are no longer reported as errors)
+* Emit a Tier-B device-class `composite_hash` fingerprint (`X-Didit-FP-Hash` header) for parity with the web SDK and the backend device-identification contract
+* No breaking changes: this release tracks the native 4.0.3 SDKs with no Flutter API changes
+
 ## 4.0.2
 
 * Update native Android SDK to 4.0.2
