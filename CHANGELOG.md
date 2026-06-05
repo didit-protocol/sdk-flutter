@@ -1,3 +1,10 @@
+## 4.0.4
+
+* Update native iOS SDK to 4.0.4
+* iOS: improve the post-active-liveness loader — dismiss the liveness WebView immediately on success and show the native processing/success sheet over an opaque background, then cross-fade into the next step, removing the residual blank/flash that could appear between active liveness and the next step
+* Android SDK unchanged at 4.0.3
+* No breaking changes: no Flutter API changes
+
 ## 4.0.3
 
 * Update native Android SDK to 4.0.3
