@@ -28,8 +28,6 @@
 	<true/>
 	<key>NSCameraUsageDescription</key>
 	<string>Camera access is required to scan your identity documents for verification.</string>
-	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>Location access helps verify your identity and prevent fraud.</string>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>Microphone access is required to record video for liveness verification.</string>
 	<key>NFCReaderUsageDescription</key>
