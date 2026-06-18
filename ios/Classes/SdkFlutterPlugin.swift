@@ -6,6 +6,8 @@ import SwiftUI
 public class SdkFlutterPlugin: NSObject, FlutterPlugin {
 
     private var hostingController: UIViewController?
+    private var presentationGeneration = 0
+    private var hasDeliveredResult = false
 
     public static func register(with registrar: FlutterPluginRegistrar) {
         let channel = FlutterMethodChannel(name: "didit_sdk", binaryMessenger: registrar.messenger())
@@ -74,6 +76,9 @@ public class SdkFlutterPlugin: NSObject, FlutterPlugin {
     // MARK: - Presentation Logic
 
     private func presentVerification(result: @escaping FlutterResult, startAction: @escaping () -> Void) {
+        removeStaleHostIfPresent()
+        let generation = beginPresentation()
+
         guard let rootVC = Self.findRootViewController() else {
             result([
                 "type": "failed",
@@ -85,17 +90,13 @@ public class SdkFlutterPlugin: NSObject, FlutterPlugin {
 
         let bridgeView = DiditBridgeView(
             onResult: { [weak self] verificationResult in
-                let mapped = Self.mapVerificationResult(verificationResult)
-
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                    self?.hostingController?.dismiss(animated: false) {
-                        self?.hostingController = nil
-                    }
-                }
-
-                result(mapped)
-            },
-            startAction: startAction
+                guard let self = self, self.claimResultDelivery(for: generation) else { return }
+                self.tearDownThenResolve(
+                    generation: generation,
+                    mapped: Self.mapVerificationResult(verificationResult),
+                    result: result
+                )
+            }
         )
 
         let hostingVC = UIHostingController(rootView: bridgeView)
@@ -103,7 +104,51 @@ public class SdkFlutterPlugin: NSObject, FlutterPlugin {
         hostingVC.view.backgroundColor = .clear
         self.hostingController = hostingVC
 
-        rootVC.present(hostingVC, animated: false)
+        presentHostThenStartFlow(hostingVC, from: rootVC, startFlow: startAction)
+    }
+
+    private func removeStaleHostIfPresent() {
+        guard let stale = hostingController else { return }
+        Self.dismissFromPresenter(stale)
+        hostingController = nil
+    }
+
+    private func beginPresentation() -> Int {
+        presentationGeneration += 1
+        hasDeliveredResult = false
+        return presentationGeneration
+    }
+
+    private func claimResultDelivery(for generation: Int) -> Bool {
+        guard !hasDeliveredResult, presentationGeneration == generation else { return false }
+        hasDeliveredResult = true
+        return true
+    }
+
+    private func tearDownThenResolve(
+        generation: Int,
+        mapped: [String: Any?],
+        result: @escaping FlutterResult
+    ) {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+            guard self.presentationGeneration == generation,
+                  let host = self.hostingController else {
+                result(mapped)
+                return
+            }
+            Self.dismissFromPresenter(host) {
+                self.hostingController = nil
+                result(mapped)
+            }
+        }
+    }
+
+    private func presentHostThenStartFlow(
+        _ host: UIViewController,
+        from presenter: UIViewController,
+        startFlow: @escaping () -> Void
+    ) {
+        presenter.present(host, animated: false, completion: startFlow)
     }
 
     // MARK: - View Controller Helpers
@@ -117,11 +162,19 @@ public class SdkFlutterPlugin: NSObject, FlutterPlugin {
             return nil
         }
 
-        var topVC = rootVC
-        while let presented = topVC.presentedViewController {
-            topVC = presented
+        return topmostPresentedController(startingFrom: rootVC)
+    }
+
+    private static func topmostPresentedController(startingFrom root: UIViewController) -> UIViewController {
+        var controller = root
+        while let presented = controller.presentedViewController, !presented.isBeingDismissed {
+            controller = presented
         }
-        return topVC
+        return controller
+    }
+
+    private static func dismissFromPresenter(_ controller: UIViewController, completion: (() -> Void)? = nil) {
+        (controller.presentingViewController ?? controller).dismiss(animated: false, completion: completion)
     }
 
     // MARK: - Configuration Parsing
@@ -223,16 +276,12 @@ public class SdkFlutterPlugin: NSObject, FlutterPlugin {
 
 private struct DiditBridgeView: View {
     let onResult: (VerificationResult) -> Void
-    let startAction: () -> Void
 
     var body: some View {
         Color.clear
             .edgesIgnoringSafeArea(.all)
             .diditVerification { result in
                 onResult(result)
-            }
-            .onAppear {
-                startAction()
             }
     }
 }
