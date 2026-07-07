@@ -273,12 +273,16 @@ class DiditTransactionOptions {
   /// Override the verification API base URL.
   final String? baseUrl;
 
-  /// Automatically launch any required user action (verification session
-  /// or wallet-ownership widget). Default is `true`.
+  /// Automatically launch a required wallet-ownership widget natively.
+  /// Default is `true`. A `verification_session` action is never
+  /// auto-launched — it is always returned via
+  /// [DiditTransactionResult.actionRequired] for the host app to launch
+  /// with its own Didit verification integration.
   final bool autoLaunchAction;
 
-  /// Called with the refreshed transaction after an auto-launched action
-  /// completes and the transaction status has been re-fetched.
+  /// Called with the refreshed transaction after an auto-launched
+  /// wallet-ownership action completes and the transaction status has been
+  /// re-fetched.
   final void Function(DiditTransactionResult result)? onTransactionUpdated;
 
   const DiditTransactionOptions({

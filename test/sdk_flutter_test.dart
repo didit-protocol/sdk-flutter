@@ -203,4 +203,30 @@ void main() {
     expect(result.status, 'APPROVED');
     expect(result.actionRequired, isNull);
   });
+
+  test(
+      'DiditTransactionResult.fromMap surfaces actionRequired unconditionally '
+      'for verification_session, including sessionId and sessionToken', () {
+    final result = DiditTransactionResult.fromMap({
+      'transactionId': 'txn-vs-1',
+      'status': 'AWAITING_USER',
+      'actionRequired': {
+        'type': 'verification_session',
+        'url': 'https://verify.example/session/abc',
+        'sessionId': 'session-abc',
+        'sessionToken': 'session-token-abc',
+        'status': 'Not Started',
+      },
+    });
+
+    expect(result.transactionId, 'txn-vs-1');
+    expect(
+      result.actionRequired?.type,
+      DiditTransactionActionRequired.typeVerificationSession,
+    );
+    expect(result.actionRequired?.url, 'https://verify.example/session/abc');
+    expect(result.actionRequired?.sessionId, 'session-abc');
+    expect(result.actionRequired?.sessionToken, 'session-token-abc');
+    expect(result.actionRequired?.status, 'Not Started');
+  });
 }

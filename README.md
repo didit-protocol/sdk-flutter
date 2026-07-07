@@ -486,7 +486,7 @@ Returns: `Future<VerificationResult>`
 
 ### `DiditSdk.submitTransaction(transactionToken, transaction, {options})`
 
-Submit a transaction directly from the device. Requires a transaction SDK token minted by your backend via `POST /v3/transactions/sdk-token/`. Device intelligence is attached automatically. If the response contains a required user action (verification session or wallet-ownership widget), the SDK auto-launches it natively and invokes `options.onTransactionUpdated` with the refreshed transaction once the action completes.
+Submit a transaction directly from the device. Requires a transaction SDK token minted by your backend via `POST /v3/transactions/sdk-token/`. Device intelligence is attached automatically. `autoLaunchAction` (default `true`) auto-launches only a required wallet-ownership widget and invokes `options.onTransactionUpdated` with the refreshed transaction once it completes; a required `verification_session` action is never auto-launched and is instead returned on `result.actionRequired` for your app to launch with its own Didit verification integration.
 
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
@@ -519,6 +519,17 @@ try {
   print('${result.transactionId} ${result.actionRequired?.type}');
 } on DiditTransactionException catch (e) {
   print('${e.code} ${e.fieldErrors}');
+}
+```
+
+If `result.actionRequired` is a `verification_session`, launch it yourself with the SDK's own verification flow:
+
+```dart
+final action = result.actionRequired;
+if (action?.type == DiditTransactionActionRequired.typeVerificationSession &&
+    action?.sessionToken != null) {
+  final verification = await DiditSdk.startVerification(action!.sessionToken!);
+  // Handle verification, then call DiditSdk.getTransaction to re-fetch status.
 }
 ```
 

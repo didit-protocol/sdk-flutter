@@ -85,12 +85,13 @@ class DiditSdk {
   ///
   /// Requires a transaction SDK token minted by your backend via
   /// `POST /v3/transactions/sdk-token/`. Device intelligence is attached
-  /// automatically. If the response contains a required user action
-  /// (verification session or wallet-ownership widget) and
+  /// automatically. If the response requires a wallet-ownership widget and
   /// [DiditTransactionOptions.autoLaunchAction] is not disabled, the SDK
   /// launches it natively and later invokes
   /// [DiditTransactionOptions.onTransactionUpdated] with the refreshed
-  /// transaction.
+  /// transaction. A `verification_session` action is never auto-launched —
+  /// it is returned on [DiditTransactionResult.actionRequired] for the host
+  /// app to launch with its own Didit verification integration.
   ///
   /// Throws a [DiditTransactionException] with [DiditTransactionException.code]
   /// set to `invalid_token`, `expired_token`, `validation` (see
