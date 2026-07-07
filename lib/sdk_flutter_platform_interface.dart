@@ -33,4 +33,31 @@ abstract class SdkFlutterPlatform extends PlatformInterface {
     throw UnimplementedError(
         'startVerificationWithWorkflow() has not been implemented.');
   }
+
+  /// Submit a transaction with a transaction SDK token.
+  Future<Map<String, dynamic>> submitTransaction(
+    String transactionToken,
+    Map<String, dynamic> transaction,
+    Map<String, dynamic> options,
+  ) {
+    throw UnimplementedError('submitTransaction() has not been implemented.');
+  }
+
+  /// Fetch a transaction previously submitted with the same token.
+  Future<Map<String, dynamic>> getTransaction(
+    String transactionToken,
+    String transactionId,
+    Map<String, dynamic> options,
+  ) {
+    throw UnimplementedError('getTransaction() has not been implemented.');
+  }
+
+  /// Register the handler invoked when the platform reports a refreshed
+  /// transaction after an auto-launched action completes.
+  void setTransactionUpdateHandler(
+    void Function(String callId, Map<String, dynamic> result)? handler,
+  ) {
+    throw UnimplementedError(
+        'setTransactionUpdateHandler() has not been implemented.');
+  }
 }

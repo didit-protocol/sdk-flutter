@@ -484,6 +484,56 @@ Start verification by creating a new session with a workflow ID (Unilink Integra
 
 Returns: `Future<VerificationResult>`
 
+### `DiditSdk.submitTransaction(transactionToken, transaction, {options})`
+
+Submit a transaction directly from the device. Requires a transaction SDK token minted by your backend via `POST /v3/transactions/sdk-token/`. Device intelligence is attached automatically. If the response contains a required user action (verification session or wallet-ownership widget), the SDK auto-launches it natively and invokes `options.onTransactionUpdated` with the refreshed transaction once the action completes.
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `transactionToken` | `String` | Yes | Transaction SDK token (sent as `X-Transaction-Token`) |
+| `transaction` | `DiditTransactionPayload` | Yes | Transaction payload (`txnId` required; `info`, `subject`, `counterparty`, `travelRule`, ...) |
+| `options` | `DiditTransactionOptions` | No | `baseUrl`, `autoLaunchAction` (default `true`), `onTransactionUpdated` callback |
+
+Returns: `Future<DiditTransactionResult>` with `transactionId`, `status`, `travelRuleStatus`, and `actionRequired`.
+
+Throws: `DiditTransactionException` with `code` set to `invalid_token`, `expired_token`, `validation` (see `fieldErrors`), or `network`.
+
+```dart
+try {
+  final result = await DiditSdk.submitTransaction(
+    sdkToken,
+    DiditTransactionPayload(
+      txnId: 'order-123',
+      type: 'crypto',
+      info: DiditTransactionInfo(
+        direction: 'outbound',
+        amount: 0.25,
+        currency: 'ETH',
+      ),
+      travelRule: DiditTravelRule(required: true),
+    ),
+    options: DiditTransactionOptions(
+      onTransactionUpdated: (updated) => print('Refreshed: ${updated.status}'),
+    ),
+  );
+  print('${result.transactionId} ${result.actionRequired?.type}');
+} on DiditTransactionException catch (e) {
+  print('${e.code} ${e.fieldErrors}');
+}
+```
+
+### `DiditSdk.getTransaction(transactionToken, transactionId, {options})`
+
+Fetch the current state of a transaction previously submitted with the same token.
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `transactionToken` | `String` | Yes | Transaction SDK token |
+| `transactionId` | `String` | Yes | `transactionId` returned by `submitTransaction` |
+| `options` | `DiditTransactionOptions` | No | `baseUrl` override |
+
+Returns: `Future<DiditTransactionResult>`
+
 ## Running the Example App
 
 The repository includes a fully functional example app.

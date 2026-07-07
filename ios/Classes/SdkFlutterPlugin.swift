@@ -6,10 +6,12 @@ import SwiftUI
 public class SdkFlutterPlugin: NSObject, FlutterPlugin {
 
     private var hostingController: UIViewController?
+    private var channel: FlutterMethodChannel?
 
     public static func register(with registrar: FlutterPluginRegistrar) {
         let channel = FlutterMethodChannel(name: "didit_sdk", binaryMessenger: registrar.messenger())
         let instance = SdkFlutterPlugin()
+        instance.channel = channel
         registrar.addMethodCallDelegate(instance, channel: channel)
     }
 
@@ -19,6 +21,10 @@ public class SdkFlutterPlugin: NSObject, FlutterPlugin {
             handleStartVerification(call, result: result)
         case "startVerificationWithWorkflow":
             handleStartVerificationWithWorkflow(call, result: result)
+        case "submitTransaction":
+            handleSubmitTransaction(call, result: result)
+        case "getTransaction":
+            handleGetTransaction(call, result: result)
         default:
             result(FlutterMethodNotImplemented)
         }
@@ -215,6 +221,178 @@ public class SdkFlutterPlugin: NSObject, FlutterPlugin {
         case .cameraAccessDenied: return "cameraAccessDenied"
         case .unknown: return "unknown"
         @unknown default: return "unknown"
+        }
+    }
+
+    // MARK: - Transactions
+
+    private func handleSubmitTransaction(_ call: FlutterMethodCall, result: @escaping FlutterResult) {
+        guard let args = call.arguments as? [String: Any],
+              let transactionToken = args["transactionToken"] as? String,
+              let transaction = args["transaction"] as? [String: Any],
+              let txnId = transaction["txnId"] as? String, !txnId.isEmpty else {
+            result(FlutterError(
+                code: "validation",
+                message: "transactionToken and transaction.txnId are required",
+                details: nil
+            ))
+            return
+        }
+        let optionsDict = args["options"] as? [String: Any] ?? [:]
+        let callId = optionsDict["callId"] as? String ?? ""
+        let payload = Self.transactionPayload(txnId: txnId, from: transaction)
+        let channel = self.channel
+        let options = DiditTransactionOptions(
+            baseUrl: optionsDict["baseUrl"] as? String,
+            autoLaunchAction: optionsDict["autoLaunchAction"] as? Bool ?? true,
+            onTransactionUpdated: { updated in
+                channel?.invokeMethod(
+                    "onTransactionUpdated",
+                    arguments: [
+                        "callId": callId,
+                        "result": Self.transactionResultMap(updated)
+                    ]
+                )
+            }
+        )
+        Task { @MainActor in
+            do {
+                let transactionResult = try await DiditSdk.shared.submitTransaction(
+                    transactionToken: transactionToken,
+                    transaction: payload,
+                    options: options
+                )
+                result(Self.transactionResultMap(transactionResult))
+            } catch {
+                result(Self.transactionFlutterError(error))
+            }
+        }
+    }
+
+    private func handleGetTransaction(_ call: FlutterMethodCall, result: @escaping FlutterResult) {
+        guard let args = call.arguments as? [String: Any],
+              let transactionToken = args["transactionToken"] as? String,
+              let transactionId = args["transactionId"] as? String else {
+            result(FlutterError(
+                code: "validation",
+                message: "transactionToken and transactionId are required",
+                details: nil
+            ))
+            return
+        }
+        let optionsDict = args["options"] as? [String: Any] ?? [:]
+        let options = DiditTransactionOptions(baseUrl: optionsDict["baseUrl"] as? String)
+        Task { @MainActor in
+            do {
+                let transactionResult = try await DiditSdk.shared.getTransaction(
+                    transactionToken: transactionToken,
+                    transactionId: transactionId,
+                    options: options
+                )
+                result(Self.transactionResultMap(transactionResult))
+            } catch {
+                result(Self.transactionFlutterError(error))
+            }
+        }
+    }
+
+    // MARK: - Transaction Mapping
+
+    private static func transactionPayload(txnId: String, from dict: [String: Any]) -> DiditTransactionPayload {
+        DiditTransactionPayload(
+            txnId: txnId,
+            txnDate: dict["txnDate"] as? String,
+            zoneId: dict["zoneId"] as? String,
+            type: dict["type"] as? String,
+            info: (dict["info"] as? [String: Any]).map(transactionInfo),
+            subject: (dict["subject"] as? [String: Any]).map(transactionParticipant),
+            counterparty: (dict["counterparty"] as? [String: Any]).map(transactionParticipant),
+            props: dict["props"] as? [String: Any],
+            travelRule: (dict["travelRule"] as? [String: Any]).map(travelRule),
+            includeCryptoScreening: dict["includeCryptoScreening"] as? Bool
+        )
+    }
+
+    private static func transactionInfo(_ dict: [String: Any]) -> DiditTransactionInfo {
+        DiditTransactionInfo(
+            direction: dict["direction"] as? String,
+            amount: (dict["amount"] as? NSNumber)?.doubleValue,
+            currency: dict["currency"] as? String,
+            currencyType: dict["currencyType"] as? String,
+            amountInDefaultCurrency: (dict["amountInDefaultCurrency"] as? NSNumber)?.doubleValue,
+            defaultCurrencyCode: dict["defaultCurrencyCode"] as? String,
+            paymentDetails: dict["paymentDetails"] as? String,
+            paymentTxnId: dict["paymentTxnId"] as? String,
+            type: dict["type"] as? String,
+            cryptoParams: dict["cryptoParams"] as? [String: Any]
+        )
+    }
+
+    private static func transactionParticipant(_ dict: [String: Any]) -> DiditTransactionParticipant {
+        DiditTransactionParticipant(
+            type: dict["type"] as? String,
+            externalUserId: dict["externalUserId"] as? String,
+            fullName: dict["fullName"] as? String,
+            firstName: dict["firstName"] as? String,
+            lastName: dict["lastName"] as? String,
+            dob: dict["dob"] as? String,
+            address: dict["address"] as? [String: Any],
+            institutionInfo: dict["institutionInfo"] as? [String: Any],
+            device: dict["device"] as? [String: Any],
+            paymentMethod: (dict["paymentMethod"] as? [String: Any]).map { method in
+                DiditTransactionPaymentMethod(
+                    type: method["type"] as? String,
+                    accountId: method["accountId"] as? String,
+                    issuingCountry: method["issuingCountry"] as? String
+                )
+            }
+        )
+    }
+
+    private static func travelRule(_ dict: [String: Any]) -> DiditTravelRuleInfo {
+        DiditTravelRuleInfo(
+            status: dict["status"] as? String,
+            `protocol`: dict["protocol"] as? String,
+            required: dict["required"] as? Bool,
+            obligationsCount: (dict["obligationsCount"] as? NSNumber)?.intValue,
+            originatorData: dict["originatorData"] as? [String: Any],
+            beneficiaryData: dict["beneficiaryData"] as? [String: Any],
+            metadata: dict["metadata"] as? [String: Any]
+        )
+    }
+
+    private static func transactionResultMap(_ result: DiditTransactionResult) -> [String: Any] {
+        var map: [String: Any] = ["transactionId": result.transactionId]
+        map["status"] = result.status
+        map["travelRuleStatus"] = result.travelRuleStatus
+        if let action = result.actionRequired {
+            var actionMap: [String: Any] = ["type": action.type]
+            actionMap["url"] = action.url
+            actionMap["sessionId"] = action.sessionId
+            actionMap["sessionToken"] = action.sessionToken
+            actionMap["status"] = action.status
+            actionMap["widgetSessionId"] = action.widgetSessionId
+            actionMap["expiresAt"] = action.expiresAt
+            map["actionRequired"] = actionMap
+        }
+        return map
+    }
+
+    private static func transactionFlutterError(_ error: Error) -> FlutterError {
+        guard let transactionError = error as? DiditTransactionError else {
+            return FlutterError(code: "network", message: error.localizedDescription, details: nil)
+        }
+        let message = transactionError.errorDescription
+        switch transactionError {
+        case .invalidToken:
+            return FlutterError(code: "invalid_token", message: message, details: nil)
+        case .expiredToken:
+            return FlutterError(code: "expired_token", message: message, details: nil)
+        case .validation(let fieldErrors):
+            let details = JSONSerialization.isValidJSONObject(fieldErrors) ? fieldErrors : ["detail": message ?? "Validation error"]
+            return FlutterError(code: "validation", message: message, details: details)
+        case .network:
+            return FlutterError(code: "network", message: message, details: nil)
         }
     }
 }

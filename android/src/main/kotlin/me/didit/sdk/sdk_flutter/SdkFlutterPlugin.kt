@@ -22,6 +22,14 @@ import me.didit.sdk.VerificationError
 import me.didit.sdk.VerificationResult
 import me.didit.sdk.VerificationStatus
 import me.didit.sdk.core.localization.SupportedLanguage
+import me.didit.sdk.transactions.DiditTransactionException
+import me.didit.sdk.transactions.DiditTransactionInfo
+import me.didit.sdk.transactions.DiditTransactionOptions
+import me.didit.sdk.transactions.DiditTransactionParticipant
+import me.didit.sdk.transactions.DiditTransactionPayload
+import me.didit.sdk.transactions.DiditTransactionPaymentMethod
+import me.didit.sdk.transactions.DiditTransactionResult
+import me.didit.sdk.transactions.DiditTravelRule
 
 class SdkFlutterPlugin :
     FlutterPlugin,
@@ -74,6 +82,8 @@ class SdkFlutterPlugin :
         when (call.method) {
             "startVerification" -> handleStartVerification(call, result)
             "startVerificationWithWorkflow" -> handleStartVerificationWithWorkflow(call, result)
+            "submitTransaction" -> handleSubmitTransaction(call, result)
+            "getTransaction" -> handleGetTransaction(call, result)
             else -> result.notImplemented()
         }
     }
@@ -244,5 +254,156 @@ class SdkFlutterPlugin :
             "errorMessage" to (e.message ?: "An unexpected error occurred.")
         )
         result.success(errorResult)
+    }
+
+    // ── Transactions ─────────────────────────────────────────────────────────
+
+    private fun handleSubmitTransaction(call: MethodCall, result: Result) {
+        val transactionToken = call.argument<String>("transactionToken")
+        val transaction = call.argument<Map<String, Any?>>("transaction")
+        val txnId = transaction?.get("txnId") as? String
+        if (transactionToken == null || transaction == null || txnId == null) {
+            result.error("validation", "transactionToken and transaction.txnId are required", null)
+            return
+        }
+        val options = call.argument<Map<String, Any?>>("options") ?: emptyMap()
+        val callId = options["callId"] as? String ?: ""
+        scope.launch {
+            try {
+                val transactionResult = DiditSdk.submitTransaction(
+                    transactionToken = transactionToken,
+                    transaction = parseTransactionPayload(txnId, transaction),
+                    options = DiditTransactionOptions(
+                        baseUrl = options["baseUrl"] as? String,
+                        autoLaunchAction = options["autoLaunchAction"] as? Boolean ?: true,
+                        onTransactionUpdated = { refreshed ->
+                            channel.invokeMethod(
+                                "onTransactionUpdated",
+                                mapOf(
+                                    "callId" to callId,
+                                    "result" to mapTransactionResult(refreshed)
+                                )
+                            )
+                        }
+                    )
+                )
+                result.success(mapTransactionResult(transactionResult))
+            } catch (e: Exception) {
+                resolveTransactionError(result, e)
+            }
+        }
+    }
+
+    private fun handleGetTransaction(call: MethodCall, result: Result) {
+        val transactionToken = call.argument<String>("transactionToken")
+        val transactionId = call.argument<String>("transactionId")
+        if (transactionToken == null || transactionId == null) {
+            result.error("validation", "transactionToken and transactionId are required", null)
+            return
+        }
+        val options = call.argument<Map<String, Any?>>("options") ?: emptyMap()
+        scope.launch {
+            try {
+                val transactionResult = DiditSdk.getTransaction(
+                    transactionToken = transactionToken,
+                    transactionId = transactionId,
+                    options = DiditTransactionOptions(baseUrl = options["baseUrl"] as? String)
+                )
+                result.success(mapTransactionResult(transactionResult))
+            } catch (e: Exception) {
+                resolveTransactionError(result, e)
+            }
+        }
+    }
+
+    private fun parseTransactionPayload(txnId: String, map: Map<String, Any?>) =
+        DiditTransactionPayload(
+            txnId = txnId,
+            txnDate = map["txnDate"] as? String,
+            zoneId = map["zoneId"] as? String,
+            type = map["type"] as? String,
+            info = subMap(map, "info")?.let(::parseTransactionInfo),
+            subject = subMap(map, "subject")?.let(::parseTransactionParticipant),
+            counterparty = subMap(map, "counterparty")?.let(::parseTransactionParticipant),
+            props = subMap(map, "props"),
+            travelRule = subMap(map, "travelRule")?.let(::parseTravelRule),
+            includeCryptoScreening = map["includeCryptoScreening"] as? Boolean
+        )
+
+    private fun parseTransactionInfo(map: Map<String, Any?>) = DiditTransactionInfo(
+        direction = map["direction"] as? String,
+        amount = (map["amount"] as? Number)?.toDouble(),
+        currency = map["currency"] as? String,
+        currencyType = map["currencyType"] as? String,
+        amountInDefaultCurrency = (map["amountInDefaultCurrency"] as? Number)?.toDouble(),
+        defaultCurrencyCode = map["defaultCurrencyCode"] as? String,
+        paymentDetails = map["paymentDetails"] as? String,
+        paymentTxnId = map["paymentTxnId"] as? String,
+        type = map["type"] as? String,
+        cryptoParams = subMap(map, "cryptoParams")
+    )
+
+    private fun parseTransactionParticipant(map: Map<String, Any?>) = DiditTransactionParticipant(
+        type = map["type"] as? String,
+        externalUserId = map["externalUserId"] as? String,
+        fullName = map["fullName"] as? String,
+        firstName = map["firstName"] as? String,
+        lastName = map["lastName"] as? String,
+        dob = map["dob"] as? String,
+        address = subMap(map, "address"),
+        institutionInfo = subMap(map, "institutionInfo"),
+        device = subMap(map, "device"),
+        paymentMethod = subMap(map, "paymentMethod")?.let {
+            DiditTransactionPaymentMethod(
+                type = it["type"] as? String,
+                accountId = it["accountId"] as? String,
+                issuingCountry = it["issuingCountry"] as? String
+            )
+        }
+    )
+
+    private fun parseTravelRule(map: Map<String, Any?>) = DiditTravelRule(
+        status = map["status"] as? String,
+        protocol = map["protocol"] as? String,
+        required = map["required"] as? Boolean,
+        obligationsCount = (map["obligationsCount"] as? Number)?.toInt(),
+        originatorData = subMap(map, "originatorData"),
+        beneficiaryData = subMap(map, "beneficiaryData"),
+        metadata = subMap(map, "metadata")
+    )
+
+    private fun subMap(map: Map<String, Any?>, key: String): Map<String, Any?>? =
+        (map[key] as? Map<*, *>)?.entries?.associate { it.key.toString() to it.value }
+
+    private fun mapTransactionResult(result: DiditTransactionResult): Map<String, Any?> {
+        val map = mutableMapOf<String, Any?>("transactionId" to result.transactionId)
+        result.status?.let { map["status"] = it }
+        result.travelRuleStatus?.let { map["travelRuleStatus"] = it }
+        result.actionRequired?.let { action ->
+            val actionMap = mutableMapOf<String, Any?>("type" to action.type)
+            action.url?.let { actionMap["url"] = it }
+            action.sessionId?.let { actionMap["sessionId"] = it }
+            action.sessionToken?.let { actionMap["sessionToken"] = it }
+            action.status?.let { actionMap["status"] = it }
+            action.widgetSessionId?.let { actionMap["widgetSessionId"] = it }
+            action.expiresAt?.let { actionMap["expiresAt"] = it }
+            map["actionRequired"] = actionMap
+        }
+        return map
+    }
+
+    private fun resolveTransactionError(result: Result, e: Exception) {
+        when (e) {
+            is DiditTransactionException.InvalidToken ->
+                result.error("invalid_token", e.message, null)
+            is DiditTransactionException.ExpiredToken ->
+                result.error("expired_token", e.message, null)
+            is DiditTransactionException.Validation ->
+                result.error("validation", e.message, e.fieldErrors)
+            is DiditTransactionException.Network ->
+                result.error("network", e.message, null)
+            else ->
+                result.error("network", e.message ?: "Transaction request failed.", null)
+        }
     }
 }

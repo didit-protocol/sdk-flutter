@@ -29,15 +29,21 @@ class VerificationScreen extends StatefulWidget {
 }
 
 class _VerificationScreenState extends State<VerificationScreen> {
+  static const _demoWalletAddress =
+      '0x71C7656EC7ab88b098defB751B7401B5f6d8976F';
+
   final _tokenController = TextEditingController(text: 'Y6jHLOSXFTOA');
   final _workflowController = TextEditingController();
+  final _transactionTokenController = TextEditingController();
   bool _loading = false;
   VerificationResult? _result;
+  String? _transactionResult;
 
   @override
   void dispose() {
     _tokenController.dispose();
     _workflowController.dispose();
+    _transactionTokenController.dispose();
     super.dispose();
   }
 
@@ -91,6 +97,100 @@ class _VerificationScreenState extends State<VerificationScreen> {
     } finally {
       setState(() => _loading = false);
     }
+  }
+
+  Future<void> _submitTransaction() async {
+    final transactionToken = _transactionTokenController.text.trim();
+    if (transactionToken.isEmpty) {
+      _showAlert('Error', 'Please enter a transaction SDK token.');
+      return;
+    }
+
+    setState(() {
+      _loading = true;
+      _transactionResult = null;
+    });
+
+    try {
+      final result = await DiditSdk.submitTransaction(
+        transactionToken,
+        DiditTransactionPayload(
+          txnId: 'flutter-demo-${DateTime.now().millisecondsSinceEpoch}',
+          txnDate: DateTime.now().toUtc().toIso8601String(),
+          type: 'crypto',
+          info: const DiditTransactionInfo(
+            direction: 'outbound',
+            amount: 0.25,
+            currency: 'ETH',
+            currencyType: 'crypto',
+            cryptoParams: {
+              'address': _demoWalletAddress,
+              'chain': 'ethereum',
+            },
+          ),
+          subject: const DiditTransactionParticipant(
+            type: 'individual',
+            externalUserId: 'flutter-demo-user',
+            fullName: 'Ada Lovelace',
+          ),
+          counterparty: const DiditTransactionParticipant(
+            type: 'individual',
+            fullName: 'Charles Babbage',
+            paymentMethod: DiditTransactionPaymentMethod(
+              type: 'crypto',
+              accountId: _demoWalletAddress,
+              issuingCountry: 'GB',
+            ),
+          ),
+          travelRule: const DiditTravelRule(
+            required: true,
+            originatorData: {'full_name': 'Ada Lovelace'},
+            beneficiaryData: {
+              'full_name': 'Charles Babbage',
+              'wallet_address': _demoWalletAddress,
+            },
+          ),
+          includeCryptoScreening: true,
+        ),
+        options: DiditTransactionOptions(
+          onTransactionUpdated: (updated) {
+            setState(() {
+              _transactionResult =
+                  'Updated after action:\n${_describeTransaction(updated)}';
+            });
+          },
+        ),
+      );
+      setState(() => _transactionResult = _describeTransaction(result));
+    } on DiditTransactionException catch (e) {
+      setState(() {
+        _transactionResult = 'Error (${e.code}): ${e.message}'
+            '${e.fieldErrors != null ? '\n${e.fieldErrors}' : ''}';
+      });
+    } catch (e) {
+      setState(() => _transactionResult = 'Unexpected error: $e');
+    } finally {
+      setState(() => _loading = false);
+    }
+  }
+
+  String _describeTransaction(DiditTransactionResult result) {
+    final action = result.actionRequired;
+    return [
+      'Transaction: ${result.transactionId}',
+      'Status: ${result.status}',
+      if (result.travelRuleStatus != null)
+        'Travel rule: ${result.travelRuleStatus}',
+      if (action == null)
+        'Action required: none'
+      else ...[
+        'Action required: ${action.type}',
+        if (action.url != null) '  url: ${action.url}',
+        if (action.sessionId != null) '  session: ${action.sessionId}',
+        if (action.widgetSessionId != null)
+          '  widget session: ${action.widgetSessionId}',
+      ],
+    ].join('\n');
   }
 
   void _showResultAlert(VerificationResult result) {
@@ -258,6 +358,80 @@ class _VerificationScreenState extends State<VerificationScreen> {
                             fontSize: 16, fontWeight: FontWeight.w600),
                       ),
               ),
+              const SizedBox(height: 24),
+
+              // Transaction submission
+              const Text(
+                'Submit Sample Transaction',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: Color(0xFF333333),
+                ),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: _transactionTokenController,
+                decoration: InputDecoration(
+                  hintText: 'Enter transaction SDK token...',
+                  filled: true,
+                  fillColor: Colors.white,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(color: Color(0xFFE0E0E0)),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(color: Color(0xFFE0E0E0)),
+                  ),
+                ),
+                autocorrect: false,
+              ),
+              const SizedBox(height: 12),
+              ElevatedButton(
+                onPressed: _loading ? null : _submitTransaction,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF4A4A4A),
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                child: _loading
+                    ? const SizedBox(
+                        height: 20,
+                        width: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.white,
+                        ),
+                      )
+                    : const Text(
+                        'Submit Travel-Rule Transaction',
+                        style: TextStyle(
+                            fontSize: 16, fontWeight: FontWeight.w600),
+                      ),
+              ),
+              if (_transactionResult != null) ...[
+                const SizedBox(height: 12),
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: const Color(0xFFE0E0E0)),
+                  ),
+                  child: Text(
+                    _transactionResult!,
+                    style: const TextStyle(
+                      fontSize: 12,
+                      fontFamily: 'monospace',
+                      color: Color(0xFF1A1A1A),
+                    ),
+                  ),
+                ),
+              ],
               const SizedBox(height: 24),
 
               // Result display
