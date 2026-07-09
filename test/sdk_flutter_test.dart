@@ -1,3 +1,4 @@
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:didit_sdk/sdk_flutter.dart';
 import 'package:didit_sdk/sdk_flutter_platform_interface.dart';
@@ -6,6 +7,11 @@ import 'package:plugin_platform_interface/plugin_platform_interface.dart';
 class MockSdkFlutterPlatform
     with MockPlatformInterfaceMixin
     implements SdkFlutterPlatform {
+  void Function(String callId, Map<String, dynamic> result)?
+      transactionUpdateHandler;
+  Map<String, dynamic>? lastTransactionOptions;
+  bool throwValidationError = false;
+
   @override
   Future<Map<String, dynamic>> startVerification(
     String token,
@@ -29,6 +35,51 @@ class MockSdkFlutterPlatform
       'sessionId': 'test-workflow-session-id',
       'status': 'Pending',
     };
+  }
+
+  @override
+  Future<Map<String, dynamic>> submitTransaction(
+    String transactionToken,
+    Map<String, dynamic> transaction,
+    Map<String, dynamic> options,
+  ) async {
+    lastTransactionOptions = options;
+    if (throwValidationError) {
+      throw PlatformException(
+        code: 'validation',
+        message: 'txnId is required',
+        details: {
+          'txnId': ['This field is required.'],
+        },
+      );
+    }
+    return {
+      'transactionId': 'test-transaction-id',
+      'status': 'AWAITING_USER',
+      'travelRuleStatus': 'PENDING',
+      'actionRequired': {
+        'type': 'wallet_ownership',
+        'url': 'https://verify.example/wallet-ownership/token',
+        'widgetSessionId': 'widget-session-id',
+        'expiresAt': '2026-07-08T00:00:00Z',
+      },
+    };
+  }
+
+  @override
+  Future<Map<String, dynamic>> getTransaction(
+    String transactionToken,
+    String transactionId,
+    Map<String, dynamic> options,
+  ) async {
+    return {'transactionId': transactionId, 'status': 'APPROVED'};
+  }
+
+  @override
+  void setTransactionUpdateHandler(
+    void Function(String callId, Map<String, dynamic> result)? handler,
+  ) {
+    transactionUpdateHandler = handler;
   }
 }
 
@@ -83,5 +134,99 @@ void main() {
     expect(result, isA<VerificationCancelled>());
     final cancelled = result as VerificationCancelled;
     expect(cancelled.session?.sessionId, 'cancelled-session');
+  });
+
+  test('submitTransaction returns typed result with actionRequired', () async {
+    platform.throwValidationError = false;
+
+    final result = await DiditSdk.submitTransaction(
+      'test-token',
+      const DiditTransactionPayload(txnId: 'txn-1'),
+    );
+
+    expect(result.transactionId, 'test-transaction-id');
+    expect(result.status, 'AWAITING_USER');
+    expect(result.travelRuleStatus, 'PENDING');
+    expect(
+      result.actionRequired?.type,
+      DiditTransactionActionRequired.typeWalletOwnership,
+    );
+    expect(result.actionRequired?.widgetSessionId, 'widget-session-id');
+    expect(platform.lastTransactionOptions?['autoLaunchAction'], true);
+    expect(platform.lastTransactionOptions?['callId'], isNotEmpty);
+  });
+
+  test('submitTransaction delivers onTransactionUpdated by callId', () async {
+    platform.throwValidationError = false;
+    DiditTransactionResult? updated;
+
+    await DiditSdk.submitTransaction(
+      'test-token',
+      const DiditTransactionPayload(txnId: 'txn-2'),
+      options: DiditTransactionOptions(
+        onTransactionUpdated: (result) => updated = result,
+      ),
+    );
+
+    final callId = platform.lastTransactionOptions?['callId'] as String;
+    platform.transactionUpdateHandler?.call(callId, {
+      'transactionId': 'test-transaction-id',
+      'status': 'APPROVED',
+    });
+
+    expect(updated?.transactionId, 'test-transaction-id');
+    expect(updated?.status, 'APPROVED');
+  });
+
+  test('submitTransaction maps validation errors with fieldErrors', () async {
+    platform.throwValidationError = true;
+
+    try {
+      await DiditSdk.submitTransaction(
+        'test-token',
+        const DiditTransactionPayload(txnId: ''),
+      );
+      fail('Expected DiditTransactionException');
+    } on DiditTransactionException catch (e) {
+      expect(e.code, DiditTransactionException.codeValidation);
+      expect(e.message, 'txnId is required');
+      expect(e.fieldErrors?['txnId'], ['This field is required.']);
+    } finally {
+      platform.throwValidationError = false;
+    }
+  });
+
+  test('getTransaction returns typed result', () async {
+    final result = await DiditSdk.getTransaction('test-token', 'txn-3');
+
+    expect(result.transactionId, 'txn-3');
+    expect(result.status, 'APPROVED');
+    expect(result.actionRequired, isNull);
+  });
+
+  test(
+      'DiditTransactionResult.fromMap surfaces actionRequired unconditionally '
+      'for verification_session, including sessionId and sessionToken', () {
+    final result = DiditTransactionResult.fromMap({
+      'transactionId': 'txn-vs-1',
+      'status': 'AWAITING_USER',
+      'actionRequired': {
+        'type': 'verification_session',
+        'url': 'https://verify.example/session/abc',
+        'sessionId': 'session-abc',
+        'sessionToken': 'session-token-abc',
+        'status': 'Not Started',
+      },
+    });
+
+    expect(result.transactionId, 'txn-vs-1');
+    expect(
+      result.actionRequired?.type,
+      DiditTransactionActionRequired.typeVerificationSession,
+    );
+    expect(result.actionRequired?.url, 'https://verify.example/session/abc');
+    expect(result.actionRequired?.sessionId, 'session-abc');
+    expect(result.actionRequired?.sessionToken, 'session-token-abc');
+    expect(result.actionRequired?.status, 'Not Started');
   });
 }

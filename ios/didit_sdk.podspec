@@ -1,6 +1,6 @@
 Pod::Spec.new do |s|
   s.name             = 'didit_sdk'
-  s.version          = '4.0.9'
+  s.version          = '4.0.2'
   s.summary          = 'Didit Identity Verification SDK for Flutter'
   s.description      = <<-DESC
 Flutter plugin wrapping the native DiditSDK for identity verification
@@ -30,7 +30,7 @@ with document scanning, NFC passport reading, and liveness detection.
                       else
                         raise "Invalid DiditSdk iOS variant '#{didit_sdk_ios_variant}'. Set $DiditSdkIosVariant in your Podfile to one of: all, core, autodetection, nfc."
                       end
-  s.dependency didit_sdk_ios_pod, '4.0.9'
+  s.dependency didit_sdk_ios_pod, '~> 4.1'
 
   s.platform = :ios, '13.0'
   s.static_framework = true
