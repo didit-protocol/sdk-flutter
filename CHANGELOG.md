@@ -1,3 +1,9 @@
+## 4.2.0
+
+* Sandbox (test-mode) support in the native SDKs: banner on every screen, bundled sample documents for ID/POA/Document AI uploads, scenario picker with Verified / Needs review / Declined outcomes, any-value guidance on email and phone steps
+* Update native iOS SDK to 4.2.0
+* Update native Android SDK to 4.2.0
+
 ## 4.1.0
 
 * Update native iOS SDK to 4.1.0
