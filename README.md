@@ -8,7 +8,7 @@ A Flutter plugin for Didit Identity Verification. Wraps the native iOS and Andro
 |-------------|----------------|
 | Flutter | 3.3+ |
 | Dart | 3.11+ |
-| iOS | 13.0+ (NFC requires iOS 15.0+) |
+| iOS | 13.0+ (`all`/`nfc` variants and Swift Package Manager require 15.0+) |
 | Android | API 23+ (6.0 Marshmallow) |
 
 ## Installation
@@ -17,7 +17,7 @@ Add the dependency to your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  didit_sdk: ^4.3.0
+  didit_sdk: ^4.3.1
 ```
 
 Then run:
@@ -38,6 +38,19 @@ The Flutter plugin can install the same native SDK variants exposed by the iOS a
 | `nfc` | No | Yes | You need NFC passport reading without automatic capture |
 
 ### iOS Setup
+
+The plugin supports both of Flutter's iOS dependency managers: Swift Package Manager and CocoaPods.
+
+#### Swift Package Manager
+
+If your Flutter version has Swift Package Manager support enabled (opt in with `flutter config --enable-swift-package-manager` on Flutter 3.24+), the plugin is consumed as a Swift package automatically.
+No Podfile configuration is needed - the native DiditSDK dependency resolves from GitHub on its own.
+
+The Swift Package Manager integration always installs the complete native SDK (the `all` variant, including NFC), which requires an iOS 15.0+ deployment target.
+Set your app's iOS deployment target to 15.0 or higher in Xcode (Runner target and project).
+If you need the smaller `core` or `autodetection` variants, or an iOS 13.0 deployment target, use the CocoaPods integration below instead.
+
+#### CocoaPods
 
 The Flutter plugin picks the native iOS SDK variant from `$DiditSdkIosVariant`, a Ruby global you set in your app's `ios/Podfile`. The plugin's `didit_sdk.podspec` reads the same global, so the choice is consistent and — critically — it survives every implicit `pod install` that `flutter build` triggers. Configure your `ios/Podfile` like this:
 

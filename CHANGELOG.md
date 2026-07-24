@@ -1,3 +1,8 @@
+## 4.3.1
+
+* iOS: Swift Package Manager support. The plugin now ships a Swift package alongside the existing CocoaPods podspec, so apps built with Flutter's SPM mode consume the native DiditSDK automatically with no Podfile configuration. The SPM integration installs the complete native SDK (`all` variant) and requires an iOS 15.0+ deployment target; CocoaPods integration and variant selection are unchanged.
+* iOS: the privacy manifest (PrivacyInfo.xcprivacy) is now bundled with the plugin on both integration paths.
+
 ## 4.3.0
 
 * Native SDKs 4.3.0 on both platforms: redesigned document/face upload status with a full-screen, theme-native view and an animated per-character "thinking" status line (localized), per-country document type ordering, KYB UBO/shareholder role hiding, un-mirrored front-camera preview, and capture/build fixes

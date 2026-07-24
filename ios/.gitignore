@@ -36,3 +36,7 @@ Icon?
 /Flutter/Generated.xcconfig
 /Flutter/ephemeral/
 /Flutter/flutter_export_environment.sh
+
+# SwiftPM build artifact (generated when the plugin package is resolved locally)
+didit_sdk/Package.resolved
+.build/
