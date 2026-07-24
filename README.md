@@ -17,7 +17,7 @@ Add the dependency to your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  didit_sdk: ^4.1.0
+  didit_sdk: ^4.3.0
 ```
 
 Then run:
@@ -60,7 +60,7 @@ didit_sdk_ios_pod = case $DiditSdkIosVariant
                     else
                       raise "Invalid $DiditSdkIosVariant '#{$DiditSdkIosVariant}'. Supported values: all, core, autodetection, nfc."
                     end
-didit_sdk_ios_podspec = 'https://raw.githubusercontent.com/didit-protocol/sdk-ios/4.1.0/DiditSDK.podspec'
+didit_sdk_ios_podspec = 'https://raw.githubusercontent.com/didit-protocol/sdk-ios/4.3.0/DiditSDK.podspec'
 
 target 'Runner' do
   use_frameworks!

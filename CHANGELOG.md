@@ -1,3 +1,9 @@
+## 4.3.0
+
+* Native SDKs 4.3.0 on both platforms: redesigned document/face upload status with a full-screen, theme-native view and an animated per-character "thinking" status line (localized), per-country document type ordering, KYB UBO/shareholder role hiding, un-mirrored front-camera preview, and capture/build fixes
+* iOS: the native dependency was still pinned to 4.1.0 in the 4.2.0 release, so iOS apps never received the 4.2.0 sandbox test-mode features; the pin now correctly tracks the native release (4.3.0)
+* Android: the plugin now injects the JitPack repository alongside the Didit Maven repository, fixing resolution of the SDK's transitive wallet dependencies (Reown/WalletConnect, KEthereum)
+
 ## 4.2.0
 
 * Sandbox (test-mode) support in the native SDKs: banner on every screen, bundled sample documents for ID/POA/Document AI uploads, scenario picker with Verified / Needs review / Declined outcomes, any-value guidance on email and phone steps

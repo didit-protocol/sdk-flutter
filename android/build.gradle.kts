@@ -1,7 +1,7 @@
 group = "me.didit.sdk.sdk_flutter"
 version = "1.0-SNAPSHOT"
 
-val diditSdkAndroidVersion = "4.2.0"
+val diditSdkAndroidVersion = "4.3.0"
 val diditSdkAndroidVariant = (
     rootProject.findProperty("diditSdkAndroidVariant")
         ?: findProperty("diditSdkAndroidVariant")
@@ -49,6 +49,7 @@ rootProject.allprojects {
             maven { url = uri(it) }
         }
         maven { url = uri("https://raw.githubusercontent.com/didit-protocol/sdk-android/main/repository") }
+        maven { url = uri("https://jitpack.io") }
     }
 }
 
