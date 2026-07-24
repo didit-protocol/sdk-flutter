@@ -1,3 +1,7 @@
+## 4.4.1
+
+* Native SDKs 4.3.1 on both platforms: the face flow no longer resets to its intro screen when the upload response advances within the face family (FACE_MATCH / AGE_ESTIMATION); the flow now waits for the backend to settle and navigates once
+
 ## 4.4.0
 
 * The smaller native SDK variants are now available under BOTH Swift Package Manager and CocoaPods via standalone packages with an identical Dart API: `didit_sdk_core` (manual capture only, iOS 13.0+), `didit_sdk_autodetection` (automatic capture without NFC, iOS 13.0+), and `didit_sdk_nfc` (NFC without automatic capture, iOS 15.0+). Depend on exactly one of the `didit_sdk` packages; each variant package pins the matching native SDK on both iOS and Android.
