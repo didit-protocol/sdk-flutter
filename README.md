@@ -8,7 +8,7 @@ A Flutter plugin for Didit Identity Verification. Wraps the native iOS and Andro
 |-------------|----------------|
 | Flutter | 3.3+ |
 | Dart | 3.11+ |
-| iOS | 13.0+ (`all`/`nfc` variants and Swift Package Manager require 15.0+) |
+| iOS | 13.0+ (`all`/`nfc` variants require 15.0+) |
 | Android | API 23+ (6.0 Marshmallow) |
 
 ## Installation
@@ -17,7 +17,7 @@ Add the dependency to your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  didit_sdk: ^4.3.1
+  didit_sdk: ^4.4.0
 ```
 
 Then run:
@@ -30,12 +30,16 @@ flutter pub get
 
 The Flutter plugin can install the same native SDK variants exposed by the iOS and Android SDKs:
 
-| Variant | Automatic capture | NFC passport reading | Use when |
-|---------|-------------------|----------------------|----------|
-| `all` | Yes | Yes | You want the complete SDK (default) |
-| `core` | No | No | You only need manual capture and the smallest binary |
-| `autodetection` | Yes | No | You need automatic capture without NFC |
-| `nfc` | No | Yes | You need NFC passport reading without automatic capture |
+| Variant | Automatic capture | NFC passport reading | Flutter package | Use when |
+|---------|-------------------|----------------------|-----------------|----------|
+| `all` | Yes | Yes | `didit_sdk` | You want the complete SDK (default) |
+| `core` | No | No | `didit_sdk_core` | You only need manual capture and the smallest binary |
+| `autodetection` | Yes | No | `didit_sdk_autodetection` | You need automatic capture without NFC |
+| `nfc` | No | Yes | `didit_sdk_nfc` | You need NFC passport reading without automatic capture |
+
+The variant packages expose exactly the same Dart API as `didit_sdk` and pin the matching native SDK variant on BOTH platforms.
+Depend on exactly one of them and import from the package you chose (e.g. `package:didit_sdk_core/sdk_flutter.dart`).
+On iOS this works under both Swift Package Manager and CocoaPods; on Android the variant package sets the default for `diditSdkAndroidVariant` (still overridable in `gradle.properties`).
 
 ### iOS Setup
 
@@ -46,9 +50,17 @@ The plugin supports both of Flutter's iOS dependency managers: Swift Package Man
 If your Flutter version has Swift Package Manager support enabled (opt in with `flutter config --enable-swift-package-manager` on Flutter 3.24+), the plugin is consumed as a Swift package automatically.
 No Podfile configuration is needed - the native DiditSDK dependency resolves from GitHub on its own.
 
-The Swift Package Manager integration always installs the complete native SDK (the `all` variant, including NFC), which requires an iOS 15.0+ deployment target.
-Set your app's iOS deployment target to 15.0 or higher in Xcode (Runner target and project).
-If you need the smaller `core` or `autodetection` variants, or an iOS 13.0 deployment target, use the CocoaPods integration below instead.
+By default the full native SDK is installed (the `all` variant, including NFC), which requires an iOS 15.0+ deployment target.
+Set your app's iOS deployment target accordingly in Xcode (Runner target and project).
+
+To use a smaller native SDK variant, depend on the matching variant package instead of `didit_sdk` (see "Native SDK Variants" above):
+
+```yaml
+dependencies:
+  didit_sdk_core: ^4.4.0 # or didit_sdk_autodetection / didit_sdk_nfc
+```
+
+The `core` and `autodetection` variants allow an iOS 13.0 deployment target; `nfc` requires 15.0+ like the default.
 
 #### CocoaPods
 
@@ -104,6 +116,8 @@ pod install
 ```
 
 `$DiditSdkIosVariant` is the only mechanism that reliably survives `flutter build` / `flutter run`. The plugin also accepts a `DIDIT_SDK_IOS_VARIANT` environment variable as a CI fallback, but env vars set inline in a shell command (`DIDIT_SDK_IOS_VARIANT=nfc flutter build ...`) are typically lost the next time Flutter spawns CocoaPods. Prefer the Podfile global.
+
+The variant packages (`didit_sdk_core`, `didit_sdk_autodetection`, `didit_sdk_nfc`) pin their native subspec directly and intentionally ignore `$DiditSdkIosVariant`; when building one of them with CocoaPods, keep your Podfile's DiditSDK subspec line and deployment target matched to that variant.
 
 ### Android Setup
 

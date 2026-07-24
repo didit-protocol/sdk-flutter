@@ -5,10 +5,10 @@ import PackageDescription
 let package = Package(
     name: "didit_sdk",
     platforms: [
-        // The SPM integration always uses the full native SDK (the "DiditSDK"
-        // product below), which requires iOS 15 just like the CocoaPods
-        // DiditSDK/All and DiditSDK/NFC subspecs. Apps needing the iOS 13
-        // Core/AutoDetection variants must stay on the CocoaPods integration.
+        // This package installs the full native SDK (the "DiditSDK" product
+        // below), which requires iOS 15 just like the CocoaPods DiditSDK/All
+        // subspec. Apps needing a smaller variant or an iOS 13 floor should use
+        // the didit_sdk_core / didit_sdk_autodetection / didit_sdk_nfc packages.
         .iOS("15.0")
     ],
     products: [

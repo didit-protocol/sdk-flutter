@@ -1,5 +1,5 @@
 PODS:
-  - didit_sdk (4.3.1):
+  - didit_sdk (4.4.0):
     - DiditSDK/All (= 4.3.0)
     - Flutter
   - DiditSDK/All (4.3.0)
@@ -24,7 +24,7 @@ EXTERNAL SOURCES:
     :path: ".symlinks/plugins/integration_test/ios"
 
 SPEC CHECKSUMS:
-  didit_sdk: b1f202ee860664906aea15527ffbeb402ad7eb4b
+  didit_sdk: e333e0c703cdec6e336f2a1173e078ae3cb6e7f7
   DiditSDK: 7cfdabc10e6b89b49b9323ca4e09fbdd01263d39
   Flutter: cabc95a1d2626b1b06e7179b784ebcf0c0cde467
   integration_test: 4a889634ef21a45d28d50d622cf412dc6d9f586e

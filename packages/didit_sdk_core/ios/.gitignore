@@ -1,0 +1,3 @@
+# SwiftPM build artifact (generated when the plugin package is resolved locally)
+didit_sdk_core/Package.resolved
+.build/

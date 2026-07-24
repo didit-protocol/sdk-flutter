@@ -1,3 +1,9 @@
+## 4.4.0
+
+* The smaller native SDK variants are now available under BOTH Swift Package Manager and CocoaPods via standalone packages with an identical Dart API: `didit_sdk_core` (manual capture only, iOS 13.0+), `didit_sdk_autodetection` (automatic capture without NFC, iOS 13.0+), and `didit_sdk_nfc` (NFC without automatic capture, iOS 15.0+). Depend on exactly one of the `didit_sdk` packages; each variant package pins the matching native SDK on both iOS and Android.
+* `didit_sdk` itself is unchanged (full native SDK by default) - existing Swift Package Manager and CocoaPods setups, including `$DiditSdkIosVariant`, keep working as before.
+* No Dart API changes.
+
 ## 4.3.1
 
 * iOS: Swift Package Manager support. The plugin now ships a Swift package alongside the existing CocoaPods podspec, so apps built with Flutter's SPM mode consume the native DiditSDK automatically with no Podfile configuration. The SPM integration installs the complete native SDK (`all` variant) and requires an iOS 15.0+ deployment target; CocoaPods integration and variant selection are unchanged.

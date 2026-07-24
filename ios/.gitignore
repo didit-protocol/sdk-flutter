@@ -38,5 +38,5 @@ Icon?
 /Flutter/flutter_export_environment.sh
 
 # SwiftPM build artifact (generated when the plugin package is resolved locally)
-didit_sdk/Package.resolved
+didit_sdk_ios/Package.resolved
 .build/
