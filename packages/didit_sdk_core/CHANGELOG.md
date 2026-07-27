@@ -1,3 +1,12 @@
+## 4.5.0
+
+* Native SDKs 4.5.0 on both platforms: the image-capture review screen now defaults to off, matching the backend, so a capture is no longer stranded behind a confirm step the workflow never enabled
+* iOS: the front-camera document preview no longer shows mirrored when the camera session finishes configuring after the view is built
+* Android: SMS OTP one-tap autofill, plus device and runtime integrity signals for injection-attack detection
+* Both platforms: RTL layout and Arabic support
+* Android: the minimum is now declared as API 23 on every module. That was always the real floor, set by Reown AppKit inside the native core, and modules previously declaring 21 could not actually be consumed at that level
+* All Didit SDKs now share the same version number
+
 ## 4.4.1
 
 * Native SDKs 4.3.1 on both platforms: the face flow no longer resets to its intro screen when the upload response advances within the face family (FACE_MATCH / AGE_ESTIMATION); the flow now waits for the backend to settle and navigates once
