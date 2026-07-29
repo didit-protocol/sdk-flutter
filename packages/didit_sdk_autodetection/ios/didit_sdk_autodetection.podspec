@@ -1,6 +1,6 @@
 Pod::Spec.new do |s|
   s.name             = 'didit_sdk_autodetection'
-  s.version          = '4.5.0'
+  s.version          = '4.5.1'
   s.summary          = 'Didit Identity Verification SDK for Flutter - autodetection variant'
   s.description      = <<-DESC
 Didit identity verification Flutter plugin pinned to the DiditSDK/AutoDetection native SDK
@@ -17,7 +17,7 @@ variant (automatic capture without NFC). Generated from didit_sdk.
   # Fixed native variant - unlike didit_sdk this podspec intentionally ignores
   # $DiditSdkIosVariant. Keep your Podfile's DiditSDK subspec line in sync
   # (DiditSDK/AutoDetection) when building with CocoaPods.
-  s.dependency 'DiditSDK/AutoDetection', '4.5.0'
+  s.dependency 'DiditSDK/AutoDetection', '4.5.1'
 
   s.platform = :ios, '13.0'
   s.static_framework = true
