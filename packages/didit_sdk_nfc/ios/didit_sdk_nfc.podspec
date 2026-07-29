@@ -1,6 +1,6 @@
 Pod::Spec.new do |s|
   s.name             = 'didit_sdk_nfc'
-  s.version          = '4.5.1'
+  s.version          = '4.5.2'
   s.summary          = 'Didit Identity Verification SDK for Flutter - nfc variant'
   s.description      = <<-DESC
 Didit identity verification Flutter plugin pinned to the DiditSDK/NFC native SDK
@@ -17,7 +17,7 @@ variant (NFC passport reading without automatic capture). Generated from didit_s
   # Fixed native variant - unlike didit_sdk this podspec intentionally ignores
   # $DiditSdkIosVariant. Keep your Podfile's DiditSDK subspec line in sync
   # (DiditSDK/NFC) when building with CocoaPods.
-  s.dependency 'DiditSDK/NFC', '4.5.1'
+  s.dependency 'DiditSDK/NFC', '4.5.2'
 
   s.platform = :ios, '15.0'
   s.static_framework = true
