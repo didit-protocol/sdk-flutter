@@ -285,7 +285,7 @@ Customize the SDK behavior by passing a `DiditConfig` object:
 final result = await DiditSdk.startVerification(
   'your-session-token',
   config: DiditConfig(
-    languageCode: 'es',       // Force Spanish language
+    languageCode: 'he',       // Force Hebrew language
     fontFamily: 'Avenir',     // Custom font
     loggingEnabled: true,     // Debug logging
   ),
@@ -311,11 +311,11 @@ All fields are optional. If no config is provided, the SDK uses sensible default
 
 ### `languageCode`
 
-Sets the language for the entire verification UI. Pass an ISO 639-1 code (e.g. `"en"`, `"fr"`, `"es"`, `"ar"`). If not set, the SDK automatically detects the device locale and falls back to English.
+Sets the language for the entire verification UI. Pass an ISO 639-1 code (e.g. `"en"`, `"he"`, `"es"`, `"ar"`). If not set, the Flutter device locale is propagated into the verification session and the native SDK falls back to English when unsupported.
 
 ```dart
-// Force French
-await DiditSdk.startVerification(token, config: DiditConfig(languageCode: 'fr'));
+// Force Hebrew
+await DiditSdk.startVerification(token, config: DiditConfig(languageCode: 'he'));
 
 // Use device locale (default)
 await DiditSdk.startVerification(token);

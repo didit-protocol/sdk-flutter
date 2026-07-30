@@ -1,4 +1,5 @@
 import 'package:flutter/services.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:didit_sdk/sdk_flutter.dart';
 import 'package:didit_sdk/sdk_flutter_platform_interface.dart';
@@ -10,6 +11,8 @@ class MockSdkFlutterPlatform
   void Function(String callId, Map<String, dynamic> result)?
       transactionUpdateHandler;
   Map<String, dynamic>? lastTransactionOptions;
+  Map<String, dynamic>? lastVerificationConfig;
+  Map<String, dynamic>? lastWorkflowConfig;
   bool throwValidationError = false;
 
   @override
@@ -17,6 +20,7 @@ class MockSdkFlutterPlatform
     String token,
     Map<String, dynamic>? config,
   ) async {
+    lastVerificationConfig = config;
     return {
       'type': 'completed',
       'sessionId': 'test-session-id',
@@ -30,6 +34,7 @@ class MockSdkFlutterPlatform
     String? vendorData,
     Map<String, dynamic>? config,
   ) async {
+    lastWorkflowConfig = config;
     return {
       'type': 'completed',
       'sessionId': 'test-workflow-session-id',
@@ -88,27 +93,55 @@ void main() {
 
   setUp(() {
     SdkFlutterPlatform.instance = platform;
+    platform.lastVerificationConfig = null;
+    platform.lastWorkflowConfig = null;
   });
 
   test('startVerification returns completed result', () async {
-    final result = await DiditSdk.startVerification('test-token');
+    final result = await DiditSdk.startVerification(
+      'test-token',
+      config: const DiditConfig(languageCode: 'he'),
+    );
 
     expect(result, isA<VerificationCompleted>());
     final completed = result as VerificationCompleted;
     expect(completed.session.sessionId, 'test-session-id');
     expect(completed.session.status, VerificationStatus.approved);
+    expect(platform.lastVerificationConfig?['languageCode'], 'he');
+  });
+
+  testWidgets('startVerification propagates a Hebrew device locale',
+      (tester) async {
+    tester.binding.platformDispatcher.localeTestValue = const Locale('he', 'IL');
+    addTearDown(tester.binding.platformDispatcher.clearLocaleTestValue);
+
+    await DiditSdk.startVerification('test-token');
+
+    expect(platform.lastVerificationConfig?['languageCode'], 'he');
+  });
+
+  testWidgets('startVerification normalizes the legacy Hebrew locale code',
+      (tester) async {
+    tester.binding.platformDispatcher.localeTestValue = const Locale('iw', 'IL');
+    addTearDown(tester.binding.platformDispatcher.clearLocaleTestValue);
+
+    await DiditSdk.startVerification('test-token');
+
+    expect(platform.lastVerificationConfig?['languageCode'], 'he');
   });
 
   test('startVerificationWithWorkflow returns completed result', () async {
     final result = await DiditSdk.startVerificationWithWorkflow(
       'test-workflow',
       vendorData: 'user-123',
+      config: const DiditConfig(languageCode: 'he'),
     );
 
     expect(result, isA<VerificationCompleted>());
     final completed = result as VerificationCompleted;
     expect(completed.session.sessionId, 'test-workflow-session-id');
     expect(completed.session.status, VerificationStatus.pending);
+    expect(platform.lastWorkflowConfig?['languageCode'], 'he');
   });
 
   test('VerificationResult.fromMap handles failed result', () {

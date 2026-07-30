@@ -1,4 +1,5 @@
 import 'package:flutter/services.dart';
+import 'package:flutter/widgets.dart';
 
 import 'sdk_flutter_platform_interface.dart';
 import 'src/transactions.dart';
@@ -17,6 +18,15 @@ export 'src/types.dart';
 /// - [submitTransaction] — with a transaction SDK token from your backend
 /// - [getTransaction] — fetch a submitted transaction's current state
 class DiditSdk {
+  static Map<String, dynamic> _verificationConfig(DiditConfig? config) {
+    final resolvedConfig = config?.toMap() ?? <String, dynamic>{};
+    resolvedConfig.putIfAbsent(
+      'languageCode',
+      () => WidgetsBinding.instance.platformDispatcher.locale.languageCode,
+    );
+    return resolvedConfig;
+  }
+
   /// Start identity verification with an existing session token.
   ///
   /// This launches the native Didit verification UI as a full-screen modal.
@@ -36,7 +46,7 @@ class DiditSdk {
   }) async {
     final raw = await SdkFlutterPlatform.instance.startVerification(
       token,
-      config?.toMap(),
+      _verificationConfig(config),
     );
     return VerificationResult.fromMap(raw);
   }
@@ -62,7 +72,7 @@ class DiditSdk {
     final raw = await SdkFlutterPlatform.instance.startVerificationWithWorkflow(
       workflowId,
       vendorData,
-      config?.toMap(),
+      _verificationConfig(config),
     );
     return VerificationResult.fromMap(raw);
   }
