@@ -17,7 +17,7 @@ Add the dependency to your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  didit_sdk: ^4.5.2
+  didit_sdk: ^4.5.3
 ```
 
 Then run:
@@ -57,7 +57,7 @@ To use a smaller native SDK variant, depend on the matching variant package inst
 
 ```yaml
 dependencies:
-  didit_sdk_core: ^4.5.2 # or didit_sdk_autodetection / didit_sdk_nfc
+  didit_sdk_core: ^4.5.3 # or didit_sdk_autodetection / didit_sdk_nfc
 ```
 
 The `core` and `autodetection` variants allow an iOS 13.0 deployment target; `nfc` requires 15.0+ like the default.
@@ -85,7 +85,7 @@ didit_sdk_ios_pod = case $DiditSdkIosVariant
                     else
                       raise "Invalid $DiditSdkIosVariant '#{$DiditSdkIosVariant}'. Supported values: all, core, autodetection, nfc."
                     end
-didit_sdk_ios_podspec = 'https://raw.githubusercontent.com/didit-protocol/sdk-ios/4.5.2/DiditSDK.podspec'
+didit_sdk_ios_podspec = 'https://raw.githubusercontent.com/didit-protocol/sdk-ios/4.5.3/DiditSDK.podspec'
 
 target 'Runner' do
   use_frameworks!
