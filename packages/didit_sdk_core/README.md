@@ -13,7 +13,7 @@ Depend on exactly one of the `didit_sdk` packages:
 
 ```yaml
 dependencies:
-  didit_sdk_core: ^4.5.3
+  didit_sdk_core: ^4.6.0
 ```
 
 ```dart
