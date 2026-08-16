@@ -1,6 +1,6 @@
 name: didit_sdk_core
 description: Didit Identity Verification SDK for Flutter, pinned to the core native SDK variant (smallest, manual capture only - no automatic capture, no NFC). Same Dart API as didit_sdk - depend on exactly one of the didit_sdk packages. Generated from didit_sdk - do not edit by hand.
-version: 4.6.0
+version: 4.7.0
 homepage: https://didit.me
 repository: https://github.com/didit-protocol/sdk-flutter
 issue_tracker: https://github.com/didit-protocol/sdk-flutter/issues
