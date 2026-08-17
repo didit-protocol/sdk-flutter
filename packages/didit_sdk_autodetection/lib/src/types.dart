@@ -171,7 +171,7 @@ enum CameraLens {
 /// the native integrations. All fields are optional with sensible defaults
 /// matching the native SDKs.
 class DiditConfig {
-  /// ISO 639-1 language code for the SDK UI (e.g. "en", "fr", "ar").
+  /// ISO 639-1 language code for the SDK UI (e.g. "en", "he", "ar").
   final String? languageCode;
 
   /// Custom font family name to use throughout the SDK UI.

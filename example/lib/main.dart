@@ -31,6 +31,10 @@ class VerificationScreen extends StatefulWidget {
 class _VerificationScreenState extends State<VerificationScreen> {
   static const _demoWalletAddress =
       '0x71C7656EC7ab88b098defB751B7401B5f6d8976F';
+  static const _verificationConfig = DiditConfig(
+    languageCode: 'he',
+    loggingEnabled: true,
+  );
 
   final _tokenController = TextEditingController(text: 'Y6jHLOSXFTOA');
   final _workflowController = TextEditingController();
@@ -62,7 +66,7 @@ class _VerificationScreenState extends State<VerificationScreen> {
     try {
       final result = await DiditSdk.startVerification(
         token,
-        config: const DiditConfig(loggingEnabled: true),
+        config: _verificationConfig,
       );
       setState(() => _result = result);
       _showResultAlert(result);
@@ -88,7 +92,7 @@ class _VerificationScreenState extends State<VerificationScreen> {
     try {
       final result = await DiditSdk.startVerificationWithWorkflow(
         workflowId,
-        config: const DiditConfig(loggingEnabled: true),
+        config: _verificationConfig,
       );
       setState(() => _result = result);
       _showResultAlert(result);
