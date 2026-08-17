@@ -1,0 +1,135 @@
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+
+jobs:
+  github-release:
+    name: Create the GitHub Release from the CHANGELOG
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+
+      # A pushed tag IS the release: this job makes the GitHub Releases page
+      # incapable of drifting from the tags (it sat at v4.1.0 while pub.dev
+      # served 4.7.0, because creating the Release object was a separate
+      # manual step). It fails when the tag does not match the pubspec
+      # versions or the CHANGELOG has no section for the version - the
+      # release runbook requires both, and a red run on the tag is the
+      # tripwire that they were skipped.
+      - name: Verify tag matches pubspecs and CHANGELOG, create release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          TAG="${GITHUB_REF_NAME}"
+          VERSION="${TAG#v}"
+          # The shallow tag-triggered checkout only guarantees the triggering
+          # tag; fetch the full tag namespace explicitly so the Latest
+          # comparison below sees every tag (checkout's fetch-tags does not
+          # guarantee this at fetch-depth 1).
+          git fetch --quiet origin '+refs/tags/*:refs/tags/*'
+          for f in pubspec.yaml packages/*/pubspec.yaml; do
+            v=$(sed -n 's/^version: //p' "$f")
+            if [ "$v" != "$VERSION" ]; then
+              echo "$f has version $v but the tag says $VERSION" >&2
+              exit 1
+            fi
+          done
+          awk -v ver="$VERSION" '$0 == "## " ver {f=1; next} /^## /{f=0} f' CHANGELOG.md > /tmp/notes.md
+          if ! grep -q '[^[:space:]]' /tmp/notes.md; then
+            echo "CHANGELOG.md has no section '## $VERSION' - add it and re-tag." >&2
+            exit 1
+          fi
+          if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            echo "Release $TAG already exists - nothing to do."
+            exit 0
+          fi
+          # Prerelease versions (any -suffix) are published as prereleases and
+          # never take the Latest badge. Stable versions take Latest only when
+          # they are the highest STABLE v* tag - a rerun of an older tag's
+          # workflow must never steal the badge, and omitting the flag is not
+          # enough (the API defaults make_latest to true). The stable-only
+          # filter is what makes sort -V exact: SemVer prerelease precedence
+          # is the one thing version-sort gets wrong.
+          # Classify prerelease on the part BEFORE any +build metadata:
+          # hyphens are legal inside build metadata (4.8.0+ios-fix is stable).
+          case "${VERSION%%+*}" in
+            *-*)
+              FLAGS="--prerelease --latest=false"
+              ;;
+            *)
+              # Stable = x.y.z with optional +build metadata (legal in Dart
+              # versions); build metadata is ignored for precedence per
+              # SemVer, so the comparison runs on the numeric core.
+              CORE="${VERSION%%+*}"
+              HIGHEST=$(git tag -l 'v*' | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+(\+[0-9A-Za-z.-]+)?$' | sed 's/^v//; s/+.*//' | sort -uV | tail -1)
+              LATEST=false
+              if [ "$CORE" = "$HIGHEST" ]; then LATEST=true; fi
+              FLAGS="--latest=$LATEST"
+              ;;
+          esac
+          gh release create "$TAG" --repo "$GITHUB_REPOSITORY" --verify-tag $FLAGS \
+            --title "$TAG" --notes-file /tmp/notes.md
+
+  publish-pub-dev:
+    name: Publish to pub.dev (${{ matrix.package }})
+    # DISABLED until automated publishing is enabled on pub.dev for all four
+    # packages (per package: Admin -> Automated publishing -> Enable
+    # "Publishing from GitHub Actions", repository didit-protocol/sdk-flutter,
+    # tag pattern v{{version}}), then set the repository variable
+    # PUB_DEV_AUTOPUBLISH=true (Settings -> Secrets and variables -> Actions
+    # -> Variables). No secrets involved: pub.dev exchanges the GitHub OIDC
+    # token per run. If pub.dev rejects the same tag pattern on more than one
+    # package of this repo, switch to per-package patterns
+    # (<package>-v{{version}}) and extend the trigger accordingly.
+    if: vars.PUB_DEV_AUTOPUBLISH == 'true'
+    needs: github-release
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    # A job-level permissions block REPLACES the workflow-level one, so
+    # contents: read must be restated or checkout loses repository access.
+    permissions:
+      contents: read
+      id-token: write
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - package: didit_sdk
+            dir: .
+          - package: didit_sdk_core
+            dir: packages/didit_sdk_core
+          - package: didit_sdk_autodetection
+            dir: packages/didit_sdk_autodetection
+          - package: didit_sdk_nfc
+            dir: packages/didit_sdk_nfc
+    steps:
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+
+      - uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2
+        with:
+          channel: stable
+          cache: true
+
+      # Idempotent: a re-run after a partial failure skips packages that
+      # already made it to pub.dev.
+      - name: Publish
+        working-directory: ${{ matrix.dir }}
+        run: |
+          set -euo pipefail
+          VERSION="${GITHUB_REF_NAME#v}"
+          # Check the full version list, not `latest` - a rerun of an OLDER
+          # tag's workflow must also detect its version as published.
+          if curl -sf "https://pub.dev/api/packages/${{ matrix.package }}" \
+            | python3 -c 'import json,sys; vs={v["version"] for v in json.load(sys.stdin)["versions"]}; sys.exit(0 if sys.argv[1] in vs else 1)' "$VERSION"; then
+            echo "${{ matrix.package }} $VERSION is already on pub.dev - skipping."
+            exit 0
+          fi
+          flutter pub get
+          flutter pub publish --force
