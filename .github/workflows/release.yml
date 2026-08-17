@@ -112,6 +112,12 @@ jobs:
     steps:
       - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
 
+      # setup-dart performs the pub.dev OIDC exchange (GitHub id-token ->
+      # temporary pub.dev credential). Without it, `pub publish` falls back
+      # to interactive browser authorization and hangs until the job
+      # timeout - observed on the first live 4.7.1 run.
+      - uses: dart-lang/setup-dart@65eb853c7ba17dde3be364c3d2858773e7144260 # v1
+
       - uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2
         with:
           channel: stable
