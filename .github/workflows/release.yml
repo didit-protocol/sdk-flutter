@@ -1,0 +1,102 @@
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+
+jobs:
+  github-release:
+    name: Create the GitHub Release from the CHANGELOG
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      # A pushed tag IS the release: this job makes the GitHub Releases page
+      # incapable of drifting from the tags (it sat at v4.1.0 while pub.dev
+      # served 4.7.0, because creating the Release object was a separate
+      # manual step). It fails when the tag does not match the pubspec
+      # versions or the CHANGELOG has no section for the version - the
+      # release runbook requires both, and a red run on the tag is the
+      # tripwire that they were skipped.
+      - name: Verify tag matches pubspecs and CHANGELOG, create release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          TAG="${GITHUB_REF_NAME}"
+          VERSION="${TAG#v}"
+          for f in pubspec.yaml packages/*/pubspec.yaml; do
+            v=$(sed -n 's/^version: //p' "$f")
+            if [ "$v" != "$VERSION" ]; then
+              echo "$f has version $v but the tag says $VERSION" >&2
+              exit 1
+            fi
+          done
+          awk -v ver="$VERSION" '$0 == "## " ver {f=1; next} /^## /{f=0} f' CHANGELOG.md > /tmp/notes.md
+          if ! grep -q '[^[:space:]]' /tmp/notes.md; then
+            echo "CHANGELOG.md has no section '## $VERSION' - add it and re-tag." >&2
+            exit 1
+          fi
+          if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            echo "Release $TAG already exists - nothing to do."
+            exit 0
+          fi
+          gh release create "$TAG" --repo "$GITHUB_REPOSITORY" --verify-tag --latest \
+            --title "$TAG" --notes-file /tmp/notes.md
+
+  publish-pub-dev:
+    name: Publish to pub.dev (${{ matrix.package }})
+    # DISABLED until automated publishing is enabled on pub.dev for all four
+    # packages (per package: Admin -> Automated publishing -> Enable
+    # "Publishing from GitHub Actions", repository didit-protocol/sdk-flutter,
+    # tag pattern v{{version}}), then set the repository variable
+    # PUB_DEV_AUTOPUBLISH=true (Settings -> Secrets and variables -> Actions
+    # -> Variables). No secrets involved: pub.dev exchanges the GitHub OIDC
+    # token per run. If pub.dev rejects the same tag pattern on more than one
+    # package of this repo, switch to per-package patterns
+    # (<package>-v{{version}}) and extend the trigger accordingly.
+    if: vars.PUB_DEV_AUTOPUBLISH == 'true'
+    needs: github-release
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      id-token: write
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - package: didit_sdk
+            dir: .
+          - package: didit_sdk_core
+            dir: packages/didit_sdk_core
+          - package: didit_sdk_autodetection
+            dir: packages/didit_sdk_autodetection
+          - package: didit_sdk_nfc
+            dir: packages/didit_sdk_nfc
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      # Idempotent: a re-run after a partial failure skips packages that
+      # already made it to pub.dev.
+      - name: Publish
+        working-directory: ${{ matrix.dir }}
+        run: |
+          set -euo pipefail
+          VERSION="${GITHUB_REF_NAME#v}"
+          PUBLISHED=$(curl -sf "https://pub.dev/api/packages/${{ matrix.package }}" \
+            | python3 -c 'import json,sys; print(json.load(sys.stdin)["latest"]["version"])' || echo none)
+          if [ "$PUBLISHED" = "$VERSION" ]; then
+            echo "${{ matrix.package }} $VERSION is already on pub.dev - skipping."
+            exit 0
+          fi
+          flutter pub get
+          flutter pub publish --force
