@@ -103,8 +103,16 @@ jobs:
       # it reached integrators. On a native-pin bump that lands before the
       # sdk-ios release assets exist, this fails by design; re-run once the
       # release is published.
+      # Flutter's experimental Swift Package Manager integration cannot build
+      # the in-repo example: the example consumes the plugin by path from a
+      # checkout directory named sdk-flutter, and SPM rejects the identity
+      # override ("identity 'sdk-flutter' doesn't match ... 'didit_sdk'").
+      # pub.dev consumers are unaffected. Build through CocoaPods - the
+      # mainstream consumer path, and the one that compiles the released
+      # binaries' .swiftinterface.
       - name: Build example iOS app (no codesign)
         working-directory: example
         run: |
+          flutter config --no-enable-swift-package-manager
           flutter pub get
           flutter build ios --debug --no-codesign
