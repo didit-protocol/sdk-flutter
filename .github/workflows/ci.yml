@@ -1,0 +1,110 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  analyze-test:
+    name: Analyze and test (root, variants, example)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Analyze and test root package
+        run: |
+          flutter pub get
+          flutter analyze
+          flutter test -r expanded
+
+      # Variant packages are generated copies (tool/generate_variant_packages.sh)
+      # with per-variant native pins; each must still resolve and analyze clean
+      # on its own, exactly as pub.dev consumers see it.
+      - name: Analyze variant packages and example
+        run: |
+          for pkg in packages/didit_sdk_core packages/didit_sdk_autodetection packages/didit_sdk_nfc example; do
+            echo "::group::$pkg"
+            (cd "$pkg" && flutter pub get && flutter analyze)
+            echo "::endgroup::"
+          done
+
+  variant-drift:
+    name: Variant packages match the generator
+    # macos: generate_variant_packages.sh uses BSD sed (sed -i '').
+    runs-on: macos-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      # The variants must never drift from the canonical root package: a
+      # hand-edit that skips the generator (or a root change that forgets to
+      # regenerate) publishes diverging Dart/native code to pub.dev.
+      - name: Regenerate variants and require a clean tree
+        run: |
+          ./tool/generate_variant_packages.sh
+          git add -N packages/
+          git diff --exit-code -- packages/
+
+  build-android-example:
+    name: Example app builds (Android)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      # Resolves the released didit-sdk Android artifacts and packages a debug
+      # APK - the consumer-side tripwire for broken/missing AARs.
+      - name: Build example APK
+        working-directory: example
+        run: |
+          flutter pub get
+          flutter build apk --debug
+
+  build-ios-example:
+    name: Example app builds (iOS)
+    runs-on: macos-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      # Compiles the plugin's `import DiditSDK` against the RELEASED iOS
+      # binaries (CocoaPods path) - the tripwire that would have caught the
+      # 4.7.0 .swiftinterface leak ("no such module 'TensorFlowLite'") before
+      # it reached integrators. On a native-pin bump that lands before the
+      # sdk-ios release assets exist, this fails by design; re-run once the
+      # release is published.
+      - name: Build example iOS app (no codesign)
+        working-directory: example
+        run: |
+          flutter pub get
+          flutter build ios --debug --no-codesign
