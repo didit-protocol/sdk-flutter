@@ -1,3 +1,10 @@
+## 4.7.2
+
+- Native SDKs 4.7.2 on both platforms.
+- Both platforms: a document or proof-of-address upload that never reached the server no longer leaves the flow spinning. An upload proven not to have been delivered is now reported as a failure with a retry, and the recovery poll that follows a genuinely ambiguous upload is bounded instead of running forever against a server the device cannot reach.
+- Both platforms: per-step welcome copy overrides (`welcome.step.document`, `welcome.step.selfie`, `welcome.step.questionnaire`) now resolve against their own workflow step instead of always the first one.
+- Android: fixes a crash on the completion screen as the result icon's animation settled (observed on Android 16).
+
 ## 4.7.1
 
 - Native SDKs 4.7.1 on both platforms.
