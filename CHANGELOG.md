@@ -1,3 +1,8 @@
+## 4.7.3
+
+- Android native SDK 4.7.3. Fixes the "Try Again", "Scan the front" and "Scan Back" buttons doing nothing on the upload status sheets on physical Android devices (didit-protocol/sdk-android#8). The sheets' full-screen touch-blocking overlay consumed every pointer event, and Compose cancels a button's in-progress tap when an ancestor consumes a MOVE event - which a real finger tap always produces between DOWN and UP. Emulator mouse clicks have no MOVE in between, so the flow only broke on real hardware.
+- iOS: no changes - still pinned to native SDK 4.7.2, which has no 4.7.3 release. The bug was specific to Jetpack Compose touch dispatch.
+
 ## 4.7.2
 
 - Native SDKs 4.7.2 on both platforms.

@@ -1,6 +1,6 @@
 Pod::Spec.new do |s|
   s.name             = 'didit_sdk'
-  s.version          = '4.7.2'
+  s.version          = '4.7.3'
   s.summary          = 'Didit Identity Verification SDK for Flutter'
   s.description      = <<-DESC
 Flutter plugin wrapping the native DiditSDK for identity verification
