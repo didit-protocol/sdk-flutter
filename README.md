@@ -17,7 +17,7 @@ Add the dependency to your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  didit_sdk: ^4.7.3
+  didit_sdk: ^4.7.4
 ```
 
 Then run:
@@ -57,7 +57,7 @@ To use a smaller native SDK variant, depend on the matching variant package inst
 
 ```yaml
 dependencies:
-  didit_sdk_core: ^4.7.3 # or didit_sdk_autodetection / didit_sdk_nfc
+  didit_sdk_core: ^4.7.4 # or didit_sdk_autodetection / didit_sdk_nfc
 ```
 
 The `core` and `autodetection` variants allow an iOS 13.0 deployment target; `nfc` requires 15.0+ like the default.

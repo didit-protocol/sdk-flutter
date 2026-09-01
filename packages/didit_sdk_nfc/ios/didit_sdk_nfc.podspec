@@ -1,6 +1,6 @@
 Pod::Spec.new do |s|
   s.name             = 'didit_sdk_nfc'
-  s.version          = '4.7.3'
+  s.version          = '4.7.4'
   s.summary          = 'Didit Identity Verification SDK for Flutter - nfc variant'
   s.description      = <<-DESC
 Didit identity verification Flutter plugin pinned to the DiditSDK/NFC native SDK
