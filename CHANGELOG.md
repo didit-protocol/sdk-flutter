@@ -1,3 +1,13 @@
+## 4.7.5
+
+- Native SDKs 4.7.5 on both platforms: iOS moves from 4.7.2 to 4.7.5, Android from 4.7.4 to 4.7.5.
+- Both platforms: KYB company search now falls back to manual company entry when the business registry reports that it has no coverage for the selected country, not only when the registry is unavailable. That response previously left the user on the search screen with an error and a search that could never succeed.
+- Both platforms: the KYB country pickers on the company search, confirmation and manual-entry screens now list only the registry-enabled countries resolved for the session, instead of every ISO country. Sessions from a backend that does not send the resolved list keep the previous behaviour unchanged.
+- Both platforms: questionnaire questions defined on a workflow graph node now render and submit using the graph node's input type instead of the stale type on the static section item, so a question the graph defines as an upload renders the upload control and is submitted through the multipart file path.
+- Android: passive liveness no longer fails with `UNEXPECTED_CAMERA_ERROR` on devices that expose usable cameras but no front lens. Camera options are now built from the cameras CameraX will actually bind, so such a device no longer falls back to requesting a front camera that cannot bind.
+- Android: the front-camera selfie taken during document-front capture is now bounded and retried - up to 3 attempts within an 8 second budget, failing fast on permanent device facts such as a missing front lens, and reporting a typed failure reason instead of an opaque null. A camera that never called back previously left the capture suspended forever, so the back-camera preview stayed blank with no error.
+- Android: document capture no longer reports `CAMERA_TIMEOUT` while it is still waiting for the camera permission dialog or for the front-camera selfie pre-capture. The stall timer is armed only once the preview can exist, so it no longer spends its restart attempts tearing down a session that is still binding.
+
 ## 4.7.4
 
 - Android native SDK 4.7.3 -> 4.7.4. Active liveness now keeps the camera view visible while the camera pipeline starts up, fixing the Android 16 / API 36 preview starvation where `cameraReady` fired but no camera preview ever appeared.

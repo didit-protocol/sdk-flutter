@@ -48,7 +48,7 @@ didit_sdk_ios_pod = case $DiditSdkIosVariant
                     end
 didit_sdk_ios_podspec = ENV.fetch(
   'DIDIT_SDK_IOS_PODSPEC',
-  'https://raw.githubusercontent.com/didit-protocol/sdk-ios/4.7.2/DiditSDK.podspec'
+  'https://raw.githubusercontent.com/didit-protocol/sdk-ios/4.7.5/DiditSDK.podspec'
 )
 
 target 'Runner' do
