@@ -1,7 +1,7 @@
 group = "me.didit.sdk.sdk_flutter"
 version = "1.0-SNAPSHOT"
 
-val diditSdkAndroidVersion = "4.7.4"
+val diditSdkAndroidVersion = "4.7.5"
 val diditSdkAndroidVariant = (
     rootProject.findProperty("diditSdkAndroidVariant")
         ?: findProperty("diditSdkAndroidVariant")
