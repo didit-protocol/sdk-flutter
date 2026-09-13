@@ -1,3 +1,12 @@
+## 4.8.0
+
+- Native SDKs 4.8.0 on both platforms.
+- Both platforms: ID verification methods. A country whose configuration offers a national ID-number lookup, a wallet sign-in, or both now presents them next to document capture on one entry screen, with each alternative route under its own heading. The lookup collects the fields that country asks for, validates them on the device, and falls back to document capture when the configuration allows it. This is the flow the web widget already ran.
+- Both platforms: a rejected questionnaire submit now shows the reason the backend gave instead of a generic failure.
+- iOS: every document row on the ID verification methods entry screen draws its own artwork instead of one generic page glyph, and a missing asset now draws an unmistakable placeholder rather than a plausible substitute symbol.
+- Android: a workflow with two ID steps in a row no longer keeps the first step's screen over the second.
+- Android: an ID-number lookup is never sent twice from one tap. Lookup and wallet-start requests are one-shot, so a connection failure no longer spends a second registry attempt before the flow sees the first fail.
+
 ## 4.7.5
 
 - Native SDKs 4.7.5 on both platforms: iOS moves from 4.7.2 to 4.7.5, Android from 4.7.4 to 4.7.5.
