@@ -9,7 +9,7 @@ class MethodChannelSdkFlutter extends SdkFlutterPlatform {
   final methodChannel = const MethodChannel('didit_sdk');
 
   void Function(String callId, Map<String, dynamic> result)?
-      _transactionUpdateHandler;
+  _transactionUpdateHandler;
 
   @override
   Future<Map<String, dynamic>> startVerification(
@@ -69,8 +69,9 @@ class MethodChannelSdkFlutter extends SdkFlutterPlatform {
     void Function(String callId, Map<String, dynamic> result)? handler,
   ) {
     _transactionUpdateHandler = handler;
-    methodChannel
-        .setMethodCallHandler(handler == null ? null : _handlePlatformCall);
+    methodChannel.setMethodCallHandler(
+      handler == null ? null : _handlePlatformCall,
+    );
   }
 
   Future<dynamic> _handlePlatformCall(MethodCall call) async {

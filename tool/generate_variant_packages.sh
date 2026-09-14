@@ -7,8 +7,9 @@
 # per-app native variant selection inside a single package under Swift Package
 # Manager). Run from the repo root after ANY change to lib/, android/,
 # ios/didit_sdk/Sources, the version, or the native SDK pins - the variants
-# must never drift. CHANGELOG.md files are left untouched when they exist -
-# update those by hand per release. See README "Native SDK Variants".
+# must never drift. When release-notes/<version>.md exists, this script also
+# generates matching changelog entries for the root and variant packages.
+# See README "Native SDK Variants".
 set -euo pipefail
 
 cd "$(dirname "$0")/.."
@@ -17,6 +18,25 @@ VERSION=$(sed -n 's/^version: //p' pubspec.yaml)
 NATIVE_IOS_VERSION=$(sed -n 's/.*exact: "\(.*\)").*/\1/p' ios/didit_sdk/Package.swift)
 [[ -n "$VERSION" && -n "$NATIVE_IOS_VERSION" ]] || { echo "failed to read versions" >&2; exit 1; }
 echo "wrapper $VERSION / native iOS DiditSDK $NATIVE_IOS_VERSION"
+
+prepend_release_notes() {
+  local changelog=$1
+  local release_notes="release-notes/$VERSION.md"
+  [[ -f "$release_notes" ]] || return 0
+  grep -q "^## $VERSION$" "$changelog" && return 0
+
+  local generated_changelog
+  generated_changelog=$(mktemp)
+  {
+    printf '## %s\n\n' "$VERSION"
+    cat "$release_notes"
+    printf '\n\n'
+    cat "$changelog"
+  } > "$generated_changelog"
+  mv "$generated_changelog" "$changelog"
+}
+
+prepend_release_notes CHANGELOG.md
 
 generate() {
   local name=$1 variant=$2 product=$3 subspec=$4 floor=$5 feature_desc=$6 auto=$7 nfc=$8
@@ -168,6 +188,7 @@ EOF
 * Initial release: the didit_sdk Flutter plugin pinned to the $variant native SDK variant on both platforms ($feature_desc; minimum iOS $floor). Supports both Swift Package Manager and CocoaPods on iOS.
 EOF
   fi
+  prepend_release_notes "$pkg/CHANGELOG.md"
 }
 
 #        name                      variant        SPM product           pod subspec              floor   description                                                    auto  nfc

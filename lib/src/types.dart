@@ -109,9 +109,9 @@ sealed class VerificationResult {
       case 'failed':
         return VerificationFailed(
           error: VerificationError(
-            type: VerificationErrorType.fromString(
-                map['errorType'] as String?),
-            message: (map['errorMessage'] as String?) ??
+            type: VerificationErrorType.fromString(map['errorType'] as String?),
+            message:
+                (map['errorMessage'] as String?) ??
                 'An unknown error occurred during verification.',
           ),
           session: session,
@@ -159,9 +159,9 @@ enum CameraLens {
   back;
 
   String toMap() => switch (this) {
-        CameraLens.front => 'front',
-        CameraLens.back => 'back',
-      };
+    CameraLens.front => 'front',
+    CameraLens.back => 'back',
+  };
 }
 
 /// Configuration options for the Didit verification SDK.
@@ -173,6 +173,10 @@ enum CameraLens {
 class DiditConfig {
   /// ISO 639-1 language code for the SDK UI (e.g. "en", "he", "ar").
   final String? languageCode;
+
+  /// Show the language selector on the verification welcome screen.
+  /// Default is `false`.
+  final bool showLanguageSelector;
 
   /// Custom font family name to use throughout the SDK UI.
   final String? fontFamily;
@@ -217,6 +221,7 @@ class DiditConfig {
 
   const DiditConfig({
     this.languageCode,
+    this.showLanguageSelector = false,
     this.fontFamily,
     this.loggingEnabled = false,
     this.showCloseButton = true,
@@ -231,6 +236,7 @@ class DiditConfig {
   Map<String, dynamic> toMap() {
     final map = <String, dynamic>{};
     if (languageCode != null) map['languageCode'] = languageCode;
+    map['showLanguageSelector'] = showLanguageSelector;
     if (fontFamily != null) map['fontFamily'] = fontFamily;
     map['loggingEnabled'] = loggingEnabled;
     map['showCloseButton'] = showCloseButton;
@@ -247,4 +253,3 @@ class DiditConfig {
     return map;
   }
 }
-

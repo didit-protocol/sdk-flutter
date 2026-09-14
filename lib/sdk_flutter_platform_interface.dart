@@ -31,7 +31,8 @@ abstract class SdkFlutterPlatform extends PlatformInterface {
     Map<String, dynamic>? config,
   ) {
     throw UnimplementedError(
-        'startVerificationWithWorkflow() has not been implemented.');
+      'startVerificationWithWorkflow() has not been implemented.',
+    );
   }
 
   /// Submit a transaction with a transaction SDK token.
@@ -58,6 +59,7 @@ abstract class SdkFlutterPlatform extends PlatformInterface {
     void Function(String callId, Map<String, dynamic> result)? handler,
   ) {
     throw UnimplementedError(
-        'setTransactionUpdateHandler() has not been implemented.');
+      'setTransactionUpdateHandler() has not been implemented.',
+    );
   }
 }

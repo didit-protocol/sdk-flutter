@@ -186,6 +186,7 @@ class SdkFlutterPlugin :
 
         return Configuration(
             languageLocale = language,
+            showLanguageSelector = map["showLanguageSelector"] as? Boolean ?: false,
             fontFamily = map["fontFamily"] as? String,
             loggingEnabled = map["loggingEnabled"] as? Boolean ?: false,
             showCloseButton = map["showCloseButton"] as? Boolean ?: true,

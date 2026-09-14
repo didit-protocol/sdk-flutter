@@ -13,7 +13,7 @@ Depend on exactly one of the `didit_sdk` packages:
 
 ```yaml
 dependencies:
-  didit_sdk_nfc: ^4.8.0
+  didit_sdk_nfc: ^4.9.0
 ```
 
 ```dart

@@ -206,7 +206,8 @@ public class SdkFlutterPlugin: NSObject, FlutterPlugin {
             defaultDocumentCamera: defaultDocumentCamera,
             defaultLivenessCamera: defaultLivenessCamera,
             showDocumentCameraSwitchButton: dict["showDocumentCameraSwitchButton"] as? Bool ?? true,
-            showLivenessCameraSwitchButton: dict["showLivenessCameraSwitchButton"] as? Bool ?? true
+            showLivenessCameraSwitchButton: dict["showLivenessCameraSwitchButton"] as? Bool ?? true,
+            showLanguageSelector: dict["showLanguageSelector"] as? Bool ?? false
         )
     }
 
