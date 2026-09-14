@@ -34,19 +34,18 @@ class DiditTransactionInfo {
   });
 
   Map<String, dynamic> toMap() => {
-        if (direction != null) 'direction': direction,
-        if (amount != null) 'amount': amount,
-        if (currency != null) 'currency': currency,
-        if (currencyType != null) 'currencyType': currencyType,
-        if (amountInDefaultCurrency != null)
-          'amountInDefaultCurrency': amountInDefaultCurrency,
-        if (defaultCurrencyCode != null)
-          'defaultCurrencyCode': defaultCurrencyCode,
-        if (paymentDetails != null) 'paymentDetails': paymentDetails,
-        if (paymentTxnId != null) 'paymentTxnId': paymentTxnId,
-        if (type != null) 'type': type,
-        if (cryptoParams != null) 'cryptoParams': cryptoParams,
-      };
+    if (direction != null) 'direction': direction,
+    if (amount != null) 'amount': amount,
+    if (currency != null) 'currency': currency,
+    if (currencyType != null) 'currencyType': currencyType,
+    if (amountInDefaultCurrency != null)
+      'amountInDefaultCurrency': amountInDefaultCurrency,
+    if (defaultCurrencyCode != null) 'defaultCurrencyCode': defaultCurrencyCode,
+    if (paymentDetails != null) 'paymentDetails': paymentDetails,
+    if (paymentTxnId != null) 'paymentTxnId': paymentTxnId,
+    if (type != null) 'type': type,
+    if (cryptoParams != null) 'cryptoParams': cryptoParams,
+  };
 }
 
 /// Payment method of a transaction participant.
@@ -66,10 +65,10 @@ class DiditTransactionPaymentMethod {
   });
 
   Map<String, dynamic> toMap() => {
-        if (type != null) 'type': type,
-        if (accountId != null) 'accountId': accountId,
-        if (issuingCountry != null) 'issuingCountry': issuingCountry,
-      };
+    if (type != null) 'type': type,
+    if (accountId != null) 'accountId': accountId,
+    if (issuingCountry != null) 'issuingCountry': issuingCountry,
+  };
 }
 
 /// A transaction participant (subject or counterparty).
@@ -102,17 +101,17 @@ class DiditTransactionParticipant {
   });
 
   Map<String, dynamic> toMap() => {
-        if (type != null) 'type': type,
-        if (externalUserId != null) 'externalUserId': externalUserId,
-        if (fullName != null) 'fullName': fullName,
-        if (firstName != null) 'firstName': firstName,
-        if (lastName != null) 'lastName': lastName,
-        if (dob != null) 'dob': dob,
-        if (address != null) 'address': address,
-        if (institutionInfo != null) 'institutionInfo': institutionInfo,
-        if (device != null) 'device': device,
-        if (paymentMethod != null) 'paymentMethod': paymentMethod!.toMap(),
-      };
+    if (type != null) 'type': type,
+    if (externalUserId != null) 'externalUserId': externalUserId,
+    if (fullName != null) 'fullName': fullName,
+    if (firstName != null) 'firstName': firstName,
+    if (lastName != null) 'lastName': lastName,
+    if (dob != null) 'dob': dob,
+    if (address != null) 'address': address,
+    if (institutionInfo != null) 'institutionInfo': institutionInfo,
+    if (device != null) 'device': device,
+    if (paymentMethod != null) 'paymentMethod': paymentMethod!.toMap(),
+  };
 }
 
 /// Travel rule information attached to a transaction.
@@ -136,14 +135,14 @@ class DiditTravelRule {
   });
 
   Map<String, dynamic> toMap() => {
-        if (status != null) 'status': status,
-        if (protocol != null) 'protocol': protocol,
-        if (required != null) 'required': required,
-        if (obligationsCount != null) 'obligationsCount': obligationsCount,
-        if (originatorData != null) 'originatorData': originatorData,
-        if (beneficiaryData != null) 'beneficiaryData': beneficiaryData,
-        if (metadata != null) 'metadata': metadata,
-      };
+    if (status != null) 'status': status,
+    if (protocol != null) 'protocol': protocol,
+    if (required != null) 'required': required,
+    if (obligationsCount != null) 'obligationsCount': obligationsCount,
+    if (originatorData != null) 'originatorData': originatorData,
+    if (beneficiaryData != null) 'beneficiaryData': beneficiaryData,
+    if (metadata != null) 'metadata': metadata,
+  };
 }
 
 /// A transaction to submit from the device.
@@ -184,18 +183,18 @@ class DiditTransactionPayload {
   });
 
   Map<String, dynamic> toMap() => {
-        'txnId': txnId,
-        if (txnDate != null) 'txnDate': txnDate,
-        if (zoneId != null) 'zoneId': zoneId,
-        if (type != null) 'type': type,
-        if (info != null) 'info': info!.toMap(),
-        if (subject != null) 'subject': subject!.toMap(),
-        if (counterparty != null) 'counterparty': counterparty!.toMap(),
-        if (props != null) 'props': props,
-        if (travelRule != null) 'travelRule': travelRule!.toMap(),
-        if (includeCryptoScreening != null)
-          'includeCryptoScreening': includeCryptoScreening,
-      };
+    'txnId': txnId,
+    if (txnDate != null) 'txnDate': txnDate,
+    if (zoneId != null) 'zoneId': zoneId,
+    if (type != null) 'type': type,
+    if (info != null) 'info': info!.toMap(),
+    if (subject != null) 'subject': subject!.toMap(),
+    if (counterparty != null) 'counterparty': counterparty!.toMap(),
+    if (props != null) 'props': props,
+    if (travelRule != null) 'travelRule': travelRule!.toMap(),
+    if (includeCryptoScreening != null)
+      'includeCryptoScreening': includeCryptoScreening,
+  };
 }
 
 /// A user action required to complete the transaction.

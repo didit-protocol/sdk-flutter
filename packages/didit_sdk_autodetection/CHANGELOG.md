@@ -1,3 +1,13 @@
+## 4.9.0
+
+Adds the opt-in `showLanguageSelector` configuration option.
+
+When enabled, users can change the verification language from the welcome screen using the same compact, searchable selector as the web verification flow.
+The selector remains hidden by default.
+
+Pins the iOS and Android native SDKs exactly to 4.9.0.
+
+
 ## 4.8.0
 
 - Native SDKs 4.8.0 on both platforms.

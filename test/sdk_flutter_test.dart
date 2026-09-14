@@ -9,7 +9,7 @@ class MockSdkFlutterPlatform
     with MockPlatformInterfaceMixin
     implements SdkFlutterPlatform {
   void Function(String callId, Map<String, dynamic> result)?
-      transactionUpdateHandler;
+  transactionUpdateHandler;
   Map<String, dynamic>? lastTransactionOptions;
   Map<String, dynamic>? lastVerificationConfig;
   Map<String, dynamic>? lastWorkflowConfig;
@@ -110,9 +110,28 @@ void main() {
     expect(platform.lastVerificationConfig?['languageCode'], 'he');
   });
 
-  testWidgets('startVerification propagates a Hebrew device locale',
-      (tester) async {
-    tester.binding.platformDispatcher.localeTestValue = const Locale('he', 'IL');
+  test('language selector is disabled by default', () async {
+    await DiditSdk.startVerification('test-token', config: const DiditConfig());
+
+    expect(platform.lastVerificationConfig?['showLanguageSelector'], false);
+  });
+
+  test('startVerification forwards an enabled language selector', () async {
+    await DiditSdk.startVerification(
+      'test-token',
+      config: const DiditConfig(showLanguageSelector: true),
+    );
+
+    expect(platform.lastVerificationConfig?['showLanguageSelector'], true);
+  });
+
+  testWidgets('startVerification propagates a Hebrew device locale', (
+    tester,
+  ) async {
+    tester.binding.platformDispatcher.localeTestValue = const Locale(
+      'he',
+      'IL',
+    );
     addTearDown(tester.binding.platformDispatcher.clearLocaleTestValue);
 
     await DiditSdk.startVerification('test-token');
@@ -120,9 +139,13 @@ void main() {
     expect(platform.lastVerificationConfig?['languageCode'], 'he');
   });
 
-  testWidgets('startVerification normalizes the legacy Hebrew locale code',
-      (tester) async {
-    tester.binding.platformDispatcher.localeTestValue = const Locale('iw', 'IL');
+  testWidgets('startVerification normalizes the legacy Hebrew locale code', (
+    tester,
+  ) async {
+    tester.binding.platformDispatcher.localeTestValue = const Locale(
+      'iw',
+      'IL',
+    );
     addTearDown(tester.binding.platformDispatcher.clearLocaleTestValue);
 
     await DiditSdk.startVerification('test-token');
@@ -237,8 +260,7 @@ void main() {
     expect(result.actionRequired, isNull);
   });
 
-  test(
-      'DiditTransactionResult.fromMap surfaces actionRequired unconditionally '
+  test('DiditTransactionResult.fromMap surfaces actionRequired unconditionally '
       'for verification_session, including sessionId and sessionToken', () {
     final result = DiditTransactionResult.fromMap({
       'transactionId': 'txn-vs-1',

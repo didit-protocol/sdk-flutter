@@ -85,7 +85,7 @@ didit_sdk_ios_pod = case $DiditSdkIosVariant
                     else
                       raise "Invalid $DiditSdkIosVariant '#{$DiditSdkIosVariant}'. Supported values: all, core, autodetection, nfc."
                     end
-didit_sdk_ios_podspec = 'https://raw.githubusercontent.com/didit-protocol/sdk-ios/4.8.0/DiditSDK.podspec'
+didit_sdk_ios_podspec = 'https://raw.githubusercontent.com/didit-protocol/sdk-ios/4.9.0/DiditSDK.podspec'
 
 target 'Runner' do
   use_frameworks!
@@ -286,6 +286,7 @@ final result = await DiditSdk.startVerification(
   'your-session-token',
   config: DiditConfig(
     languageCode: 'he',       // Force Hebrew language
+    showLanguageSelector: true, // Let the user change language
     fontFamily: 'Avenir',     // Custom font
     loggingEnabled: true,     // Debug logging
   ),
@@ -297,6 +298,7 @@ final result = await DiditSdk.startVerification(
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
 | `languageCode` | `String?` | Device locale | ISO 639-1 language code (e.g. `"en"`, `"fr"`, `"ar"`) |
+| `showLanguageSelector` | `bool` | `false` | Show the web-style language selector on the welcome screen |
 | `fontFamily` | `String?` | System font | Custom font family name |
 | `loggingEnabled` | `bool` | `false` | Enable SDK debug logging |
 | `showCloseButton` | `bool` | `true` | Show the close (X) button on verification step screens |
@@ -319,6 +321,17 @@ await DiditSdk.startVerification(token, config: DiditConfig(languageCode: 'he'))
 
 // Use device locale (default)
 await DiditSdk.startVerification(token);
+```
+
+### `showLanguageSelector`
+
+Set this to `true` to let users change the verification language from the welcome screen. The selector is hidden by default.
+
+```dart
+await DiditSdk.startVerification(
+  token,
+  config: const DiditConfig(showLanguageSelector: true),
+);
 ```
 
 ### `fontFamily`

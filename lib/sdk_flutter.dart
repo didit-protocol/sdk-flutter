@@ -80,7 +80,7 @@ class DiditSdk {
   static int _transactionCallCounter = 0;
   static bool _transactionUpdateHandlerRegistered = false;
   static final Map<String, void Function(DiditTransactionResult)>
-      _pendingTransactionUpdates = {};
+  _pendingTransactionUpdates = {};
 
   static void _ensureTransactionUpdateHandler() {
     if (_transactionUpdateHandlerRegistered) return;
@@ -140,15 +140,12 @@ class DiditSdk {
       _pendingTransactionUpdates[callId] = onTransactionUpdated;
     }
     try {
-      final raw = await SdkFlutterPlatform.instance.submitTransaction(
-        transactionToken,
-        transaction.toMap(),
-        {
-          'callId': callId,
-          'autoLaunchAction': options.autoLaunchAction,
-          if (options.baseUrl != null) 'baseUrl': options.baseUrl,
-        },
-      );
+      final raw = await SdkFlutterPlatform.instance
+          .submitTransaction(transactionToken, transaction.toMap(), {
+            'callId': callId,
+            'autoLaunchAction': options.autoLaunchAction,
+            if (options.baseUrl != null) 'baseUrl': options.baseUrl,
+          });
       final result = DiditTransactionResult.fromMap(raw);
       if (result.actionRequired == null) {
         _pendingTransactionUpdates.remove(callId);

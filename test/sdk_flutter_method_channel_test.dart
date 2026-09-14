@@ -114,15 +114,15 @@ void main() {
     const codec = StandardMethodCodec();
     await TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
         .handlePlatformMessage(
-      'didit_sdk',
-      codec.encodeMethodCall(
-        const MethodCall('onTransactionUpdated', {
-          'callId': 'call-9',
-          'result': {'transactionId': 'txn-9', 'status': 'APPROVED'},
-        }),
-      ),
-      (data) {},
-    );
+          'didit_sdk',
+          codec.encodeMethodCall(
+            const MethodCall('onTransactionUpdated', {
+              'callId': 'call-9',
+              'result': {'transactionId': 'txn-9', 'status': 'APPROVED'},
+            }),
+          ),
+          (data) {},
+        );
 
     expect(receivedCallId, 'call-9');
     expect(receivedResult?['transactionId'], 'txn-9');
