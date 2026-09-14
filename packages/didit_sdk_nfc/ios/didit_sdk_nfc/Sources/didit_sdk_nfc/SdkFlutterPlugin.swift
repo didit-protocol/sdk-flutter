@@ -198,7 +198,6 @@ public class SdkFlutterPlugin: NSObject, FlutterPlugin {
 
         return DiditSdk.Configuration(
             languageLocale: language,
-            showLanguageSelector: dict["showLanguageSelector"] as? Bool ?? false,
             fontFamily: dict["fontFamily"] as? String,
             loggingEnabled: dict["loggingEnabled"] as? Bool ?? false,
             showCloseButton: dict["showCloseButton"] as? Bool ?? true,
@@ -207,7 +206,8 @@ public class SdkFlutterPlugin: NSObject, FlutterPlugin {
             defaultDocumentCamera: defaultDocumentCamera,
             defaultLivenessCamera: defaultLivenessCamera,
             showDocumentCameraSwitchButton: dict["showDocumentCameraSwitchButton"] as? Bool ?? true,
-            showLivenessCameraSwitchButton: dict["showLivenessCameraSwitchButton"] as? Bool ?? true
+            showLivenessCameraSwitchButton: dict["showLivenessCameraSwitchButton"] as? Bool ?? true,
+            showLanguageSelector: dict["showLanguageSelector"] as? Bool ?? false
         )
     }
 
