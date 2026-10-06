@@ -155,6 +155,7 @@ Add the following keys to your app's `Info.plist`:
 | Microphone | `NSMicrophoneUsageDescription` | Video recording for liveness checks | Yes |
 | Photo Library | `NSPhotoLibraryUsageDescription` | Upload documents from device gallery | Yes |
 | NFC | `NFCReaderUsageDescription` | Read NFC chips in passports/ID cards | If using NFC |
+| Location | `NSLocationWhenInUseUsageDescription` | Location verification step | If a workflow includes Location |
 
 ```xml
 <key>NSCameraUsageDescription</key>
@@ -165,9 +166,18 @@ Add the following keys to your app's `Info.plist`:
 <string>Photo library access is required to upload documents.</string>
 <key>NFCReaderUsageDescription</key>
 <string>NFC is used to read passport chip data for identity verification.</string>
+<key>NSLocationWhenInUseUsageDescription</key>
+<string>Your location is used to confirm where you are for this verification.</string>
 ```
 
 If any required iOS privacy key is missing, iOS terminates the app as soon as the SDK tries to access that protected resource. For example, missing `NSCameraUsageDescription` causes a crash when the user taps the document camera's take photo button.
+
+Without `NSLocationWhenInUseUsageDescription`, iOS never shows the location prompt, so the Location step cannot read the device's location.
+iOS shows this text in its own prompt, in the device language, so translate it in your app's `InfoPlist.strings` for every language you support. For example, in `es.lproj/InfoPlist.strings`:
+
+```
+"NSLocationWhenInUseUsageDescription" = "Tu ubicación se usa para confirmar dónde estás en esta verificación.";
+```
 
 #### NFC Configuration (for passport/ID chip reading)
 
