@@ -450,7 +450,7 @@ Bank and Location verification are steps of the workflow you configure in the Di
 When a session's workflow includes them, `startVerification` and `startVerificationWithWorkflow` show them in the same native flow as every other step, in the language set by `languageCode` (for example `'es'`) or the device locale.
 They run in the native SDKs, so they need a `didit_sdk` release that pins native SDKs with these steps (see the [changelog](CHANGELOG.md)).
 
-- **Location** asks for the device location on the Location step itself, so do not request it in your app first. Add the location entries from [Permissions](#permissions): `NSLocationWhenInUseUsageDescription` on iOS, `ACCESS_FINE_LOCATION` and `ACCESS_COARSE_LOCATION` on Android. The step reads the location on the device it runs on; the web flow's QR code hand-off to another device does not apply.
+- **Location** asks for the device location on the Location step itself; you do not need to request it in your app first. Add the location entries from [Permissions](#permissions): `NSLocationWhenInUseUsageDescription` on iOS, `ACCESS_FINE_LOCATION` and `ACCESS_COARSE_LOCATION` on Android. The step reads the location on the device it runs on; the web flow's QR code hand-off to another device does not apply.
 - **Bank** needs no permission entry.
 - **Results** keep the same types. A session decided on either step returns `VerificationCompleted` with `approved`, `pending` or `declined`, or `VerificationCancelled` when the user leaves the flow. The result does not say which check declined the session; read the decision from the session through the Didit API, webhooks or console.
 
