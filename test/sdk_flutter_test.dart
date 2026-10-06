@@ -153,6 +153,22 @@ void main() {
     expect(platform.lastVerificationConfig?['languageCode'], 'he');
   });
 
+  testWidgets('both entry points propagate a Spanish device locale', (
+    tester,
+  ) async {
+    tester.binding.platformDispatcher.localeTestValue = const Locale(
+      'es',
+      'ES',
+    );
+    addTearDown(tester.binding.platformDispatcher.clearLocaleTestValue);
+
+    await DiditSdk.startVerification('test-token');
+    await DiditSdk.startVerificationWithWorkflow('test-workflow');
+
+    expect(platform.lastVerificationConfig?['languageCode'], 'es');
+    expect(platform.lastWorkflowConfig?['languageCode'], 'es');
+  });
+
   test('startVerificationWithWorkflow returns completed result', () async {
     final result = await DiditSdk.startVerificationWithWorkflow(
       'test-workflow',
@@ -190,6 +206,23 @@ void main() {
     expect(result, isA<VerificationCancelled>());
     final cancelled = result as VerificationCancelled;
     expect(cancelled.session?.sessionId, 'cancelled-session');
+  });
+
+  test('VerificationResult.fromMap maps a declined session and ignores keys '
+      'it does not know', () {
+    // A session declined on a server-decided step (Bank, Location) reports
+    // only the status; a newer native SDK may add keys the wrapper ignores.
+    final result = VerificationResult.fromMap({
+      'type': 'completed',
+      'sessionId': 'declined-session',
+      'status': 'Declined',
+      'step': 'location',
+    });
+
+    expect(result, isA<VerificationCompleted>());
+    final completed = result as VerificationCompleted;
+    expect(completed.session.sessionId, 'declined-session');
+    expect(completed.session.status, VerificationStatus.declined);
   });
 
   test('submitTransaction returns typed result with actionRequired', () async {
