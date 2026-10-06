@@ -216,9 +216,20 @@ The following permissions are declared in the native SDK's `AndroidManifest.xml`
 | `INTERNET` | Network access for API communication | Yes |
 | `ACCESS_NETWORK_STATE` | Detect network availability | Yes |
 | `CAMERA` | Document scanning and face verification | Yes |
+| `RECORD_AUDIO` | Audio for the video recorded during document and face capture | Yes |
+| `VIBRATE` | Haptic feedback while reading an NFC chip | Yes |
 | `NFC` | Read NFC chips in passports/ID cards | If using NFC |
 
 Camera and NFC hardware features are declared as optional (`android:required="false"`), so your app can be installed on devices without these features. When `diditSdkAndroidNfcEnabled=false`, the Android NFC permission and feature are not added by the SDK.
+
+If any of your workflows includes a Location step, also declare the location permissions in your app's `AndroidManifest.xml`:
+
+```xml
+<uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+<uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+```
+
+Declare both. Since Android 12 the user can choose to share only their approximate location, and Android requires an app that asks for precise location to ask for approximate location too.
 
 #### Runtime Permissions
 
@@ -432,6 +443,18 @@ final sessionToken = await yourBackend.createSession(userId);
 // The SDK only needs the token
 final result = await DiditSdk.startVerification(sessionToken);
 ```
+
+## Bank and Location Steps
+
+Bank and Location verification are steps of the workflow you configure in the Didit console, so there is nothing to enable in Dart.
+When a session's workflow includes them, `startVerification` and `startVerificationWithWorkflow` show them in the same native flow as every other step, in the language set by `languageCode` (for example `'es'`) or the device locale.
+They run in the native SDKs, so they need a `didit_sdk` release that pins native SDKs with these steps (see the [changelog](CHANGELOG.md)).
+
+- **Location** asks for the device location on the Location step itself, so do not request it in your app first. Add the location entries from [Permissions](#permissions): `NSLocationWhenInUseUsageDescription` on iOS, `ACCESS_FINE_LOCATION` and `ACCESS_COARSE_LOCATION` on Android. The step reads the location on the device it runs on; the web flow's QR code hand-off to another device does not apply.
+- **Bank** needs no permission entry.
+- **Results** keep the same types. A session decided on either step returns `VerificationCompleted` with `approved`, `pending` or `declined`, or `VerificationCancelled` when the user leaves the flow. The result does not say which check declined the session; read the decision from the session through the Didit API, webhooks or console.
+
+If a workflow includes Location, declare location data in your App Store privacy details and in the Google Play Data safety form.
 
 ## Verification Results
 
