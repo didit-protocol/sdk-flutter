@@ -61,6 +61,8 @@ void main() {
   test(
     'a retryBlocked failure from the platform reaches Dart as retryBlocked',
     () async {
+      const message =
+          'You have reached the maximum number of verification attempts.';
       // The map the iOS plugin sends when the native SDK fails with retryBlocked.
       TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
           .setMockMethodCallHandler(channel, (MethodCall methodCall) async {
@@ -68,8 +70,7 @@ void main() {
             return <String, dynamic>{
               'type': 'failed',
               'errorType': 'retryBlocked',
-              'errorMessage':
-                  'You have reached the maximum number of verification attempts.',
+              'errorMessage': message,
               'sessionId': 'session-1',
               'status': 'Declined',
             };
@@ -82,10 +83,7 @@ void main() {
       expect(result, isA<VerificationFailed>());
       final failed = result as VerificationFailed;
       expect(failed.error.type, VerificationErrorType.retryBlocked);
-      expect(
-        failed.error.message,
-        'You have reached the maximum number of verification attempts.',
-      );
+      expect(failed.error.message, message);
       expect(failed.session?.sessionId, 'session-1');
       expect(failed.session?.status, VerificationStatus.declined);
     },
