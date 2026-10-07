@@ -13,6 +13,7 @@ class MockSdkFlutterPlatform
   Map<String, dynamic>? lastTransactionOptions;
   Map<String, dynamic>? lastVerificationConfig;
   Map<String, dynamic>? lastWorkflowConfig;
+  Map<String, dynamic>? verificationResult;
   bool throwValidationError = false;
 
   @override
@@ -21,11 +22,12 @@ class MockSdkFlutterPlatform
     Map<String, dynamic>? config,
   ) async {
     lastVerificationConfig = config;
-    return {
-      'type': 'completed',
-      'sessionId': 'test-session-id',
-      'status': 'Approved',
-    };
+    return verificationResult ??
+        {
+          'type': 'completed',
+          'sessionId': 'test-session-id',
+          'status': 'Approved',
+        };
   }
 
   @override
@@ -95,6 +97,7 @@ void main() {
     SdkFlutterPlatform.instance = platform;
     platform.lastVerificationConfig = null;
     platform.lastWorkflowConfig = null;
+    platform.verificationResult = null;
   });
 
   test('startVerification returns completed result', () async {
@@ -283,5 +286,59 @@ void main() {
     expect(result.actionRequired?.sessionId, 'session-abc');
     expect(result.actionRequired?.sessionToken, 'session-token-abc');
     expect(result.actionRequired?.status, 'Not Started');
+  });
+
+  group('Bank and Location steps', () {
+    testWidgets('a Spanish device locale reaches both entry points', (
+      tester,
+    ) async {
+      tester.binding.platformDispatcher.localeTestValue = const Locale(
+        'es',
+        'ES',
+      );
+      addTearDown(tester.binding.platformDispatcher.clearLocaleTestValue);
+
+      await DiditSdk.startVerification('test-token');
+      await DiditSdk.startVerificationWithWorkflow('test-workflow');
+
+      expect(platform.lastVerificationConfig?['languageCode'], 'es');
+      expect(platform.lastWorkflowConfig?['languageCode'], 'es');
+    });
+
+    for (final (nativeStatus, status) in [
+      ('Approved', VerificationStatus.approved),
+      ('Pending', VerificationStatus.pending),
+      ('Declined', VerificationStatus.declined),
+    ]) {
+      test('a session decided on the step completes as ${status.name}', () async {
+        platform.verificationResult = {
+          'type': 'completed',
+          'sessionId': 'bank-location-session',
+          'status': nativeStatus,
+        };
+
+        final result = await DiditSdk.startVerification('test-token');
+
+        expect(result, isA<VerificationCompleted>());
+        final session = (result as VerificationCompleted).session;
+        expect(session.sessionId, 'bank-location-session');
+        expect(session.status, status);
+      });
+    }
+
+    test('a native SDK without the step fails as unknown with its message', () async {
+      platform.verificationResult = {
+        'type': 'failed',
+        'errorType': 'unknown',
+        'errorMessage': 'Unsupported verification step',
+      };
+
+      final result = await DiditSdk.startVerification('test-token');
+
+      expect(result, isA<VerificationFailed>());
+      final error = (result as VerificationFailed).error;
+      expect(error.type, VerificationErrorType.unknown);
+      expect(error.message, 'Unsupported verification step');
+    });
   });
 }
