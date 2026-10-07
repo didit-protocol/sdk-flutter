@@ -10,7 +10,7 @@ import XCTest
 // hand-off: the Dart configuration it passes to the native SDK, the calls it rejects before
 // presenting anything, and the map each result shape reaches Dart as.
 //
-// Run them from Xcode (Runner.xcworkspace, RunnerTests scheme) or with `xcodebuild test`.
+// Run them on a Mac: open Runner.xcworkspace and run Product > Test on the Runner scheme.
 
 class RunnerTests: XCTestCase {
 
