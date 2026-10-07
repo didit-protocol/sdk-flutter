@@ -310,35 +310,41 @@ void main() {
       ('Pending', VerificationStatus.pending),
       ('Declined', VerificationStatus.declined),
     ]) {
-      test('a session decided on the step completes as ${status.name}', () async {
+      test(
+        'a session decided on the step completes as ${status.name}',
+        () async {
+          platform.verificationResult = {
+            'type': 'completed',
+            'sessionId': 'bank-location-session',
+            'status': nativeStatus,
+          };
+
+          final result = await DiditSdk.startVerification('test-token');
+
+          expect(result, isA<VerificationCompleted>());
+          final session = (result as VerificationCompleted).session;
+          expect(session.sessionId, 'bank-location-session');
+          expect(session.status, status);
+        },
+      );
+    }
+
+    test(
+      'a native SDK without the step fails as unknown with its message',
+      () async {
         platform.verificationResult = {
-          'type': 'completed',
-          'sessionId': 'bank-location-session',
-          'status': nativeStatus,
+          'type': 'failed',
+          'errorType': 'unknown',
+          'errorMessage': 'Unsupported verification step',
         };
 
         final result = await DiditSdk.startVerification('test-token');
 
-        expect(result, isA<VerificationCompleted>());
-        final session = (result as VerificationCompleted).session;
-        expect(session.sessionId, 'bank-location-session');
-        expect(session.status, status);
-      });
-    }
-
-    test('a native SDK without the step fails as unknown with its message', () async {
-      platform.verificationResult = {
-        'type': 'failed',
-        'errorType': 'unknown',
-        'errorMessage': 'Unsupported verification step',
-      };
-
-      final result = await DiditSdk.startVerification('test-token');
-
-      expect(result, isA<VerificationFailed>());
-      final error = (result as VerificationFailed).error;
-      expect(error.type, VerificationErrorType.unknown);
-      expect(error.message, 'Unsupported verification step');
-    });
+        expect(result, isA<VerificationFailed>());
+        final error = (result as VerificationFailed).error;
+        expect(error.type, VerificationErrorType.unknown);
+        expect(error.message, 'Unsupported verification step');
+      },
+    );
   });
 }

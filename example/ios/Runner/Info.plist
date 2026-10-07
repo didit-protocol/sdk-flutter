@@ -38,7 +38,7 @@
 	<string>Your location is used to confirm where you are for this verification.</string>
 	<key>NSLocationTemporaryUsageDescriptionDictionary</key>
 	<dict>
-		<key>DiditLocationVerification</key>
+		<key>DiditLocation</key>
 		<string>This verification needs your precise location once.</string>
 	</dict>
 	<key>com.apple.developer.nfc.readersession.iso7816.select-identifiers</key>
