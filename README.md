@@ -222,8 +222,6 @@ Only needed when your workflows include a Location step (see [Bank and Location 
 
 3. **App Store privacy label.** Declare Precise Location and Coarse Location (iOS shares the coarse one when the person turns precise location off) for App Functionality, linked to the user and not used for tracking.
 
-Without the module or without `NSLocationWhenInUseUsageDescription`, the step shows no system prompt: it reports that the device cannot place the person and the workflow's own settings decide what happens next.
-
 ### Android
 
 The following permissions are declared in the native SDK's `AndroidManifest.xml` and merged automatically:
@@ -234,19 +232,17 @@ The following permissions are declared in the native SDK's `AndroidManifest.xml`
 | `ACCESS_NETWORK_STATE` | Detect network availability | Yes |
 | `CAMERA` | Document scanning and face verification | Yes |
 | `NFC` | Read NFC chips in passports/ID cards | If using NFC |
-| `ACCESS_FINE_LOCATION` | Precise position for the Location verification step | From the native release with the Location step |
-| `ACCESS_COARSE_LOCATION` | Approximate position for the Location verification step | From the native release with the Location step |
+| `ACCESS_FINE_LOCATION` | Precise position for the Location verification step | If your workflows include Location |
+| `ACCESS_COARSE_LOCATION` | Approximate position for the Location verification step | If your workflows include Location |
 
 Camera and NFC hardware features are declared as optional (`android:required="false"`), so your app can be installed on devices without these features. When `diditSdkAndroidNfcEnabled=false`, the Android NFC permission and feature are not added by the SDK.
 
-The location hardware features (`android.hardware.location`, `android.hardware.location.gps` and `android.hardware.location.network`) are optional too. The SDK asks for location at runtime only when a workflow reaches a Location step, after a screen that explains why, and on Android 12+ the person can grant precise or approximate location. If you keep these permissions, declare Approximate location and Precise location as collected data in your app's Google Play Data safety form. If your app never runs Location verification, remove them from your merged manifest (`xmlns:tools="http://schemas.android.com/tools"` on the `<manifest>` element):
+The location hardware features (`android.hardware.location`, `android.hardware.location.gps` and `android.hardware.location.network`) are optional too, and on Android 12+ the person can grant precise or approximate location. If you keep these permissions, declare Approximate location and Precise location as collected data in your app's Google Play Data safety form. If your app never runs Location verification, remove them from your merged manifest (`xmlns:tools="http://schemas.android.com/tools"` on the `<manifest>` element):
 
 ```xml
 <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" tools:node="remove" />
 <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" tools:node="remove" />
 ```
-
-A session that still reaches the step then reports the location as unavailable, without a prompt, and the workflow's own settings decide what happens next.
 
 #### Runtime Permissions
 
@@ -463,14 +459,12 @@ final result = await DiditSdk.startVerification(sessionToken);
 
 ## Bank and Location Steps
 
-Workflows can include a Bank verification step and a Location verification step. The native SDKs draw both screens, so there is no Dart API to call: start the verification as usual and handle the same `VerificationResult`. The steps follow `languageCode` (or the device locale) like the rest of the flow.
+Workflows can include a Bank verification step and a Location verification step. The native SDKs draw both screens, so there is no Dart API to call: start the verification as usual and handle the same [`VerificationResult`](#verification-results), in the language set by [`languageCode`](#languagecode).
 
-> **Availability:** these steps need a native SDK release that includes them and a Flutter release that pins it. Native SDK 4.9.1, which this release pins, does not include them, so keep Bank and Location out of the workflows you start from the app until the [CHANGELOG](CHANGELOG.md) announces support.
+> **Availability:** these steps need a native SDK release that includes them and a Flutter release that pins it. The native SDK this release pins does not include them, so keep Bank and Location out of the workflows you start from the app until the [CHANGELOG](CHANGELOG.md) announces support.
 
-- **Location:** the SDK explains why it needs the position, asks for location permission, reads the position once while the step is on screen and never tracks it in the background. It needs the iOS setup in [Location Configuration](#location-configuration-for-the-location-verification-step); on Android the permissions are merged from the native SDK (see [Android](#android)).
+- **Location:** the SDK explains why it needs the position, asks for location permission, reads the position once while the step is on screen and never tracks it in the background. It needs the iOS setup in [Location Configuration](#location-configuration-for-the-location-verification-step); on Android the permissions are merged from the native SDK (see [Android](#android)). Without the iOS module or usage string, or with the Android permissions removed, the step shows no prompt: it reports the location as unavailable and the workflow's own settings decide what happens next.
 - **Bank:** the person picks their bank and approves in the system browser (`SFSafariViewController` on iOS, Custom Tabs on Android), then returns to the SDK, which reads the outcome from Didit. Your app needs no permission, URL scheme or intent filter for it.
-
-A session decided on either step returns `VerificationCompleted` with `approved`, `pending` or `declined`, and leaving the flow returns `VerificationCancelled`, exactly as for the other steps.
 
 ## Verification Results
 
@@ -646,7 +640,7 @@ flutter run
 
 To run on a real device, open `example/ios/Runner.xcworkspace` in Xcode, configure your signing team, and select your device.
 
-To build the native SDK from a DiditSDK source tree instead (the directory holding `DiditSDK.podspec`), which also adds the `DiditSDK/Location` module, `export DIDIT_SDK_IOS_SOURCE=/path/to/sdk` in the shell you run `pod install` and `flutter run` from, so the pod installs Flutter starts keep it. The example app's Info.plist already carries the location usage strings, in English and Spanish.
+To build the native SDK from a DiditSDK source tree instead (the directory holding `DiditSDK.podspec`), which also adds the `DiditSDK/Location` module, `export DIDIT_SDK_IOS_SOURCE=/path/to/sdk` before `pod install` and `flutter run`. The example app's Info.plist already carries the location usage strings, in English and Spanish.
 
 The example app starts verification in Hebrew; pick another language with `flutter run --dart-define=DIDIT_LANGUAGE=es`.
 
