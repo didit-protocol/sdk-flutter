@@ -53,6 +53,7 @@ didit_sdk_ios_podspec = ENV.fetch(
 # Optional: the path to a DiditSDK source tree (the directory holding DiditSDK.podspec)
 # to build the native SDK from source instead. It also adds the DiditSDK/Location module,
 # which the Location verification step needs and the released binaries do not include.
+# The tree's DiditSDK version must match the plugin's pin in ios/didit_sdk.podspec.
 didit_sdk_ios_source = ENV['DIDIT_SDK_IOS_SOURCE']
 
 target 'Runner' do

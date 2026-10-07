@@ -232,12 +232,12 @@ The following permissions are declared in the native SDK's `AndroidManifest.xml`
 | `ACCESS_NETWORK_STATE` | Detect network availability | Yes |
 | `CAMERA` | Document scanning and face verification | Yes |
 | `NFC` | Read NFC chips in passports/ID cards | If using NFC |
-| `ACCESS_FINE_LOCATION` | Precise position for the Location verification step | If your workflows include Location |
-| `ACCESS_COARSE_LOCATION` | Approximate position for the Location verification step | If your workflows include Location |
+| `ACCESS_FINE_LOCATION` | Precise position for the Location verification step | Native releases with the Location step |
+| `ACCESS_COARSE_LOCATION` | Approximate position for the Location verification step | Native releases with the Location step |
 
 Camera and NFC hardware features are declared as optional (`android:required="false"`), so your app can be installed on devices without these features. When `diditSdkAndroidNfcEnabled=false`, the Android NFC permission and feature are not added by the SDK.
 
-The location hardware features (`android.hardware.location`, `android.hardware.location.gps` and `android.hardware.location.network`) are optional too, and on Android 12+ the person can grant precise or approximate location. If you keep these permissions, declare Approximate location and Precise location as collected data in your app's Google Play Data safety form. If your app never runs Location verification, remove them from your merged manifest (`xmlns:tools="http://schemas.android.com/tools"` on the `<manifest>` element):
+The location hardware features (`android.hardware.location`, `android.hardware.location.gps` and `android.hardware.location.network`) are optional too, and on Android 12+ the person can grant precise or approximate location. If your merged manifest has these permissions, declare Approximate location and Precise location as collected data in your app's Google Play Data safety form. If your app never runs Location verification, remove them from your merged manifest (`xmlns:tools="http://schemas.android.com/tools"` on the `<manifest>` element):
 
 ```xml
 <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" tools:node="remove" />
@@ -640,7 +640,7 @@ flutter run
 
 To run on a real device, open `example/ios/Runner.xcworkspace` in Xcode, configure your signing team, and select your device.
 
-To build the native SDK from a DiditSDK source tree instead (the directory holding `DiditSDK.podspec`), which also adds the `DiditSDK/Location` module, `export DIDIT_SDK_IOS_SOURCE=/path/to/sdk` before `pod install` and `flutter run`. The example app's Info.plist already carries the location usage strings, in English and Spanish.
+To build the native SDK from a DiditSDK source tree instead (the directory holding `DiditSDK.podspec`, at the version `ios/didit_sdk.podspec` pins), which also adds the `DiditSDK/Location` module, `export DIDIT_SDK_IOS_SOURCE=/path/to/sdk` before `pod install` and `flutter run`. The example app's Info.plist already carries the location usage strings, in English and Spanish.
 
 The example app starts verification in Hebrew; pick another language with `flutter run --dart-define=DIDIT_LANGUAGE=es`.
 
