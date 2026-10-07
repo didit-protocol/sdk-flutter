@@ -155,6 +155,7 @@ Add the following keys to your app's `Info.plist`:
 | Microphone | `NSMicrophoneUsageDescription` | Video recording for liveness checks | Yes |
 | Photo Library | `NSPhotoLibraryUsageDescription` | Upload documents from device gallery | Yes |
 | NFC | `NFCReaderUsageDescription` | Read NFC chips in passports/ID cards | If using NFC |
+| Location | `NSLocationWhenInUseUsageDescription` | Location verification step | If your workflows include Location (see [Location Configuration](#location-configuration-for-the-location-verification-step)) |
 
 ```xml
 <key>NSCameraUsageDescription</key>
@@ -197,6 +198,32 @@ Make sure the app's provisioning profile includes the NFC Tag Reading capability
 
 This NFC configuration is not needed when `$DiditSdkIosVariant` is `'core'` or `'autodetection'`.
 
+#### Location Configuration (for the Location verification step)
+
+Only needed when your workflows include a Location step (see [Bank and Location Steps](#bank-and-location-steps)).
+
+1. **Native Location module.** The step runs on Core Location, which the native SDK ships in its optional `DiditSDK/Location` module, outside every variant, so apps that never run the step do not link location APIs. The released native binaries do not include that module yet.
+
+2. **Usage strings** in `Info.plist`. `NSLocationTemporaryUsageDescriptionDictionary` is optional: with it, a step that needs a precise position can ask once for precise location when the person granted only an approximate one (iOS 14+). Its purpose key must be exactly `DiditLocationVerification`.
+   ```xml
+   <key>NSLocationWhenInUseUsageDescription</key>
+   <string>Your location is used to confirm where you are for this verification.</string>
+   <key>NSLocationTemporaryUsageDescriptionDictionary</key>
+   <dict>
+       <key>DiditLocationVerification</key>
+       <string>This verification needs your precise location once.</string>
+   </dict>
+   ```
+   Translate both in your `InfoPlist.strings` files (iOS looks the precise-location string up by its purpose key), for example `es.lproj/InfoPlist.strings`:
+   ```
+   "NSLocationWhenInUseUsageDescription" = "Tu ubicación se usa para confirmar dónde estás en esta verificación.";
+   "DiditLocationVerification" = "Esta verificación necesita tu ubicación precisa una vez.";
+   ```
+
+3. **App Store privacy label.** Declare Precise Location and Coarse Location (iOS shares the coarse one when the person turns precise location off) for App Functionality, linked to the user and not used for tracking.
+
+Without the module or without `NSLocationWhenInUseUsageDescription`, the step shows no system prompt: it reports that the device cannot place the person and the workflow's own settings decide what happens next.
+
 ### Android
 
 The following permissions are declared in the native SDK's `AndroidManifest.xml` and merged automatically:
@@ -207,8 +234,19 @@ The following permissions are declared in the native SDK's `AndroidManifest.xml`
 | `ACCESS_NETWORK_STATE` | Detect network availability | Yes |
 | `CAMERA` | Document scanning and face verification | Yes |
 | `NFC` | Read NFC chips in passports/ID cards | If using NFC |
+| `ACCESS_FINE_LOCATION` | Precise position for the Location verification step | From the native release with the Location step |
+| `ACCESS_COARSE_LOCATION` | Approximate position for the Location verification step | From the native release with the Location step |
 
 Camera and NFC hardware features are declared as optional (`android:required="false"`), so your app can be installed on devices without these features. When `diditSdkAndroidNfcEnabled=false`, the Android NFC permission and feature are not added by the SDK.
+
+The location hardware features (`android.hardware.location`, `android.hardware.location.gps` and `android.hardware.location.network`) are optional too. The SDK asks for location at runtime only when a workflow reaches a Location step, after a screen that explains why, and on Android 12+ the person can grant precise or approximate location. If you keep these permissions, declare Approximate location and Precise location as collected data in your app's Google Play Data safety form. If your app never runs Location verification, remove them from your merged manifest (`xmlns:tools="http://schemas.android.com/tools"` on the `<manifest>` element):
+
+```xml
+<uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" tools:node="remove" />
+<uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" tools:node="remove" />
+```
+
+A session that still reaches the step then reports the location as unavailable, without a prompt, and the workflow's own settings decide what happens next.
 
 #### Runtime Permissions
 
@@ -422,6 +460,17 @@ final sessionToken = await yourBackend.createSession(userId);
 // The SDK only needs the token
 final result = await DiditSdk.startVerification(sessionToken);
 ```
+
+## Bank and Location Steps
+
+Workflows can include a Bank verification step and a Location verification step. The native SDKs draw both screens, so there is no Dart API to call: start the verification as usual and handle the same `VerificationResult`. The steps follow `languageCode` (or the device locale) like the rest of the flow.
+
+> **Availability:** these steps need a native SDK release that includes them and a Flutter release that pins it. Native SDK 4.9.1, which this release pins, does not include them, so keep Bank and Location out of the workflows you start from the app until the [CHANGELOG](CHANGELOG.md) announces support.
+
+- **Location:** the SDK explains why it needs the position, asks for location permission, reads the position once while the step is on screen and never tracks it in the background. It needs the iOS setup in [Location Configuration](#location-configuration-for-the-location-verification-step); on Android the permissions are merged from the native SDK (see [Android](#android)).
+- **Bank:** the person picks their bank and approves in the system browser (`SFSafariViewController` on iOS, Custom Tabs on Android), then returns to the SDK, which reads the outcome from Didit. Your app needs no permission, URL scheme or intent filter for it.
+
+A session decided on either step returns `VerificationCompleted` with `approved`, `pending` or `declined`, and leaving the flow returns `VerificationCancelled`, exactly as for the other steps.
 
 ## Verification Results
 
