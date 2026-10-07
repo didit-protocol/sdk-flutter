@@ -128,7 +128,10 @@ class _VerificationScreenState extends State<VerificationScreen> {
             amount: 0.25,
             currency: 'ETH',
             currencyType: 'crypto',
-            cryptoParams: {'address': _demoWalletAddress, 'chain': 'ethereum'},
+            cryptoParams: {
+              'address': _demoWalletAddress,
+              'chain': 'ethereum',
+            },
           ),
           subject: const DiditTransactionParticipant(
             type: 'individual',
@@ -166,8 +169,7 @@ class _VerificationScreenState extends State<VerificationScreen> {
       setState(() => _transactionResult = _describeTransaction(result));
     } on DiditTransactionException catch (e) {
       setState(() {
-        _transactionResult =
-            'Error (${e.code}): ${e.message}'
+        _transactionResult = 'Error (${e.code}): ${e.message}'
             '${e.fieldErrors != null ? '\n${e.fieldErrors}' : ''}';
       });
     } catch (e) {
@@ -303,9 +305,7 @@ class _VerificationScreenState extends State<VerificationScreen> {
                     : const Text(
                         'Start Verification',
                         style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                        ),
+                            fontSize: 16, fontWeight: FontWeight.w600),
                       ),
               ),
               const SizedBox(height: 24),
@@ -360,9 +360,7 @@ class _VerificationScreenState extends State<VerificationScreen> {
                     : const Text(
                         'Start with Workflow',
                         style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                        ),
+                            fontSize: 16, fontWeight: FontWeight.w600),
                       ),
               ),
               const SizedBox(height: 24),
@@ -417,9 +415,7 @@ class _VerificationScreenState extends State<VerificationScreen> {
                     : const Text(
                         'Submit Travel-Rule Transaction',
                         style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                        ),
+                            fontSize: 16, fontWeight: FontWeight.w600),
                       ),
               ),
               if (_transactionResult != null) ...[
@@ -481,15 +477,12 @@ class _VerificationScreenState extends State<VerificationScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             _resultRow('Type', 'completed'),
-            _resultRow(
-              'Status',
-              session.status.name,
-              color: session.status == VerificationStatus.approved
-                  ? const Color(0xFF059669)
-                  : session.status == VerificationStatus.declined
-                  ? const Color(0xFFDC2626)
-                  : null,
-            ),
+            _resultRow('Status', session.status.name,
+                color: session.status == VerificationStatus.approved
+                    ? const Color(0xFF059669)
+                    : session.status == VerificationStatus.declined
+                        ? const Color(0xFFDC2626)
+                        : null),
             _resultRow('Session', session.sessionId),
           ],
         );
