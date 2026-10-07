@@ -646,6 +646,10 @@ flutter run
 
 To run on a real device, open `example/ios/Runner.xcworkspace` in Xcode, configure your signing team, and select your device.
 
+To build the native SDK from a DiditSDK source tree instead (the directory holding `DiditSDK.podspec`), which also adds the `DiditSDK/Location` module, `export DIDIT_SDK_IOS_SOURCE=/path/to/sdk` in the shell you run `pod install` and `flutter run` from, so the pod installs Flutter starts keep it. The example app's Info.plist already carries the location usage strings, in English and Spanish.
+
+The example app starts verification in Hebrew; pick another language with `flutter run --dart-define=DIDIT_LANGUAGE=es`.
+
 ### Android
 
 ```bash
