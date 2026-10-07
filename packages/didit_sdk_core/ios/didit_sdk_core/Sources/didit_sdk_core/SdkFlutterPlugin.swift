@@ -185,7 +185,7 @@ public class SdkFlutterPlugin: NSObject, FlutterPlugin {
 
     // MARK: - Configuration Parsing
 
-    private func parseConfiguration(_ dict: [String: Any]?) -> DiditSdk.Configuration? {
+    func parseConfiguration(_ dict: [String: Any]?) -> DiditSdk.Configuration? {
         guard let dict = dict else { return nil }
 
         var language: SupportedLanguage?
@@ -230,7 +230,7 @@ public class SdkFlutterPlugin: NSObject, FlutterPlugin {
         }
     }
 
-    private static func mapVerificationResult(_ result: VerificationResult) -> [String: Any?] {
+    static func mapVerificationResult(_ result: VerificationResult) -> [String: Any?] {
         switch result {
         case .completed(let session):
             return [
