@@ -501,6 +501,7 @@ Both `startVerification` and `startVerificationWithWorkflow` return a `Future<Ve
 | `cameraAccessDenied` | Camera permission not granted |
 | `notInitialized` | SDK not initialized (Android only) |
 | `apiError` | API request failed |
+| `retryBlocked` | Maximum verification attempts reached; the session comes back as `declined` |
 | `unknown` | Other error with message |
 
 ### Complete Result Handling Example

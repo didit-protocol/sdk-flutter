@@ -122,3 +122,11 @@ jobs:
           flutter config --no-enable-swift-package-manager
           flutter pub get
           flutter build ios --debug --no-codesign
+
+      # The plugin's XCTests (example/ios/RunnerTests) on a simulator, against
+      # the same released native binaries.
+      - name: Plugin unit tests (iOS)
+        working-directory: example/ios
+        run: |
+          udid=$(xcrun simctl list devices available --json | python3 -c 'import json, sys; print(next(d["udid"] for runtime, devices in json.load(sys.stdin)["devices"].items() if "iOS" in runtime for d in devices if d["name"].startswith("iPhone")))')
+          xcodebuild test -workspace Runner.xcworkspace -scheme Runner -configuration Debug -destination "id=$udid"
