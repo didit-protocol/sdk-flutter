@@ -54,12 +54,12 @@ didit_sdk_ios_podspec = ENV.fetch(
 # to build the native SDK from source instead. It also adds the DiditSDK/Location module,
 # which the Location verification step needs and the released binaries do not include.
 # The tree's DiditSDK version must match the plugin's pin in ios/didit_sdk.podspec.
-didit_sdk_ios_source = ENV['DIDIT_SDK_IOS_SOURCE']
+didit_sdk_ios_source = ENV.fetch('DIDIT_SDK_IOS_SOURCE', '').strip
 
 target 'Runner' do
   use_frameworks!
 
-  if didit_sdk_ios_source
+  unless didit_sdk_ios_source.empty?
     pod didit_sdk_ios_pod, :path => didit_sdk_ios_source
     pod 'DiditSDK/Location', :path => didit_sdk_ios_source
   else

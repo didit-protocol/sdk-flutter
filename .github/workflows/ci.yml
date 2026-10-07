@@ -85,6 +85,12 @@ jobs:
           flutter pub get
           flutter build apk --debug
 
+      # The plugin's JVM unit tests (android/src/test) against the released
+      # native AAR, inside the Gradle project the build above generated.
+      - name: Plugin unit tests (Android)
+        working-directory: example/android
+        run: ./gradlew :didit_sdk:testDebugUnitTest
+
   build-ios-example:
     name: Example app builds (iOS)
     runs-on: macos-latest
