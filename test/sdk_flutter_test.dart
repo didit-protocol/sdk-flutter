@@ -153,6 +153,22 @@ void main() {
     expect(platform.lastVerificationConfig?['languageCode'], 'he');
   });
 
+  testWidgets('both entry points propagate a Spanish device locale', (
+    tester,
+  ) async {
+    tester.binding.platformDispatcher.localeTestValue = const Locale(
+      'es',
+      'ES',
+    );
+    addTearDown(tester.binding.platformDispatcher.clearLocaleTestValue);
+
+    await DiditSdk.startVerification('test-token');
+    await DiditSdk.startVerificationWithWorkflow('test-workflow');
+
+    expect(platform.lastVerificationConfig?['languageCode'], 'es');
+    expect(platform.lastWorkflowConfig?['languageCode'], 'es');
+  });
+
   test('startVerificationWithWorkflow returns completed result', () async {
     final result = await DiditSdk.startVerificationWithWorkflow(
       'test-workflow',
@@ -178,6 +194,32 @@ void main() {
     final failed = result as VerificationFailed;
     expect(failed.error.type, VerificationErrorType.sessionExpired);
     expect(failed.error.message, 'The session has expired.');
+  });
+
+  test('VerificationResult.fromMap keeps an unsupported step message', () {
+    final result = VerificationResult.fromMap({
+      'type': 'failed',
+      'errorType': 'unknown',
+      'errorMessage': 'Unsupported verification step',
+    });
+
+    expect(result, isA<VerificationFailed>());
+    final failed = result as VerificationFailed;
+    expect(failed.error.type, VerificationErrorType.unknown);
+    expect(failed.error.message, 'Unsupported verification step');
+  });
+
+  test('VerificationResult.fromMap handles declined result', () {
+    final result = VerificationResult.fromMap({
+      'type': 'completed',
+      'sessionId': 'declined-session',
+      'status': 'Declined',
+    });
+
+    expect(result, isA<VerificationCompleted>());
+    final completed = result as VerificationCompleted;
+    expect(completed.session.sessionId, 'declined-session');
+    expect(completed.session.status, VerificationStatus.declined);
   });
 
   test('VerificationResult.fromMap handles cancelled result', () {
