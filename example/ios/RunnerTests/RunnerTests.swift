@@ -8,7 +8,9 @@ import XCTest
 // The native SDK runs every step of the flow, Bank and Location included, and reports a
 // single VerificationResult when the flow ends. These tests cover the plugin's side of that
 // hand-off: the Dart configuration it passes to the native SDK, the calls it rejects before
-// presenting anything, and the map each result shape reaches Dart as.
+// presenting anything, and the map each result shape reaches Dart as. The whole round trip,
+// from Dart through the native SDK's own callback and back, is checked by
+// example/integration_test/retry_blocked_test.dart (tool/ios_bridge_test.sh).
 //
 // CI runs them in the iOS example job; CONTRIBUTING.md shows how to run them on a Mac.
 
@@ -107,34 +109,5 @@ class RunnerTests: XCTestCase {
         "status": "Pending",
       ])
     }
-  }
-
-  // The native SDK fails with retryBlocked, and the declined session, when the person has no
-  // retries left. The result takes the path of the `.diditVerification` callback and is encoded
-  // with the codec the Dart side of the channel decodes.
-  func testNativeRetryBlockedCallbackReachesDartAsRetryBlocked() {
-    let generation = plugin.beginPresentation()
-    var reply: Any?
-    let replied = expectation(description: "the native result answers the Dart call")
-
-    plugin.deliver(
-      .failed(error: .retryBlocked, session: SessionData(sessionId: "session-1", status: .declined)),
-      generation: generation
-    ) { result in
-      reply = result
-      replied.fulfill()
-    }
-    waitForExpectations(timeout: 2)
-
-    let codec = FlutterStandardMethodCodec.sharedInstance()
-    let received = codec.decodeEnvelope(codec.encodeSuccessEnvelope(reply)) as? [String: Any]
-
-    XCTAssertEqual(received?.compactMapValues { $0 as? String }, [
-      "type": "failed",
-      "errorType": "retryBlocked",
-      "errorMessage": VerificationError.retryBlocked.localizedDescription,
-      "sessionId": "session-1",
-      "status": "Declined",
-    ])
   }
 }
