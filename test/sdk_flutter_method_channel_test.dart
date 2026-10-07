@@ -1,5 +1,6 @@
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:didit_sdk/sdk_flutter.dart';
 import 'package:didit_sdk/sdk_flutter_method_channel.dart';
 
 void main() {
@@ -56,6 +57,39 @@ void main() {
     expect(result['type'], 'completed');
     expect(result['sessionId'], 'test-workflow-session-id');
   });
+
+  test(
+    'a retryBlocked failure from the platform reaches Dart as retryBlocked',
+    () async {
+      // The map the iOS and Android plugins send when the native SDK fails with retryBlocked.
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(channel, (MethodCall methodCall) async {
+            expect(methodCall.method, 'startVerificationWithWorkflow');
+            return <String, dynamic>{
+              'type': 'failed',
+              'errorType': 'retryBlocked',
+              'errorMessage':
+                  'You have reached the maximum number of verification attempts.',
+              'sessionId': 'session-1',
+              'status': 'Declined',
+            };
+          });
+
+      final result = await DiditSdk.startVerificationWithWorkflow(
+        'test-workflow',
+      );
+
+      expect(result, isA<VerificationFailed>());
+      final failed = result as VerificationFailed;
+      expect(failed.error.type, VerificationErrorType.retryBlocked);
+      expect(
+        failed.error.message,
+        'You have reached the maximum number of verification attempts.',
+      );
+      expect(failed.session?.sessionId, 'session-1');
+      expect(failed.session?.status, VerificationStatus.declined);
+    },
+  );
 
   test('submitTransaction calls platform channel with payload', () async {
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger

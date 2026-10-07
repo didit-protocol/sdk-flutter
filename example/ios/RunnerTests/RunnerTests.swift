@@ -89,6 +89,7 @@ class RunnerTests: XCTestCase {
   func testFailedSessionReturnsTheErrorTypeAndMessage() {
     let errors: [(VerificationError, String)] = [
       (.sessionExpired, "sessionExpired"),
+      (.retryBlocked, "retryBlocked"),
       (.networkError, "networkError"),
       (.cameraAccessDenied, "cameraAccessDenied"),
       (.unknown("Unsupported verification step"), "unknown"),
@@ -106,5 +107,34 @@ class RunnerTests: XCTestCase {
         "status": "Pending",
       ])
     }
+  }
+
+  // The native SDK fails with retryBlocked, and the declined session, when the person has no
+  // retries left. The result takes the path of the `.diditVerification` callback and is encoded
+  // with the codec the Dart side of the channel decodes.
+  func testNativeRetryBlockedCallbackReachesDartAsRetryBlocked() {
+    let generation = plugin.beginPresentation()
+    var reply: Any?
+    let replied = expectation(description: "the native result answers the Dart call")
+
+    plugin.deliver(
+      .failed(error: .retryBlocked, session: SessionData(sessionId: "session-1", status: .declined)),
+      generation: generation
+    ) { result in
+      reply = result
+      replied.fulfill()
+    }
+    waitForExpectations(timeout: 2)
+
+    let codec = FlutterStandardMethodCodec.sharedInstance()
+    let received = codec.decodeEnvelope(codec.encodeSuccessEnvelope(reply)) as? [String: Any]
+
+    XCTAssertEqual(received?.compactMapValues { $0 as? String }, [
+      "type": "failed",
+      "errorType": "retryBlocked",
+      "errorMessage": VerificationError.retryBlocked.localizedDescription,
+      "sessionId": "session-1",
+      "status": "Declined",
+    ])
   }
 }
