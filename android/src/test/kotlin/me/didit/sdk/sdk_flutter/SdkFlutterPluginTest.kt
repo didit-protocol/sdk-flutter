@@ -108,7 +108,7 @@ internal class SdkFlutterPluginTest {
         assertEquals(SupportedLanguage.SPANISH, configuration.captured.languageLocale)
         assertEquals(false, configuration.captured.showCloseButton)
         verify(exactly = 1) { DiditSdk.launchVerificationUI(hostActivity) }
-        assertEquals(emptyList(), delivered)
+        assertEquals<List<Any?>>(emptyList(), delivered)
     }
 
     @Test
@@ -197,7 +197,7 @@ internal class SdkFlutterPluginTest {
         startVerification()
 
         verify(exactly = 0) { DiditSdk.launchVerificationUI(any()) }
-        assertEquals(
+        assertEquals<List<Any?>>(
             listOf(mapOf("type" to "failed", "errorType" to "unknown", "errorMessage" to "Session not found")),
             delivered
         )
@@ -210,7 +210,7 @@ internal class SdkFlutterPluginTest {
         startVerification()
 
         verify(exactly = 0) { DiditSdk.launchVerificationUI(any()) }
-        assertEquals(
+        assertEquals<List<Any?>>(
             listOf(
                 mapOf(
                     "type" to "failed",
