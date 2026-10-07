@@ -50,12 +50,21 @@ didit_sdk_ios_podspec = ENV.fetch(
   'DIDIT_SDK_IOS_PODSPEC',
   'https://raw.githubusercontent.com/didit-protocol/sdk-ios/4.9.1/DiditSDK.podspec'
 )
+# Optional: the path to a DiditSDK source tree (the directory holding DiditSDK.podspec)
+# to build the native SDK from source instead. It also adds the DiditSDK/Location module,
+# which the Location verification step needs and the released binaries do not include.
+didit_sdk_ios_source = ENV['DIDIT_SDK_IOS_SOURCE']
 
 target 'Runner' do
   use_frameworks!
 
-  # DiditSDK is not on CocoaPods trunk; pull it from the GitHub-hosted podspec.
-  pod didit_sdk_ios_pod, :podspec => didit_sdk_ios_podspec
+  if didit_sdk_ios_source
+    pod didit_sdk_ios_pod, :path => didit_sdk_ios_source
+    pod 'DiditSDK/Location', :path => didit_sdk_ios_source
+  else
+    # DiditSDK is not on CocoaPods trunk; pull it from the GitHub-hosted podspec.
+    pod didit_sdk_ios_pod, :podspec => didit_sdk_ios_podspec
+  end
 
   flutter_install_all_ios_pods File.dirname(File.realpath(__FILE__))
   target 'RunnerTests' do
