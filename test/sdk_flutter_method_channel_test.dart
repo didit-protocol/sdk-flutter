@@ -61,7 +61,7 @@ void main() {
   test(
     'a retryBlocked failure from the platform reaches Dart as retryBlocked',
     () async {
-      // The map the iOS and Android plugins send when the native SDK fails with retryBlocked.
+      // The map the iOS plugin sends when the native SDK fails with retryBlocked.
       TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
           .setMockMethodCallHandler(channel, (MethodCall methodCall) async {
             expect(methodCall.method, 'startVerificationWithWorkflow');

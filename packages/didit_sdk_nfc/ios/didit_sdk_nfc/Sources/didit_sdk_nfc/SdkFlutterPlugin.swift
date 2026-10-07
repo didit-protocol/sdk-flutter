@@ -96,12 +96,7 @@ public class SdkFlutterPlugin: NSObject, FlutterPlugin {
 
         let bridgeView = DiditBridgeView(
             onResult: { [weak self] verificationResult in
-                guard let self = self, self.claimResultDelivery(for: generation) else { return }
-                self.tearDownThenResolve(
-                    generation: generation,
-                    mapped: Self.mapVerificationResult(verificationResult),
-                    result: result
-                )
+                self?.deliver(verificationResult, generation: generation, result: result)
             }
         )
 
@@ -119,10 +114,19 @@ public class SdkFlutterPlugin: NSObject, FlutterPlugin {
         hostingController = nil
     }
 
-    private func beginPresentation() -> Int {
+    func beginPresentation() -> Int {
         presentationGeneration += 1
         hasDeliveredResult = false
         return presentationGeneration
+    }
+
+    func deliver(_ verificationResult: VerificationResult, generation: Int, result: @escaping FlutterResult) {
+        guard claimResultDelivery(for: generation) else { return }
+        tearDownThenResolve(
+            generation: generation,
+            mapped: Self.mapVerificationResult(verificationResult),
+            result: result
+        )
     }
 
     private func claimResultDelivery(for generation: Int) -> Bool {
@@ -271,6 +275,7 @@ public class SdkFlutterPlugin: NSObject, FlutterPlugin {
     private static func mapErrorType(_ error: VerificationError) -> String {
         switch error {
         case .sessionExpired: return "sessionExpired"
+        case .retryBlocked: return "retryBlocked"
         case .networkError: return "networkError"
         case .cameraAccessDenied: return "cameraAccessDenied"
         case .unknown: return "unknown"
