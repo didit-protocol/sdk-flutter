@@ -151,7 +151,7 @@ class SdkFlutterPlugin :
                 is DiditSdkState.Ready -> {
                     val currentActivity = activity
                     if (currentActivity != null) {
-                        DiditSdk.launchVerificationUI(currentActivity)
+                        Unit
                     } else {
                         val errorResult = mapOf(
                             "type" to "failed",
@@ -242,7 +242,7 @@ class SdkFlutterPlugin :
             is VerificationError.CameraAccessDenied -> "cameraAccessDenied"
             is VerificationError.NotInitialized -> "notInitialized"
             is VerificationError.ApiError -> "apiError"
-            is VerificationError.RetryBlocked -> "retryBlocked"
+            is VerificationError.RetryBlocked -> "unknown"
             is VerificationError.Unknown -> "unknown"
             else -> "unknown"
         }
