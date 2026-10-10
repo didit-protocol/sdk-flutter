@@ -185,7 +185,7 @@ public class SdkFlutterPlugin: NSObject, FlutterPlugin {
 
     // MARK: - Configuration Parsing
 
-    private func parseConfiguration(_ dict: [String: Any]?) -> DiditSdk.Configuration? {
+    func parseConfiguration(_ dict: [String: Any]?) -> DiditSdk.Configuration? {
         guard let dict = dict else { return nil }
 
         var language: SupportedLanguage?
@@ -230,7 +230,7 @@ public class SdkFlutterPlugin: NSObject, FlutterPlugin {
         }
     }
 
-    private static func mapVerificationResult(_ result: VerificationResult) -> [String: Any?] {
+    static func mapVerificationResult(_ result: VerificationResult) -> [String: Any?] {
         switch result {
         case .completed(let session):
             return [
@@ -271,6 +271,7 @@ public class SdkFlutterPlugin: NSObject, FlutterPlugin {
     private static func mapErrorType(_ error: VerificationError) -> String {
         switch error {
         case .sessionExpired: return "sessionExpired"
+        case .retryBlocked: return "retryBlocked"
         case .networkError: return "networkError"
         case .cameraAccessDenied: return "cameraAccessDenied"
         case .unknown: return "unknown"
