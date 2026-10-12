@@ -1,0 +1,83 @@
+# Pick the native iOS SDK variant for both this Podfile and the didit_sdk plugin
+# podspec by setting a single Ruby global. CocoaPods re-reads the Podfile on every
+# `pod install` (including the implicit ones `flutter build` runs), so this choice
+# survives without depending on shell env vars. Edit this line to switch variants;
+# valid values: 'all', 'core', 'autodetection', 'nfc'.
+$DiditSdkIosVariant = ENV.fetch('DIDIT_SDK_IOS_VARIANT', 'all').downcase
+
+didit_sdk_ios_deployment_target = ['all', 'nfc'].include?($DiditSdkIosVariant) ? '15.0' : '13.0'
+platform :ios, didit_sdk_ios_deployment_target
+
+# CocoaPods analytics sends network stats synchronously affecting flutter build latency.
+ENV['COCOAPODS_DISABLE_STATS'] = 'true'
+
+project 'Runner', {
+  'Debug' => :debug,
+  'Profile' => :release,
+  'Release' => :release,
+}
+
+def flutter_root
+  generated_xcode_build_settings_path = File.expand_path(File.join('..', 'Flutter', 'Generated.xcconfig'), __FILE__)
+  unless File.exist?(generated_xcode_build_settings_path)
+    raise "#{generated_xcode_build_settings_path} must exist. If you're running pod install manually, make sure flutter pub get is executed first"
+  end
+
+  File.foreach(generated_xcode_build_settings_path) do |line|
+    matches = line.match(/FLUTTER_ROOT\=(.*)/)
+    return matches[1].strip if matches
+  end
+  raise "FLUTTER_ROOT not found in #{generated_xcode_build_settings_path}. Try deleting Generated.xcconfig, then run flutter pub get"
+end
+
+require File.expand_path(File.join('packages', 'flutter_tools', 'bin', 'podhelper'), flutter_root)
+
+flutter_ios_podfile_setup
+
+didit_sdk_ios_pod = case $DiditSdkIosVariant
+                    when 'all'
+                      'DiditSDK/All'
+                    when 'core'
+                      'DiditSDK/Core'
+                    when 'autodetection'
+                      'DiditSDK/AutoDetection'
+                    when 'nfc'
+                      'DiditSDK/NFC'
+                    else
+                      raise "Invalid $DiditSdkIosVariant '#{$DiditSdkIosVariant}'. Supported values: all, core, autodetection, nfc."
+                    end
+didit_sdk_ios_podspec = ENV.fetch(
+  'DIDIT_SDK_IOS_PODSPEC',
+  'https://raw.githubusercontent.com/didit-protocol/sdk-ios/4.9.1/DiditSDK.podspec'
+)
+# Optional: the path to a DiditSDK source tree (the directory holding DiditSDK.podspec)
+# to build the native SDK from source instead. It also adds the DiditSDK/Location module,
+# which the Location verification step needs and the released binaries do not include.
+# The tree's DiditSDK version must match the plugin's pin in ios/didit_sdk.podspec.
+didit_sdk_ios_source = ENV.fetch('DIDIT_SDK_IOS_SOURCE', '').strip
+
+target 'Runner' do
+  use_frameworks!
+
+  unless didit_sdk_ios_source.empty?
+    pod didit_sdk_ios_pod, :path => didit_sdk_ios_source
+    pod 'DiditSDK/Location', :path => didit_sdk_ios_source
+  else
+    # DiditSDK is not on CocoaPods trunk; pull it from the GitHub-hosted podspec.
+    pod didit_sdk_ios_pod, :podspec => didit_sdk_ios_podspec
+  end
+
+  flutter_install_all_ios_pods File.dirname(File.realpath(__FILE__))
+  target 'RunnerTests' do
+    inherit! :search_paths
+  end
+end
+
+post_install do |installer|
+  installer.pods_project.targets.each do |target|
+    flutter_additional_ios_build_settings(target)
+    target.build_configurations.each do |config|
+      config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = didit_sdk_ios_deployment_target
+    end
+  end
+end
