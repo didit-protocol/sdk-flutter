@@ -15,7 +15,7 @@ let package = Package(
         .library(name: "didit-sdk", targets: ["didit_sdk"])
     ],
     dependencies: [
-        .package(url: "https://github.com/didit-protocol/sdk-ios.git", exact: "4.9.1")
+        .package(url: "https://github.com/didit-protocol/sdk-ios.git", exact: "4.10.0")
     ],
     targets: [
         .target(
