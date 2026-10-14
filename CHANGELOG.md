@@ -1,3 +1,18 @@
+## 4.10.0
+
+Pins the iOS and Android native SDKs exactly to 4.10.0.
+
+- Both platforms: automatic capture is available in every variant, using the Didit tiny detectors (TensorFlowLite on iOS and MediaPipe on Android are removed). The `autodetection` variant and the `didit_sdk_autodetection` package are deprecated and identical to `core` / `didit_sdk_core`; switch to `didit_sdk_core`. The Android `didit-sdk-autodetection-play` artifact is no longer published.
+- New native steps run inside the existing start-verification call, with no new Dart API:
+  - Bank verification: the person approves in the system browser (for Stripe, Didit's hosted Stripe page). No setup.
+  - Location verification: on iOS it is opt-in with `$DiditSdkIosLocationEnabled = true` in your Podfile (or `DIDIT_SDK_IOS_LOCATION_ENABLED=true`), which selects the `DiditSDK/All-Location`, `Core-Location` or `NFC-Location` subspec; Swift Package Manager cannot select it through this plugin yet. On Android `didit-sdk-core` declares `ACCESS_FINE_LOCATION` and `ACCESS_COARSE_LOCATION`; remove them with `tools:node="remove"` if you never run the step. Without it the step reports that the device cannot place the person. See the README for the Info.plist purpose strings.
+  - Electronic signature (Sign documents).
+  - Biometric consent, when Didit's backend requires it.
+- Both platforms: a "No camera found" screen with a Copy link action. Verification steps the SDK version does not support show update-app guidance and return a failed result.
+- iOS: the native framework is smaller because translations moved out of the binary. A verification ended by reaching the maximum number of attempts is reported as `retryBlocked` instead of `unknown`.
+- Android: improved recovery during active liveness. The native artifacts need Kotlin 2.1.10+, Android Gradle Plugin 8.6.0+, Gradle 8.7+ and JDK 17.
+
+
 ## 4.9.1
 
 Pins the iOS and Android native SDKs exactly to 4.9.1.

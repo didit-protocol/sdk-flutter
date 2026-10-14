@@ -1,6 +1,8 @@
 # didit_sdk_autodetection
 
-The Didit Identity Verification SDK for Flutter, pinned to the **autodetection** native SDK variant on both iOS and Android: automatic capture without NFC.
+The Didit Identity Verification SDK for Flutter, pinned to the **autodetection** native SDK variant on both iOS and Android: identical to didit_sdk_core.
+
+> **Deprecated.** This package is identical to [`didit_sdk_core`](https://pub.dev/packages/didit_sdk_core) since native SDK 4.10.0, which has automatic capture in every variant. Switch to `didit_sdk_core`.
 
 | | |
 |---|---|

@@ -2,8 +2,11 @@
 # podspec by setting a single Ruby global. CocoaPods re-reads the Podfile on every
 # `pod install` (including the implicit ones `flutter build` runs), so this choice
 # survives without depending on shell env vars. Edit this line to switch variants;
-# valid values: 'all', 'core', 'autodetection', 'nfc'.
+# valid values: 'all', 'core', 'autodetection' (deprecated, same as 'core'), 'nfc'.
 $DiditSdkIosVariant = ENV.fetch('DIDIT_SDK_IOS_VARIANT', 'all').downcase
+# Opt in to the Location verification step: the plugin podspec and this Podfile
+# then use the variant's -Location subspec (e.g. DiditSDK/All-Location).
+$DiditSdkIosLocationEnabled = ENV.fetch('DIDIT_SDK_IOS_LOCATION_ENABLED', 'false').downcase == 'true'
 
 didit_sdk_ios_deployment_target = ['all', 'nfc'].include?($DiditSdkIosVariant) ? '15.0' : '13.0'
 platform :ios, didit_sdk_ios_deployment_target
@@ -40,19 +43,20 @@ didit_sdk_ios_pod = case $DiditSdkIosVariant
                     when 'core'
                       'DiditSDK/Core'
                     when 'autodetection'
-                      'DiditSDK/AutoDetection'
+                      'DiditSDK/Core'
                     when 'nfc'
                       'DiditSDK/NFC'
                     else
                       raise "Invalid $DiditSdkIosVariant '#{$DiditSdkIosVariant}'. Supported values: all, core, autodetection, nfc."
                     end
+didit_sdk_ios_pod += '-Location' if $DiditSdkIosLocationEnabled
 didit_sdk_ios_podspec = ENV.fetch(
   'DIDIT_SDK_IOS_PODSPEC',
   'https://raw.githubusercontent.com/didit-protocol/sdk-ios/4.10.0/DiditSDK.podspec'
 )
 # Optional: the path to a DiditSDK source tree (the directory holding DiditSDK.podspec)
-# to build the native SDK from source instead. It also adds the DiditSDK/Location module,
-# which the Location verification step needs and the released binaries do not include.
+# to build the native SDK from source instead; its podspec has the same subspec names,
+# so the same single subspec works for :path and :podspec.
 # The tree's DiditSDK version must match the plugin's pin in ios/didit_sdk.podspec.
 didit_sdk_ios_source = ENV.fetch('DIDIT_SDK_IOS_SOURCE', '').strip
 
@@ -61,7 +65,6 @@ target 'Runner' do
 
   unless didit_sdk_ios_source.empty?
     pod didit_sdk_ios_pod, :path => didit_sdk_ios_source
-    pod 'DiditSDK/Location', :path => didit_sdk_ios_source
   else
     # DiditSDK is not on CocoaPods trunk; pull it from the GitHub-hosted podspec.
     pod didit_sdk_ios_pod, :podspec => didit_sdk_ios_podspec

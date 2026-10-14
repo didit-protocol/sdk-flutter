@@ -17,7 +17,7 @@ let package = Package(
         .target(
             name: "didit_sdk_autodetection",
             dependencies: [
-                .product(name: "DiditSDKAutoDetection", package: "sdk-ios")
+                .product(name: "DiditSDKCore", package: "sdk-ios")
             ],
             resources: [
                 .process("Resources")
