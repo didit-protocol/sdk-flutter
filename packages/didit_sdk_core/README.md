@@ -1,10 +1,10 @@
 # didit_sdk_core
 
-The Didit Identity Verification SDK for Flutter, pinned to the **core** native SDK variant on both iOS and Android: smallest, manual capture only - no automatic capture, no NFC.
+The Didit Identity Verification SDK for Flutter, pinned to the **core** native SDK variant on both iOS and Android: automatic capture, no NFC.
 
 | | |
 |---|---|
-| Automatic capture | No |
+| Automatic capture | Yes |
 | NFC passport reading | No |
 | Minimum iOS | 13.0 |
 
@@ -13,7 +13,7 @@ Depend on exactly one of the `didit_sdk` packages:
 
 ```yaml
 dependencies:
-  didit_sdk_core: ^4.9.1
+  didit_sdk_core: ^4.10.0
 ```
 
 ```dart

@@ -1,15 +1,15 @@
 PODS:
-  - didit_sdk (4.9.1):
-    - DiditSDK/All (= 4.9.1)
+  - didit_sdk (4.10.0):
+    - DiditSDK/All (= 4.10.0)
     - Flutter
-  - DiditSDK/All (4.9.1)
+  - DiditSDK/All (4.10.0)
   - Flutter (1.0.0)
   - integration_test (0.0.1):
     - Flutter
 
 DEPENDENCIES:
   - didit_sdk (from `.symlinks/plugins/didit_sdk/ios`)
-  - DiditSDK/All (from `https://raw.githubusercontent.com/didit-protocol/sdk-ios/4.9.1/DiditSDK.podspec`)
+  - DiditSDK/All (from `https://raw.githubusercontent.com/didit-protocol/sdk-ios/4.10.0/DiditSDK.podspec`)
   - Flutter (from `Flutter`)
   - integration_test (from `.symlinks/plugins/integration_test/ios`)
 
@@ -17,7 +17,7 @@ EXTERNAL SOURCES:
   didit_sdk:
     :path: ".symlinks/plugins/didit_sdk/ios"
   DiditSDK:
-    :podspec: https://raw.githubusercontent.com/didit-protocol/sdk-ios/4.9.1/DiditSDK.podspec
+    :podspec: https://raw.githubusercontent.com/didit-protocol/sdk-ios/4.10.0/DiditSDK.podspec
   Flutter:
     :path: Flutter
   integration_test:

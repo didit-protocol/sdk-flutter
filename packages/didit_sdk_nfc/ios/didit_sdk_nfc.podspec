@@ -1,10 +1,10 @@
 Pod::Spec.new do |s|
   s.name             = 'didit_sdk_nfc'
-  s.version          = '4.9.1'
+  s.version          = '4.10.0'
   s.summary          = 'Didit Identity Verification SDK for Flutter - nfc variant'
   s.description      = <<-DESC
 Didit identity verification Flutter plugin pinned to the DiditSDK/NFC native SDK
-variant (NFC passport reading without automatic capture). Generated from didit_sdk.
+variant (automatic capture and NFC passport reading). Generated from didit_sdk.
                        DESC
   s.homepage         = 'https://github.com/didit-protocol/sdk-flutter'
   s.license          = { :file => '../LICENSE' }
@@ -16,8 +16,11 @@ variant (NFC passport reading without automatic capture). Generated from didit_s
 
   # Fixed native variant - unlike didit_sdk this podspec intentionally ignores
   # $DiditSdkIosVariant. Keep your Podfile's DiditSDK subspec line in sync
-  # (DiditSDK/NFC) when building with CocoaPods.
-  s.dependency 'DiditSDK/NFC', '4.9.1'
+  # (DiditSDK/NFC) when building with CocoaPods. Location verification is opt-in
+  # through $DiditSdkIosLocationEnabled (or DIDIT_SDK_IOS_LOCATION_ENABLED=true),
+  # which swaps the subspec for its -Location twin (DiditSDK/NFC-Location).
+  didit_sdk_ios_location = (defined?($DiditSdkIosLocationEnabled) && !$DiditSdkIosLocationEnabled.nil? ? $DiditSdkIosLocationEnabled : ENV.fetch('DIDIT_SDK_IOS_LOCATION_ENABLED', 'false')).to_s.downcase == 'true'
+  s.dependency "DiditSDK/NFC#{'-Location' if didit_sdk_ios_location}", '4.10.0'
 
   s.platform = :ios, '15.0'
   s.static_framework = true

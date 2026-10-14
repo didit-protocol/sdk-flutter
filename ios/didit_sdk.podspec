@@ -1,6 +1,6 @@
 Pod::Spec.new do |s|
   s.name             = 'didit_sdk'
-  s.version          = '4.9.1'
+  s.version          = '4.10.0'
   s.summary          = 'Didit Identity Verification SDK for Flutter'
   s.description      = <<-DESC
 Flutter plugin wrapping the native DiditSDK for identity verification
@@ -24,14 +24,21 @@ with document scanning, NFC passport reading, and liveness detection.
                         'DiditSDK/All'
                       when 'core'
                         'DiditSDK/Core'
-                      when 'autodetection'
-                        'DiditSDK/AutoDetection'
+                      when 'autodetection' # deprecated, identical to core
+                        'DiditSDK/Core'
                       when 'nfc'
                         'DiditSDK/NFC'
                       else
                         raise "Invalid DiditSdk iOS variant '#{didit_sdk_ios_variant}'. Set $DiditSdkIosVariant in your Podfile to one of: all, core, autodetection, nfc."
                       end
-  s.dependency didit_sdk_ios_pod, '4.9.1'
+
+  # Opt-in Location verification: $DiditSdkIosLocationEnabled (Podfile) or the
+  # DIDIT_SDK_IOS_LOCATION_ENABLED env var ("true"), default off. The native SDK
+  # ships Location as complete variants, so the flag swaps the one subspec for
+  # its -Location twin (All-Location, Core-Location, NFC-Location).
+  didit_sdk_ios_location = (defined?($DiditSdkIosLocationEnabled) && !$DiditSdkIosLocationEnabled.nil? ? $DiditSdkIosLocationEnabled : ENV.fetch('DIDIT_SDK_IOS_LOCATION_ENABLED', 'false')).to_s.downcase == 'true'
+  didit_sdk_ios_pod += '-Location' if didit_sdk_ios_location
+  s.dependency didit_sdk_ios_pod, '4.10.0'
 
   s.platform = :ios, '13.0'
   s.static_framework = true

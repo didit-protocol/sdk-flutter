@@ -10,6 +10,7 @@ A Flutter plugin for Didit Identity Verification. Wraps the native iOS and Andro
 | Dart | 3.11+ |
 | iOS | 13.0+ (`all`/`nfc` variants require 15.0+) |
 | Android | API 23+ (6.0 Marshmallow) |
+| Android build toolchain | Kotlin 2.1.10+, Android Gradle Plugin 8.6.0+, Gradle 8.7+, JDK 17 (required by the native 4.10.0 artifacts) |
 
 ## Installation
 
@@ -17,7 +18,7 @@ Add the dependency to your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  didit_sdk: ^4.9.1
+  didit_sdk: ^4.10.0
 ```
 
 Then run:
@@ -33,9 +34,11 @@ The Flutter plugin can install the same native SDK variants exposed by the iOS a
 | Variant | Automatic capture | NFC passport reading | Flutter package | Use when |
 |---------|-------------------|----------------------|-----------------|----------|
 | `all` | Yes | Yes | `didit_sdk` | You want the complete SDK (default) |
-| `core` | No | No | `didit_sdk_core` | You only need manual capture and the smallest binary |
-| `autodetection` | Yes | No | `didit_sdk_autodetection` | You need automatic capture without NFC |
-| `nfc` | No | Yes | `didit_sdk_nfc` | You need NFC passport reading without automatic capture |
+| `core` | Yes | No | `didit_sdk_core` | You do not need NFC passport reading |
+| `autodetection` (deprecated) | Yes | No | `didit_sdk_autodetection` | Nothing: identical to `core`, switch to `didit_sdk_core` |
+| `nfc` | Yes | Yes | `didit_sdk_nfc` | You need NFC passport reading |
+
+Since native SDK 4.10.0 automatic capture is in every variant (the Didit tiny detectors replace TensorFlowLite on iOS and MediaPipe on Android), so `autodetection` is deprecated and identical to `core`; the Android `didit-sdk-autodetection-play` artifact is no longer published.
 
 The variant packages expose exactly the same Dart API as `didit_sdk` and pin the matching native SDK variant on BOTH platforms.
 Depend on exactly one of them and import from the package you chose (e.g. `package:didit_sdk_core/sdk_flutter.dart`).
@@ -53,11 +56,14 @@ No Podfile configuration is needed - the native DiditSDK dependency resolves fro
 By default the full native SDK is installed (the `all` variant, including NFC), which requires an iOS 15.0+ deployment target.
 Set your app's iOS deployment target accordingly in Xcode (Runner target and project).
 
+Location verification with Swift Package Manager is not available through this plugin yet, because Flutter's Swift package manifests cannot read a Podfile flag to pick the native Location product.
+Use CocoaPods with `$DiditSdkIosLocationEnabled` (see [Location Configuration](#location-configuration-for-the-location-verification-step)) for workflows that include a Location step.
+
 To use a smaller native SDK variant, depend on the matching variant package instead of `didit_sdk` (see "Native SDK Variants" above):
 
 ```yaml
 dependencies:
-  didit_sdk_core: ^4.9.1 # or didit_sdk_autodetection / didit_sdk_nfc
+  didit_sdk_core: ^4.10.0 # or didit_sdk_autodetection / didit_sdk_nfc
 ```
 
 The `core` and `autodetection` variants allow an iOS 13.0 deployment target; `nfc` requires 15.0+ like the default.
@@ -67,8 +73,10 @@ The `core` and `autodetection` variants allow an iOS 13.0 deployment target; `nf
 The Flutter plugin picks the native iOS SDK variant from `$DiditSdkIosVariant`, a Ruby global you set in your app's `ios/Podfile`. The plugin's `didit_sdk.podspec` reads the same global, so the choice is consistent and — critically — it survives every implicit `pod install` that `flutter build` triggers. Configure your `ios/Podfile` like this:
 
 ```ruby
-# Pick one: 'all', 'core', 'autodetection', 'nfc'
+# Pick one: 'all', 'core', 'autodetection' (deprecated, same as 'core'), 'nfc'
 $DiditSdkIosVariant = 'all'
+# Optional, default off: set to true to include the Location verification step
+# $DiditSdkIosLocationEnabled = true
 
 didit_sdk_ios_deployment_target = ['all', 'nfc'].include?($DiditSdkIosVariant) ? '15.0' : '13.0'
 platform :ios, didit_sdk_ios_deployment_target
@@ -78,14 +86,15 @@ didit_sdk_ios_pod = case $DiditSdkIosVariant
                       'DiditSDK/All'
                     when 'core'
                       'DiditSDK/Core'
-                    when 'autodetection'
-                      'DiditSDK/AutoDetection'
+                    when 'autodetection' # deprecated, identical to core
+                      'DiditSDK/Core'
                     when 'nfc'
                       'DiditSDK/NFC'
                     else
                       raise "Invalid $DiditSdkIosVariant '#{$DiditSdkIosVariant}'. Supported values: all, core, autodetection, nfc."
                     end
-didit_sdk_ios_podspec = 'https://raw.githubusercontent.com/didit-protocol/sdk-ios/4.9.1/DiditSDK.podspec'
+didit_sdk_ios_pod += '-Location' if $DiditSdkIosLocationEnabled # only for workflows with a Location step
+didit_sdk_ios_podspec = 'https://raw.githubusercontent.com/didit-protocol/sdk-ios/4.10.0/DiditSDK.podspec'
 
 target 'Runner' do
   use_frameworks!
@@ -124,7 +133,7 @@ The variant packages (`didit_sdk_core`, `didit_sdk_autodetection`, `didit_sdk_nf
 The Flutter plugin selects the native Android SDK variant from `diditSdkAndroidVariant`. The default variant is `all`. To choose another variant, add this to `android/gradle.properties`:
 
 ```properties
-diditSdkAndroidVariant=autodetection
+diditSdkAndroidVariant=core
 ```
 
 Supported values are `all`, `core`, `autodetection`, and `nfc`.
@@ -202,7 +211,13 @@ This NFC configuration is not needed when `$DiditSdkIosVariant` is `'core'` or `
 
 Only needed when your workflows include a Location step (see [Bank and Location Steps](#bank-and-location-steps)).
 
-1. **Native Location module.** The step runs on Core Location, which the native SDK ships in its optional `DiditSDK/Location` module, outside every variant, so apps that never run the step do not link location APIs. The released native binaries do not include that module yet.
+1. **Enable it in your Podfile.** The step runs on Core Location, which the native SDK ships as separate `-Location` variants (`DiditSDK/All-Location`, `DiditSDK/Core-Location`, `DiditSDK/NFC-Location`), so apps that never run the step do not link location APIs. Set the opt-in flag before `pod install`; it is off by default:
+   ```ruby
+   $DiditSdkIosLocationEnabled = true
+   ```
+   The plugin podspec then depends on the `-Location` twin of your variant (`all` -> `All-Location`, `core` and `autodetection` -> `Core-Location`, `nfc` -> `NFC-Location`), and your Podfile must declare that same single subspec, as in the Podfile above (`didit_sdk_ios_pod += '-Location' if $DiditSdkIosLocationEnabled`). Declare exactly one DiditSDK subspec: two would vendor two copies of the framework. The `DIDIT_SDK_IOS_LOCATION_ENABLED=true` environment variable is a CI fallback.
+   Swift Package Manager cannot select the Location product through this plugin yet, so use CocoaPods for Location.
+   Without it the step reports that the device cannot place the person.
 
 2. **Usage strings** in `Info.plist`. `NSLocationTemporaryUsageDescriptionDictionary` is optional: with it, a step that needs a precise position can ask once for precise location when the person granted only an approximate one (iOS 14+). Its purpose key must be exactly `DiditLocationVerification`.
    ```xml
@@ -232,8 +247,8 @@ The following permissions are declared in the native SDK's `AndroidManifest.xml`
 | `ACCESS_NETWORK_STATE` | Detect network availability | Yes |
 | `CAMERA` | Document scanning and face verification | Yes |
 | `NFC` | Read NFC chips in passports/ID cards | If using NFC |
-| `ACCESS_FINE_LOCATION` | Precise position for the Location verification step | Native releases with the Location step |
-| `ACCESS_COARSE_LOCATION` | Approximate position for the Location verification step | Native releases with the Location step |
+| `ACCESS_FINE_LOCATION` | Precise position for the Location verification step | Declared by `didit-sdk-core` and merged into your app |
+| `ACCESS_COARSE_LOCATION` | Approximate position for the Location verification step | Declared by `didit-sdk-core` and merged into your app |
 
 Camera and NFC hardware features are declared as optional (`android:required="false"`), so your app can be installed on devices without these features. When `diditSdkAndroidNfcEnabled=false`, the Android NFC permission and feature are not added by the SDK.
 
@@ -461,10 +476,10 @@ final result = await DiditSdk.startVerification(sessionToken);
 
 Workflows can include a Bank verification step and a Location verification step. The native SDKs draw both screens, so there is no Dart API to call: start the verification as usual and handle the same [`VerificationResult`](#verification-results), in the language set by [`languageCode`](#languagecode).
 
-> **Availability:** these steps need a native SDK release that includes them and a Flutter release that pins it. The native SDK this release pins does not include them, so keep Bank and Location out of the workflows you start from the app until the [CHANGELOG](CHANGELOG.md) announces support.
+> **Availability:** these steps ship with native SDK 4.10.0, which this release pins. They run inside the existing start-verification call: there is no new Dart API.
 
-- **Location:** the SDK explains why it needs the position, asks for location permission, reads the position once while the step is on screen and never tracks it in the background. It needs the iOS setup in [Location Configuration](#location-configuration-for-the-location-verification-step); on Android the permissions are merged from the native SDK (see [Android](#android)). Without the iOS module or usage string, or with the Android permissions removed, the step shows no prompt: it reports the location as unavailable and the workflow's own settings decide what happens next.
-- **Bank:** the person picks their bank and approves in the system browser (`SFSafariViewController` on iOS, Custom Tabs on Android), then returns to the SDK, which reads the outcome from Didit. Your app needs no permission, URL scheme or intent filter for it.
+- **Location:** the SDK explains why it needs the position, asks for location permission, reads the position once while the step is on screen and never tracks it in the background. On iOS it needs the opt-in `$DiditSdkIosLocationEnabled` flag and usage strings from [Location Configuration](#location-configuration-for-the-location-verification-step); on Android `didit-sdk-core` declares the location permissions and they are merged into your app (see [Android](#android); remove them with `tools:node="remove"` if you never run the step). Without the iOS flag or usage string, or with the Android permissions removed, the step shows no prompt: it reports that the device cannot place the person and the workflow's own settings decide what happens next.
+- **Bank:** the person picks their bank and the SDK opens the bank's page (or a page Didit hosts) in the system browser, then returns to the SDK, which reads the outcome from Didit. Your app needs no setup, permission, URL scheme or intent filter for it.
 
 ## Verification Results
 
@@ -641,7 +656,7 @@ flutter run
 
 To run on a real device, open `example/ios/Runner.xcworkspace` in Xcode, configure your signing team, and select your device.
 
-To build the native SDK from a DiditSDK source tree instead (the directory holding `DiditSDK.podspec`, at the version `ios/didit_sdk.podspec` pins), which also adds the `DiditSDK/Location` module, `export DIDIT_SDK_IOS_SOURCE=/path/to/sdk` before `pod install` and `flutter run`. The example app's Info.plist already carries the location usage strings, in English and Spanish.
+To build the native SDK from a DiditSDK source tree instead (the directory holding `DiditSDK.podspec`, at the version `ios/didit_sdk.podspec` pins), `export DIDIT_SDK_IOS_SOURCE=/path/to/sdk` before `pod install` and `flutter run`. To run the Location step in the example, also `export DIDIT_SDK_IOS_LOCATION_ENABLED=true` (the same name works for the binary podspec and for a source tree). The example app's Info.plist already carries the location usage strings, in English and Spanish.
 
 The example app starts verification in Hebrew; pick another language with `flutter run --dart-define=DIDIT_LANGUAGE=es`.
 

@@ -1,10 +1,10 @@
 # didit_sdk_nfc
 
-The Didit Identity Verification SDK for Flutter, pinned to the **nfc** native SDK variant on both iOS and Android: NFC passport reading without automatic capture.
+The Didit Identity Verification SDK for Flutter, pinned to the **nfc** native SDK variant on both iOS and Android: automatic capture and NFC passport reading.
 
 | | |
 |---|---|
-| Automatic capture | No |
+| Automatic capture | Yes |
 | NFC passport reading | Yes |
 | Minimum iOS | 15.0 |
 
@@ -13,7 +13,7 @@ Depend on exactly one of the `didit_sdk` packages:
 
 ```yaml
 dependencies:
-  didit_sdk_nfc: ^4.9.1
+  didit_sdk_nfc: ^4.10.0
 ```
 
 ```dart

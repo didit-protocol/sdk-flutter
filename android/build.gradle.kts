@@ -1,7 +1,7 @@
 group = "me.didit.sdk.sdk_flutter"
 version = "1.0-SNAPSHOT"
 
-val diditSdkAndroidVersion = "4.9.1"
+val diditSdkAndroidVersion = "4.10.0"
 val diditSdkAndroidVariant = (
     rootProject.findProperty("diditSdkAndroidVariant")
         ?: findProperty("diditSdkAndroidVariant")
@@ -10,7 +10,8 @@ val diditSdkAndroidVariant = (
 val diditSdkAndroidArtifact = when (diditSdkAndroidVariant) {
     "all" -> "didit-sdk"
     "core" -> "didit-sdk-core"
-    "autodetection" -> "didit-sdk-autodetection"
+    // Deprecated and identical to core since native 4.10.0 (didit-sdk-autodetection is empty).
+    "autodetection" -> "didit-sdk-core"
     "nfc" -> "didit-sdk-nfc"
     else -> error(
         "Invalid diditSdkAndroidVariant '$diditSdkAndroidVariant'. " +
