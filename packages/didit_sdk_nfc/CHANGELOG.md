@@ -10,7 +10,8 @@ Pins the iOS and Android native SDKs exactly to 4.10.0.
   - Biometric consent, when Didit's backend requires it.
 - Both platforms: a "No camera found" screen with a Copy link action. Verification steps the SDK version does not support show update-app guidance and return a failed result.
 - iOS: the native framework is smaller because translations moved out of the binary. A verification ended by reaching the maximum number of attempts is reported as `retryBlocked` instead of `unknown`.
-- Android: improved recovery during active liveness. The native artifacts need Kotlin 2.1.10+, Android Gradle Plugin 8.6.0+, Gradle 8.7+ and JDK 17.
+- Both platforms: active liveness recovers when its completion callback is missed or arrives late, instead of waiting or returning to the intro.
+- Android: the native artifacts need Kotlin 2.1.10+, Android Gradle Plugin 8.6.0+, Gradle 8.7+ and JDK 17.
 
 
 ## 4.9.1
