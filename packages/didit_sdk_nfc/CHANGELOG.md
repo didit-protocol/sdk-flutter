@@ -4,7 +4,7 @@ Pins the iOS and Android native SDKs exactly to 4.10.0.
 
 - Both platforms: automatic capture is available in every variant, using the Didit tiny detectors (TensorFlowLite on iOS and MediaPipe on Android are removed). The `autodetection` variant and the `didit_sdk_autodetection` package are deprecated and identical to `core` / `didit_sdk_core`; switch to `didit_sdk_core`. The Android `didit-sdk-autodetection-play` artifact is no longer published.
 - New native steps run inside the existing start-verification call, with no new Dart API:
-  - Bank verification: the person approves in the system browser (for Stripe, Didit's hosted Stripe page). No setup.
+  - Bank verification: the person approves in the system browser, on the bank's page or a page Didit hosts. No setup.
   - Location verification: on iOS it is opt-in with `$DiditSdkIosLocationEnabled = true` in your Podfile (or `DIDIT_SDK_IOS_LOCATION_ENABLED=true`), which selects the `DiditSDK/All-Location`, `Core-Location` or `NFC-Location` subspec; Swift Package Manager cannot select it through this plugin yet. On Android `didit-sdk-core` declares `ACCESS_FINE_LOCATION` and `ACCESS_COARSE_LOCATION`; remove them with `tools:node="remove"` if you never run the step. Without it the step reports that the device cannot place the person. See the README for the Info.plist purpose strings.
   - Electronic signature (Sign documents).
   - Biometric consent, when Didit's backend requires it.

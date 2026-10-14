@@ -479,7 +479,7 @@ Workflows can include a Bank verification step and a Location verification step.
 > **Availability:** these steps ship with native SDK 4.10.0, which this release pins. They run inside the existing start-verification call: there is no new Dart API.
 
 - **Location:** the SDK explains why it needs the position, asks for location permission, reads the position once while the step is on screen and never tracks it in the background. On iOS it needs the opt-in `$DiditSdkIosLocationEnabled` flag and usage strings from [Location Configuration](#location-configuration-for-the-location-verification-step); on Android `didit-sdk-core` declares the location permissions and they are merged into your app (see [Android](#android); remove them with `tools:node="remove"` if you never run the step). Without the iOS flag or usage string, or with the Android permissions removed, the step shows no prompt: it reports that the device cannot place the person and the workflow's own settings decide what happens next.
-- **Bank:** the person picks their bank and the SDK opens the bank's page in the system browser (for Stripe, Didit's hosted Stripe page), then returns to the SDK, which reads the outcome from Didit. Your app needs no setup, permission, URL scheme or intent filter for it.
+- **Bank:** the person picks their bank and the SDK opens the bank's page (or a page Didit hosts) in the system browser, then returns to the SDK, which reads the outcome from Didit. Your app needs no setup, permission, URL scheme or intent filter for it.
 
 ## Verification Results
 
