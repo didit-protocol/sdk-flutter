@@ -162,29 +162,32 @@ void main() {
       tester,
     ) async {
       addTearDown(tester.binding.platformDispatcher.clearLocaleTestValue);
-      const cases = <Locale, String>{
-        Locale('zh', 'TW'): 'zh-TW',
-        Locale.fromSubtags(
-          languageCode: 'zh',
-          scriptCode: 'Hant',
-          countryCode: 'HK',
-        ): 'zh-TW',
-        Locale('zh', 'CN'): 'zh-CN',
-        Locale('zh', 'SG'): 'zh-CN',
-        Locale('zh'): 'zh',
-        Locale('pt', 'BR'): 'pt-BR',
-        Locale('pt', 'PT'): 'pt',
-      };
+      const cases = <(Locale, String)>[
+        (Locale('zh', 'TW'), 'zh-TW'),
+        (
+          Locale.fromSubtags(
+            languageCode: 'zh',
+            scriptCode: 'Hant',
+            countryCode: 'HK',
+          ),
+          'zh-TW',
+        ),
+        (Locale('zh', 'CN'), 'zh-CN'),
+        (Locale('zh', 'SG'), 'zh-CN'),
+        (Locale('zh'), 'zh'),
+        (Locale('pt', 'BR'), 'pt-BR'),
+        (Locale('pt', 'PT'), 'pt'),
+      ];
 
-      for (final entry in cases.entries) {
-        tester.binding.platformDispatcher.localeTestValue = entry.key;
+      for (final (locale, expected) in cases) {
+        tester.binding.platformDispatcher.localeTestValue = locale;
 
         await DiditSdk.startVerification('token');
 
         expect(
           platform.verificationConfig?['languageCode'],
-          entry.value,
-          reason: '${entry.key}',
+          expected,
+          reason: '$locale',
         );
       }
     });
