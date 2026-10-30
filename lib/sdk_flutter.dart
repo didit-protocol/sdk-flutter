@@ -20,11 +20,34 @@ export 'src/types.dart';
 class DiditSdk {
   static Map<String, dynamic> _verificationConfig(DiditConfig? config) {
     final resolvedConfig = config?.toMap() ?? <String, dynamic>{};
-    resolvedConfig.putIfAbsent(
-      'languageCode',
-      () => WidgetsBinding.instance.platformDispatcher.locale.languageCode,
-    );
+    resolvedConfig.putIfAbsent('languageCode', _deviceLanguageCode);
     return resolvedConfig;
+  }
+
+  /// The device locale as the native SDK names it.
+  ///
+  /// The native SDKs distinguish Simplified and Traditional Chinese and
+  /// Brazilian Portuguese with their own codes, so the two-letter language
+  /// alone would send those users to the generic variant.
+  static String _deviceLanguageCode() {
+    final locale = WidgetsBinding.instance.platformDispatcher.locale;
+    final country = locale.countryCode?.toUpperCase();
+    final script = locale.scriptCode?.toLowerCase();
+
+    switch (locale.languageCode) {
+      case 'zh':
+        if (script == 'hant' || country == 'TW' || country == 'HK' || country == 'MO') {
+          return 'zh-TW';
+        }
+        if (script == 'hans' || country == 'CN' || country == 'SG') {
+          return 'zh-CN';
+        }
+        return 'zh';
+      case 'pt':
+        return country == 'BR' ? 'pt-BR' : 'pt';
+      default:
+        return locale.languageCode;
+    }
   }
 
   /// Start identity verification with an existing session token.
