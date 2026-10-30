@@ -158,6 +158,37 @@ void main() {
       expect(config.containsKey('defaultLivenessCamera'), false);
     });
 
+    testWidgets('the device locale keeps the native language variants', (
+      tester,
+    ) async {
+      addTearDown(tester.binding.platformDispatcher.clearLocaleTestValue);
+      const cases = <Locale, String>{
+        Locale('zh', 'TW'): 'zh-TW',
+        Locale.fromSubtags(
+          languageCode: 'zh',
+          scriptCode: 'Hant',
+          countryCode: 'HK',
+        ): 'zh-TW',
+        Locale('zh', 'CN'): 'zh-CN',
+        Locale('zh', 'SG'): 'zh-CN',
+        Locale('zh'): 'zh',
+        Locale('pt', 'BR'): 'pt-BR',
+        Locale('pt', 'PT'): 'pt',
+      };
+
+      for (final entry in cases.entries) {
+        tester.binding.platformDispatcher.localeTestValue = entry.key;
+
+        await DiditSdk.startVerification('token');
+
+        expect(
+          platform.verificationConfig?['languageCode'],
+          entry.value,
+          reason: '${entry.key}',
+        );
+      }
+    });
+
     testWidgets('an explicit language wins over the device locale', (
       tester,
     ) async {

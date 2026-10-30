@@ -36,7 +36,10 @@ class DiditSdk {
 
     switch (locale.languageCode) {
       case 'zh':
-        if (script == 'hant' || country == 'TW' || country == 'HK' || country == 'MO') {
+        if (script == 'hant' ||
+            country == 'TW' ||
+            country == 'HK' ||
+            country == 'MO') {
           return 'zh-TW';
         }
         if (script == 'hans' || country == 'CN' || country == 'SG') {
