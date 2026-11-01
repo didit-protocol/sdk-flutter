@@ -41,6 +41,10 @@ prepend_release_notes CHANGELOG.md
 generate() {
   local name=$1 variant=$2 product=$3 subspec=$4 floor=$5 feature_desc=$6 auto=$7 nfc=$8
   local pkg=packages/$name
+  local deprecation=""
+  if [[ "$variant" == autodetection ]]; then
+    deprecation="Deprecated, identical to didit_sdk_core - switch to didit_sdk_core. "
+  fi
   echo "generating $pkg"
 
   rm -rf "$pkg/ios" "$pkg/lib" "$pkg/android"
@@ -59,7 +63,7 @@ generate() {
 
   cat > "$pkg/pubspec.yaml" <<EOF
 name: $name
-description: Didit Identity Verification SDK for Flutter, pinned to the $variant native SDK variant ($feature_desc). Same Dart API as didit_sdk - depend on exactly one of the didit_sdk packages. Generated from didit_sdk - do not edit by hand.
+description: ${deprecation}Didit Identity Verification SDK for Flutter, pinned to the $variant native SDK variant ($feature_desc). Same Dart API as didit_sdk - depend on exactly one of the didit_sdk packages. Generated from didit_sdk - do not edit by hand.
 version: $VERSION
 homepage: https://didit.me
 repository: https://github.com/didit-protocol/sdk-flutter
@@ -112,8 +116,11 @@ variant ($feature_desc). Generated from didit_sdk.
 
   # Fixed native variant - unlike didit_sdk this podspec intentionally ignores
   # \$DiditSdkIosVariant. Keep your Podfile's DiditSDK subspec line in sync
-  # ($subspec) when building with CocoaPods.
-  s.dependency '$subspec', '$NATIVE_IOS_VERSION'
+  # ($subspec) when building with CocoaPods. Location verification is opt-in
+  # through \$DiditSdkIosLocationEnabled (or DIDIT_SDK_IOS_LOCATION_ENABLED=true),
+  # which swaps the subspec for its -Location twin ($subspec-Location).
+  didit_sdk_ios_location = (defined?(\$DiditSdkIosLocationEnabled) && !\$DiditSdkIosLocationEnabled.nil? ? \$DiditSdkIosLocationEnabled : ENV.fetch('DIDIT_SDK_IOS_LOCATION_ENABLED', 'false')).to_s.downcase == 'true'
+  s.dependency "$subspec#{'-Location' if didit_sdk_ios_location}", '$NATIVE_IOS_VERSION'
 
   s.platform = :ios, '$floor'
   s.static_framework = true
@@ -158,7 +165,9 @@ EOF
 # $name
 
 The Didit Identity Verification SDK for Flutter, pinned to the **$variant** native SDK variant on both iOS and Android: $feature_desc.
-
+${deprecation:+
+> **Deprecated.** This package is identical to [\`didit_sdk_core\`](https://pub.dev/packages/didit_sdk_core) since native SDK 4.10.0, which has automatic capture in every variant. Switch to \`didit_sdk_core\`.
+}
 | | |
 |---|---|
 | Automatic capture | $auto |
@@ -192,8 +201,8 @@ EOF
 }
 
 #        name                      variant        SPM product           pod subspec              floor   description                                                    auto  nfc
-generate didit_sdk_core            core           DiditSDKCore          DiditSDK/Core            13.0    "smallest, manual capture only - no automatic capture, no NFC" No    No
-generate didit_sdk_autodetection   autodetection  DiditSDKAutoDetection DiditSDK/AutoDetection   13.0    "automatic capture without NFC"                                Yes   No
-generate didit_sdk_nfc             nfc            DiditSDKNFC           DiditSDK/NFC             15.0    "NFC passport reading without automatic capture"               No    Yes
+generate didit_sdk_core            core           DiditSDKCore          DiditSDK/Core            13.0    "automatic capture, no NFC"                                    Yes   No
+generate didit_sdk_autodetection   autodetection  DiditSDKCore          DiditSDK/Core            13.0    "identical to didit_sdk_core"  Yes   No
+generate didit_sdk_nfc             nfc            DiditSDKNFC           DiditSDK/NFC             15.0    "automatic capture and NFC passport reading"                   Yes   Yes
 
 echo "done"
