@@ -1,7 +1,10 @@
-## 4.10.0
+## 4.11.0
 
-Pins the iOS and Android native SDKs exactly to 4.10.0.
+Pins the iOS and Android native SDKs exactly to 4.11.0. This release also carries everything planned for 4.10.0, which was never published to pub.dev.
 
+- Both platforms: the redesigned flow shell, with a new top bar, progress in words, a rebuilt welcome screen and clearer error messages.
+- Both platforms: Bank verification never ends in a dead end. Countries without a bank route offer a statement upload or continuing without a bank, and an account check counts its own attempts.
+- iOS: document capture focuses reliably on close-up cards.
 - Both platforms: automatic capture is available in every variant, using the Didit tiny detectors (TensorFlowLite on iOS and MediaPipe on Android are removed). The `autodetection` variant and the `didit_sdk_autodetection` package are deprecated and identical to `core` / `didit_sdk_core`; switch to `didit_sdk_core`. The Android `didit-sdk-autodetection-play` artifact is no longer published.
 - New native steps run inside the existing start-verification call, with no new Dart API:
   - Bank verification: the person approves in the system browser, on the bank's page or a page Didit hosts. No setup.
