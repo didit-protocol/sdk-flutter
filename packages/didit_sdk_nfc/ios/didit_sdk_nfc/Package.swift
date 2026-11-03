@@ -11,7 +11,7 @@ let package = Package(
         .library(name: "didit-sdk-nfc", targets: ["didit_sdk_nfc"])
     ],
     dependencies: [
-        .package(url: "https://github.com/didit-protocol/sdk-ios.git", exact: "4.11.0")
+        .package(url: "https://github.com/didit-protocol/sdk-ios.git", exact: "4.12.0")
     ],
     targets: [
         .target(
