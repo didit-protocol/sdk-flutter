@@ -1,3 +1,14 @@
+## 4.12.2
+
+Pins the iOS and Android native SDKs exactly to 4.12.2.
+
+No Dart API changes. The changes below run inside the existing start-verification call.
+
+- Both platforms: the welcome screen centres the logo (Didit's, or the customer's on white label) above the left-aligned title. iOS now draws the customer's logo 72 pt high, as Android and the web do, and the iOS resubmission screen shows the company block again.
+- Both platforms: in the KYB key people step, "Add representative" opens with a representative role selected and saves the person under representatives even when the workflow switches some roles off. Before, the person could only be added as a beneficial owner and the step could not continue.
+- Both platforms: in questionnaires, "Secured by" stays pinned under the button on short screens and at large text, the country picker of an address question is titled for the address, and an open dropdown takes the fields' corners.
+
+
 ## 4.12.1
 
 Pins the iOS and Android native SDKs exactly to 4.12.1.
