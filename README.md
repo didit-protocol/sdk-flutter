@@ -10,7 +10,7 @@ A Flutter plugin for Didit Identity Verification. Wraps the native iOS and Andro
 | Dart | 3.11+ |
 | iOS | 13.0+ (`all`/`nfc` variants require 15.0+) |
 | Android | API 23+ (6.0 Marshmallow) |
-| Android build toolchain | Kotlin 2.1.10+, Android Gradle Plugin 8.6.0+, Gradle 8.7+, JDK 17 (required by the native 4.12.1 artifacts) |
+| Android build toolchain | Kotlin 2.1.10+, Android Gradle Plugin 8.6.0+, Gradle 8.7+, JDK 17 (required by the native 4.12.2 artifacts) |
 
 ## Installation
 
@@ -18,7 +18,7 @@ Add the dependency to your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  didit_sdk: ^4.12.1
+  didit_sdk: ^4.12.2
 ```
 
 Then run:
@@ -63,7 +63,7 @@ To use a smaller native SDK variant, depend on the matching variant package inst
 
 ```yaml
 dependencies:
-  didit_sdk_core: ^4.12.1 # or didit_sdk_autodetection / didit_sdk_nfc
+  didit_sdk_core: ^4.12.2 # or didit_sdk_autodetection / didit_sdk_nfc
 ```
 
 The `core` and `autodetection` variants allow an iOS 13.0 deployment target; `nfc` requires 15.0+ like the default.
@@ -94,7 +94,7 @@ didit_sdk_ios_pod = case $DiditSdkIosVariant
                       raise "Invalid $DiditSdkIosVariant '#{$DiditSdkIosVariant}'. Supported values: all, core, autodetection, nfc."
                     end
 didit_sdk_ios_pod += '-Location' if $DiditSdkIosLocationEnabled # only for workflows with a Location step
-didit_sdk_ios_podspec = 'https://raw.githubusercontent.com/didit-protocol/sdk-ios/4.12.1/DiditSDK.podspec'
+didit_sdk_ios_podspec = 'https://raw.githubusercontent.com/didit-protocol/sdk-ios/4.12.2/DiditSDK.podspec'
 
 target 'Runner' do
   use_frameworks!
@@ -476,7 +476,7 @@ final result = await DiditSdk.startVerification(sessionToken);
 
 Workflows can include a Bank verification step and a Location verification step. The native SDKs draw both screens, so there is no Dart API to call: start the verification as usual and handle the same [`VerificationResult`](#verification-results), in the language set by [`languageCode`](#languagecode).
 
-> **Availability:** these steps ship with native SDK 4.12.1, which this release pins. They run inside the existing start-verification call: there is no new Dart API.
+> **Availability:** these steps ship with native SDK 4.12.2, which this release pins. They run inside the existing start-verification call: there is no new Dart API.
 
 - **Location:** the SDK explains why it needs the position, asks for location permission, reads the position once while the step is on screen and never tracks it in the background. On iOS it needs the opt-in `$DiditSdkIosLocationEnabled` flag and usage strings from [Location Configuration](#location-configuration-for-the-location-verification-step); on Android `didit-sdk-core` declares the location permissions and they are merged into your app (see [Android](#android); remove them with `tools:node="remove"` if you never run the step). Without the iOS flag or usage string, or with the Android permissions removed, the step shows no prompt: it reports that the device cannot place the person and the workflow's own settings decide what happens next.
 - **Bank:** the person picks their bank and the SDK opens the bank's page (or a page Didit hosts) in the system browser, then returns to the SDK, which reads the outcome from Didit. Your app needs no setup, permission, URL scheme or intent filter for it.
