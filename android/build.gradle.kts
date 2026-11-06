@@ -125,7 +125,9 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
 
-    testImplementation("org.jetbrains.kotlin:kotlin-test")
+    // KGP infers the JUnit 5 flavour of kotlin-test; built-in Kotlin does not.
+    testImplementation("org.jetbrains.kotlin:kotlin-test-junit5")
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
     testImplementation("io.mockk:mockk:1.14.11")
     testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.8.1")
 }
