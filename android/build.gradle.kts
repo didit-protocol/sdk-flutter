@@ -56,16 +56,7 @@ rootProject.allprojects {
 
 plugins {
     id("com.android.library")
-}
-
-// AGP 9+ compiles Kotlin itself ("built-in Kotlin") and rejects the Kotlin
-// Gradle Plugin, and Flutter warns about plugins that declare it. Apply KGP only
-// where built-in Kotlin is off: AGP 8, or AGP 9 with android.builtInKotlin=false
-// (the same rule Flutter's Gradle plugin uses).
-val builtInKotlin = androidComponents.pluginVersion.major >= 9 &&
-    (providers.gradleProperty("android.builtInKotlin").orNull?.toBoolean() ?: true)
-if (!builtInKotlin) {
-    apply(plugin = "kotlin-android")
+    id("kotlin-android")
 }
 
 android {
@@ -76,6 +67,10 @@ android {
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
+    }
+
+    kotlinOptions {
+        jvmTarget = JavaVersion.VERSION_17.toString()
     }
 
     sourceSets {
@@ -112,22 +107,12 @@ android {
     }
 }
 
-// The `kotlin` extension exists with both KGP and built-in Kotlin, unlike
-// android.kotlinOptions, which only KGP adds.
-extensions.configure<org.jetbrains.kotlin.gradle.dsl.KotlinAndroidProjectExtension>("kotlin") {
-    compilerOptions {
-        jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
-    }
-}
-
 dependencies {
     implementation("me.didit:$diditSdkAndroidArtifact:$diditSdkAndroidVersion")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
 
-    // KGP infers the JUnit 5 flavour of kotlin-test; built-in Kotlin does not.
-    testImplementation("org.jetbrains.kotlin:kotlin-test-junit5")
-    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
+    testImplementation("org.jetbrains.kotlin:kotlin-test")
     testImplementation("io.mockk:mockk:1.14.11")
     testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.8.1")
 }
