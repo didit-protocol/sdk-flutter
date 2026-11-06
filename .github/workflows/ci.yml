@@ -91,6 +91,58 @@ jobs:
         working-directory: example/android
         run: ./gradlew :didit_sdk:testDebugUnitTest
 
+  build-android-example-agp9:
+    name: Example app builds (Android, AGP 9 built-in Kotlin)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      # The example stays on AGP 8 in the repository (the job above); this run
+      # moves it to AGP 9 with built-in Kotlin, which refuses any project that
+      # also applies the Kotlin Gradle Plugin (KGP). Setting the flag explicitly
+      # also stops Flutter from writing android.builtInKotlin=false.
+      - name: Move the example to AGP 9 with built-in Kotlin
+        working-directory: example/android
+        run: |
+          sed -i 's/id("com.android.application") version "[^"]*"/id("com.android.application") version "9.2.1"/' settings.gradle.kts
+          sed -i 's/gradle-[0-9.]*-all\.zip/gradle-9.5.1-all.zip/' gradle/wrapper/gradle-wrapper.properties
+          printf '\nandroid.builtInKotlin=true\nandroid.newDsl=false\n' >> gradle.properties
+          grep -q 'id("com.android.application") version "9.2.1"' settings.gradle.kts
+          grep -q 'gradle-9.5.1-all.zip' gradle/wrapper/gradle-wrapper.properties
+
+      - name: Build example APK
+        working-directory: example
+        run: |
+          flutter pub get
+          flutter build apk --debug 2>&1 | tee "$RUNNER_TEMP/build-apk.log"
+
+      - name: Plugin unit tests (Android)
+        working-directory: example/android
+        run: ./gradlew :didit_sdk:testDebugUnitTest 2>&1 | tee "$RUNNER_TEMP/unit-tests.log"
+
+      # Flutter names every plugin that still applies KGP and will refuse to
+      # build them in a future release.
+      - name: No KGP warning names didit_sdk
+        run: |
+          if grep -h 'plugins that apply Kotlin Gradle Plugin (KGP):.*didit_sdk' "$RUNNER_TEMP/build-apk.log" "$RUNNER_TEMP/unit-tests.log"; then
+            echo "::error::Flutter reports that didit_sdk applies the Kotlin Gradle Plugin on AGP 9"
+            exit 1
+          fi
+
   build-ios-example:
     name: Example app builds (iOS)
     runs-on: macos-latest
