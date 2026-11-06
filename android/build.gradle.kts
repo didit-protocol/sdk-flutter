@@ -56,7 +56,16 @@ rootProject.allprojects {
 
 plugins {
     id("com.android.library")
-    id("kotlin-android")
+}
+
+// AGP 9+ compiles Kotlin itself ("built-in Kotlin") and rejects the Kotlin
+// Gradle Plugin, and Flutter warns about plugins that declare it. Apply KGP only
+// where built-in Kotlin is off: AGP 8, or AGP 9 with android.builtInKotlin=false
+// (the same rule Flutter's Gradle plugin uses).
+val builtInKotlin = androidComponents.pluginVersion.major >= 9 &&
+    (providers.gradleProperty("android.builtInKotlin").orNull?.toBoolean() ?: true)
+if (!builtInKotlin) {
+    apply(plugin = "kotlin-android")
 }
 
 android {
@@ -67,10 +76,6 @@ android {
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
-    }
-
-    kotlinOptions {
-        jvmTarget = JavaVersion.VERSION_17.toString()
     }
 
     sourceSets {
