@@ -112,6 +112,14 @@ android {
     }
 }
 
+// The `kotlin` extension exists with both KGP and built-in Kotlin, unlike
+// android.kotlinOptions, which only KGP adds.
+extensions.configure<org.jetbrains.kotlin.gradle.dsl.KotlinAndroidProjectExtension>("kotlin") {
+    compilerOptions {
+        jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
+    }
+}
+
 dependencies {
     implementation("me.didit:$diditSdkAndroidArtifact:$diditSdkAndroidVersion")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3")
