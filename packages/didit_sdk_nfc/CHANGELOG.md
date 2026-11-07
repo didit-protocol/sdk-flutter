@@ -1,3 +1,15 @@
+## 4.13.2
+
+Pins the iOS and Android native SDKs exactly to 4.13.2. Native 4.13.1 was an Android-only interim release with the welcome screen change below; this release brings it to iOS too.
+
+No Dart API changes. The native changes below run inside the existing start-verification call.
+
+- Android: the plugin builds with Android Gradle Plugin 9 and its built-in Kotlin. It applies the Kotlin Gradle Plugin only when built-in Kotlin is off (AGP 8, or AGP 9 with `android.builtInKotlin=false`), so AGP 9 apps no longer fail or warn about it.
+- iOS: a photo requested from a camera that opens but delivers no frames no longer crashes the host app. Every photo request first checks for a running camera session with an active video connection, and the screen shows its camera error or skip instead.
+- Android: on the ID lookup selfie, a photo request from a camera that delivers no frames ends in the screen's camera error after 5 seconds instead of waiting forever.
+- Both platforms: on the welcome screen, while the list of steps goes on below its bottom fade, a round "Scroll down" button sits horizontally centred on the list (also in right-to-left languages), as in the web flow. A tap scrolls the list down, the button hides at the end of the list and while a sheet is open, and it is a named, accessible button in every language the SDK supports.
+
+
 ## 4.13.0
 
 Pins the iOS and Android native SDKs exactly to 4.13.0.
