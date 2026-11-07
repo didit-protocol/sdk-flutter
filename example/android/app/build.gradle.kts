@@ -1,6 +1,9 @@
 plugins {
     id("com.android.application")
-    // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
+    // No Kotlin Gradle Plugin here: on AGP 9 built-in Kotlin compiles src/main/kotlin, and on
+    // AGP 8 the Flutter Gradle Plugin applies the Kotlin Gradle Plugin itself (the `kotlin { }`
+    // block below would not resolve otherwise). CI checks the APK contains MainActivity on both.
+    // The Flutter Gradle Plugin must be applied after the Android Gradle Plugin.
     id("dev.flutter.flutter-gradle-plugin")
 }
 
