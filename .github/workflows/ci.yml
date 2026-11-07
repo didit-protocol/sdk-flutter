@@ -85,6 +85,17 @@ jobs:
           flutter pub get
           flutter build apk --debug
 
+      # The example's MainActivity is Kotlin. A build that skipped Kotlin
+      # compilation still packages an APK, so check the class is in it.
+      - name: Example APK contains the Kotlin MainActivity
+        working-directory: example
+        run: |
+          apk=build/app/outputs/flutter-apk/app-debug.apk
+          if ! unzip -p "$apk" 'classes*.dex' | grep -aq 'Lme/didit/sdk/sdk_flutter_example/MainActivity;'; then
+            echo "::error::$apk has no MainActivity class: the example's Kotlin sources were not compiled"
+            exit 1
+          fi
+
       # The plugin's JVM unit tests (android/src/test) against the released
       # native AAR, inside the Gradle project the build above generated.
       - name: Plugin unit tests (Android)
@@ -129,6 +140,16 @@ jobs:
         run: |
           flutter pub get
           flutter build apk --debug 2>&1 | tee "$RUNNER_TEMP/build-apk.log"
+
+      # Built-in Kotlin must compile the example's Kotlin MainActivity too.
+      - name: Example APK contains the Kotlin MainActivity
+        working-directory: example
+        run: |
+          apk=build/app/outputs/flutter-apk/app-debug.apk
+          if ! unzip -p "$apk" 'classes*.dex' | grep -aq 'Lme/didit/sdk/sdk_flutter_example/MainActivity;'; then
+            echo "::error::$apk has no MainActivity class: the example's Kotlin sources were not compiled"
+            exit 1
+          fi
 
       - name: Plugin unit tests (Android)
         working-directory: example/android
