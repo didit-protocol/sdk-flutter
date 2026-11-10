@@ -52,7 +52,7 @@ didit_sdk_ios_pod = case $DiditSdkIosVariant
 didit_sdk_ios_pod += '-Location' if $DiditSdkIosLocationEnabled
 didit_sdk_ios_podspec = ENV.fetch(
   'DIDIT_SDK_IOS_PODSPEC',
-  'https://raw.githubusercontent.com/didit-protocol/sdk-ios/4.14.3/DiditSDK.podspec'
+  'https://raw.githubusercontent.com/didit-protocol/sdk-ios/4.14.4/DiditSDK.podspec'
 )
 # Optional: the path to a DiditSDK source tree (the directory holding DiditSDK.podspec)
 # to build the native SDK from source instead; its podspec has the same subspec names,
