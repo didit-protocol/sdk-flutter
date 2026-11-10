@@ -1,3 +1,12 @@
+## 4.14.3
+
+Pins the iOS and Android native SDKs exactly to 4.14.3.
+
+No Dart API changes. The native change below runs inside the existing start-verification call and returns the same `VerificationResult`.
+
+- iOS: the selfie result screens show the sandbox banner only for sandbox sessions. Live sessions showed "SANDBOX · Test data only" there. Android has no functional change; the version stays aligned.
+
+
 ## 4.14.2
 
 Pins the iOS and Android native SDKs exactly to 4.14.2.
