@@ -1,6 +1,6 @@
 Pod::Spec.new do |s|
   s.name             = 'didit_sdk_core'
-  s.version          = '4.14.5'
+  s.version          = '4.14.6'
   s.summary          = 'Didit Identity Verification SDK for Flutter - core variant'
   s.description      = <<-DESC
 Didit identity verification Flutter plugin pinned to the DiditSDK/Core native SDK
@@ -20,7 +20,7 @@ variant (automatic capture, no NFC). Generated from didit_sdk.
   # through $DiditSdkIosLocationEnabled (or DIDIT_SDK_IOS_LOCATION_ENABLED=true),
   # which swaps the subspec for its -Location twin (DiditSDK/Core-Location).
   didit_sdk_ios_location = (defined?($DiditSdkIosLocationEnabled) && !$DiditSdkIosLocationEnabled.nil? ? $DiditSdkIosLocationEnabled : ENV.fetch('DIDIT_SDK_IOS_LOCATION_ENABLED', 'false')).to_s.downcase == 'true'
-  s.dependency "DiditSDK/Core#{'-Location' if didit_sdk_ios_location}", '4.14.5'
+  s.dependency "DiditSDK/Core#{'-Location' if didit_sdk_ios_location}", '4.14.6'
 
   s.platform = :ios, '13.0'
   s.static_framework = true
