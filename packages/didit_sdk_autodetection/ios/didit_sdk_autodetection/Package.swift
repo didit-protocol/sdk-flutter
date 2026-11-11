@@ -11,7 +11,7 @@ let package = Package(
         .library(name: "didit-sdk-autodetection", targets: ["didit_sdk_autodetection"])
     ],
     dependencies: [
-        .package(url: "https://github.com/didit-protocol/sdk-ios.git", exact: "4.14.5")
+        .package(url: "https://github.com/didit-protocol/sdk-ios.git", exact: "4.14.6")
     ],
     targets: [
         .target(
