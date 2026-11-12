@@ -52,6 +52,31 @@ class DiditAuth {
     _object(await _platform.signInWithPasskey(publishableKey, redirectUri)),
   );
 
+  /// Asks the signed-in person to sign in again and returns their new session,
+  /// for actions that need a session at most five minutes old or created with
+  /// a passkey, such as [registerPasskey].
+  ///
+  /// [method] is [DiditReauthMethod.hosted] (the default) to open the hosted
+  /// sign-in page, or [DiditReauthMethod.passkey] to ask for a passkey of this
+  /// device; the page opens then only when Didit needs a further step.
+  ///
+  /// Nothing changes when it fails: the stored session stays signed in. Throws
+  /// a [DiditAuthException] with code `not_signed_in` when nobody is signed
+  /// in, `step_up_user_mismatch` when a different person signed in (that new
+  /// session is ended at Didit), and `cancelled` when the person closes the
+  /// page.
+  Future<DiditSession> reauthenticate({
+    DiditReauthMethod method = DiditReauthMethod.hosted,
+  }) async => DiditSession.fromJson(
+    _object(
+      await _platform.reauthenticate(
+        publishableKey,
+        redirectUri,
+        method: method.name,
+      ),
+    ),
+  );
+
   /// Adds a passkey of this device to the signed-in person and returns its
   /// id.
   ///

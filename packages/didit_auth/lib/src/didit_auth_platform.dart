@@ -57,6 +57,16 @@ abstract class DiditAuthPlatform extends PlatformInterface {
     throw UnimplementedError('signOut() has not been implemented.');
   }
 
+  /// Signs the signed-in person in again with [method] (`hosted` or
+  /// `passkey`); returns the new session as JSON.
+  Future<String> reauthenticate(
+    String publishableKey,
+    String redirectUri, {
+    required String method,
+  }) {
+    throw UnimplementedError('reauthenticate() has not been implemented.');
+  }
+
   /// Runs a step-up; returns its result as JSON.
   Future<String> stepUp(
     String publishableKey,

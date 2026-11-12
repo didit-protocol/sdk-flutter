@@ -82,6 +82,10 @@ class DiditAuthPlugin :
             "signInWithPasskey" -> forward(call, result) { auth ->
                 AuthWire.sessionJson(auth.signInWithPasskey(requireActivity()))
             }
+            "reauthenticate" -> forward(call, result) { auth ->
+                val method = AuthWire.reauthMethod(call.argument<String>("method"))
+                AuthWire.sessionJson(auth.reauthenticate(requireActivity(), method))
+            }
             "registerPasskey" -> forward(call, result) { auth -> auth.registerPasskey(requireActivity()) }
             "currentSession" -> forward(call, result) { auth ->
                 auth.currentSession(call.argument<Boolean>("force") ?: false)?.let(AuthWire::sessionJson)

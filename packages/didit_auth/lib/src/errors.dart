@@ -17,6 +17,11 @@ abstract final class DiditAuthErrorCodes {
   /// The call needs a signed-in person.
   static const String notSignedIn = 'not_signed_in';
 
+  /// A different person than the signed-in one completed a
+  /// `DiditAuth.reauthenticate`. The new session is ended at Didit and the
+  /// stored session is untouched.
+  static const String stepUpUserMismatch = 'step_up_user_mismatch';
+
   /// The person dismissed the passkey prompt.
   static const String passkeyCancelled = 'passkey_cancelled';
 

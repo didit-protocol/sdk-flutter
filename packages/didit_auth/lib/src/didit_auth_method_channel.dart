@@ -79,6 +79,18 @@ class MethodChannelDiditAuth extends DiditAuthPlatform {
       _invoke<void>('signOut', publishableKey, redirectUri);
 
   @override
+  Future<String> reauthenticate(
+    String publishableKey,
+    String redirectUri, {
+    required String method,
+  }) => _required(
+    _invoke<String>('reauthenticate', publishableKey, redirectUri, {
+      'method': method,
+    }),
+    'reauthenticate',
+  );
+
+  @override
   Future<String> stepUp(
     String publishableKey,
     String redirectUri, {

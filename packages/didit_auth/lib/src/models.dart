@@ -117,6 +117,18 @@ class DiditSession {
   final DateTime expiresAt;
 }
 
+/// How `DiditAuth.reauthenticate` signs the current person in again.
+///
+/// The `name` of each value is what crosses the method channel.
+enum DiditReauthMethod {
+  /// Opens the application's hosted sign-in page.
+  hosted,
+
+  /// Asks for a passkey of this device, and opens the hosted page only when
+  /// Didit needs a further step.
+  passkey,
+}
+
 /// A sensitive action your application's step-up rules can apply to.
 sealed class DiditStepUpAction {
   const DiditStepUpAction();

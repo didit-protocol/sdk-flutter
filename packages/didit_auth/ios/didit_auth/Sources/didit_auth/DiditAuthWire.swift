@@ -46,6 +46,18 @@ enum DiditAuthWire {
         }
     }
 
+    /// No value is the native default, the hosted page.
+    static func reauthMethod(_ method: String?) throws -> DiditReauthMethod {
+        switch method {
+        case nil, "hosted":
+            return .hosted
+        case "passkey":
+            return .passkey
+        default:
+            throw DiditAuthError("invalid_request", "Unknown re-authentication method: \(method ?? "none").")
+        }
+    }
+
     static func sessionJson(_ session: DiditSession) throws -> String {
         try json([
             "userId": session.userId,

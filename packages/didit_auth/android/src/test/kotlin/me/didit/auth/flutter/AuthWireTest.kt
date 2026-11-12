@@ -2,6 +2,7 @@ package me.didit.auth.flutter
 
 import me.didit.sdk.auth.DiditAuthException
 import me.didit.sdk.auth.DiditOrganization
+import me.didit.sdk.auth.DiditReauthMethod
 import me.didit.sdk.auth.DiditSession
 import me.didit.sdk.auth.DiditStepUpAction
 import me.didit.sdk.auth.DiditStepUpResult
@@ -72,6 +73,26 @@ class AuthWireTest {
         assertEquals("invalid_request", assertFailsWith<DiditAuthException> { AuthWire.stepUpAction("payout", null, null) }.code)
         assertEquals("invalid_request", assertFailsWith<DiditAuthException> { AuthWire.stepUpAction("refund", null, null) }.code)
         assertEquals("invalid_request", assertFailsWith<DiditAuthException> { AuthWire.stepUpAction(null, null, null) }.code)
+    }
+
+    @Test
+    fun `re-authentication methods map to the native ones, hosted by default`() {
+        assertEquals(DiditReauthMethod.HOSTED, AuthWire.reauthMethod("hosted"))
+        assertEquals(DiditReauthMethod.PASSKEY, AuthWire.reauthMethod("passkey"))
+        assertEquals(DiditReauthMethod.HOSTED, AuthWire.reauthMethod(null))
+    }
+
+    @Test
+    fun `an unknown re-authentication method is an invalid request`() {
+        assertEquals("invalid_request", assertFailsWith<DiditAuthException> { AuthWire.reauthMethod("password") }.code)
+    }
+
+    @Test
+    fun `a user mismatch keeps its code on the wire`() {
+        val reply = AuthWire.errorReply(DiditAuthException("step_up_user_mismatch", "A different person completed the sign-in."))
+
+        assertEquals("step_up_user_mismatch", reply.code)
+        assertNull(reply.details)
     }
 
     @Test

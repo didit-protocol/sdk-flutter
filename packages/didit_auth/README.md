@@ -86,6 +86,18 @@ final viaPasskey = await auth.signInWithPasskey(); // a passkey of this device
 final passkeyId = await auth.registerPasskey(); // needs a session at most five minutes old
 ```
 
+### Sign in again
+
+```dart
+final fresh = await auth.reauthenticate(); // hosted page (the default)
+final viaPasskey = await auth.reauthenticate(method: DiditReauthMethod.passkey);
+```
+
+`reauthenticate` asks the signed-in person to sign in again and returns their new session, for actions that need a session at most five minutes old, such as `registerPasskey`.
+`DiditReauthMethod.passkey` asks for a passkey of this device and opens the hosted page only when Didit needs a further step.
+It throws `not_signed_in` when nobody is signed in, and `step_up_user_mismatch` when a different person signs in: that new session is ended at Didit and the stored session stays untouched.
+Nothing changes when it fails.
+
 ### Session, token and sign-out
 
 ```dart
@@ -123,9 +135,10 @@ The codes are the same on Android and iOS and in the React Native package:
 
 | Code | Meaning |
 |------|---------|
-| `cancelled` | The person closed the sign-in or step-up page |
+| `cancelled` | The person closed the sign-in, re-authentication or step-up page |
 | `invalid_state` | The page returned for a sign-in this app did not start |
 | `not_signed_in` | The call needs a signed-in person |
+| `step_up_user_mismatch` | A different person than the signed-in one completed `reauthenticate`; the stored session is untouched |
 | `passkey_cancelled` | The person dismissed the passkey prompt |
 | `passkey_unavailable` | The device cannot run a passkey for this app |
 | `browser_unavailable` | The page cannot be shown: no screen of the app is in the foreground, or iOS is older than 17.4 |
