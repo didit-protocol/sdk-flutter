@@ -17,7 +17,7 @@ sessions in the Keychain, sign-out and step-ups.
   # The native release this plugin pins. ../android/build.gradle.kts and
   # didit_auth/Package.swift pin the same one; test/native_pin_test.dart keeps
   # the three equal. The host's Podfile names the DiditSDK podspec (see the README).
-  didit_auth_native_version = '4.14.7'
+  didit_auth_native_version = '4.15.0'
   s.dependency 'DiditSDK/Auth', didit_auth_native_version
 
   # DiditAuth needs iOS 15; its hosted pages need 17.4 at run time and fail
