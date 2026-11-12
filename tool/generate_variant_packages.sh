@@ -8,7 +8,8 @@
 # Manager). Run from the repo root after ANY change to lib/, android/,
 # ios/didit_sdk/Sources, the version, or the native SDK pins - the variants
 # must never drift. When release-notes/<version>.md exists, this script also
-# generates matching changelog entries for the root and variant packages.
+# generates matching changelog entries for the root and variant packages,
+# and release-notes/didit_auth-<version>.md does the same for packages/didit_auth.
 # See README "Native SDK Variants".
 set -euo pipefail
 
@@ -21,14 +22,15 @@ echo "wrapper $VERSION / native iOS DiditSDK $NATIVE_IOS_VERSION"
 
 prepend_release_notes() {
   local changelog=$1
-  local release_notes="release-notes/$VERSION.md"
+  local version=${2:-$VERSION}
+  local release_notes=${3:-release-notes/$version.md}
   [[ -f "$release_notes" ]] || return 0
-  grep -q "^## $VERSION$" "$changelog" && return 0
+  grep -q "^## $version$" "$changelog" && return 0
 
   local generated_changelog
   generated_changelog=$(mktemp)
   {
-    printf '## %s\n\n' "$VERSION"
+    printf '## %s\n\n' "$version"
     cat "$release_notes"
     printf '\n\n'
     cat "$changelog"
@@ -37,6 +39,10 @@ prepend_release_notes() {
 }
 
 prepend_release_notes CHANGELOG.md
+
+# didit_auth has its own version; its entry comes from release-notes/didit_auth-<version>.md.
+AUTH_VERSION=$(sed -n 's/^version: //p' packages/didit_auth/pubspec.yaml)
+prepend_release_notes packages/didit_auth/CHANGELOG.md "$AUTH_VERSION" "release-notes/didit_auth-$AUTH_VERSION.md"
 
 generate() {
   local name=$1 variant=$2 product=$3 subspec=$4 floor=$5 feature_desc=$6 auto=$7 nfc=$8
