@@ -27,7 +27,7 @@ The plugin runs on Android and iOS only; on any other platform every call throws
 
 ```yaml
 dependencies:
-  didit_auth: ^0.1.0
+  didit_auth: ^0.1.1
 ```
 
 ```dart

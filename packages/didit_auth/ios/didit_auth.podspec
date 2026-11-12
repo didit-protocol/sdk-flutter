@@ -1,6 +1,6 @@
 Pod::Spec.new do |s|
   s.name             = 'didit_auth'
-  s.version          = '0.1.0'
+  s.version          = '0.1.1'
   s.summary          = 'Didit Authentication for Flutter'
   s.description      = <<-DESC
 Flutter plugin wrapping native DiditAuth: hosted sign-in with PKCE, passkeys,
