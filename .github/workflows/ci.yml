@@ -43,6 +43,30 @@ jobs:
             echo "::endgroup::"
           done
 
+  auth-package:
+    name: Analyze, format and test (didit_auth)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: packages/didit_auth
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      # didit_auth is its own package (own version, own tag), not a generated
+      # variant of didit_sdk.
+      - name: Resolve, format, analyze and test
+        run: |
+          flutter pub get
+          dart format --output=none --set-exit-if-changed .
+          flutter analyze
+          flutter test -r expanded
+
   variant-drift:
     name: Variant packages match the generator
     # macos: generate_variant_packages.sh uses BSD sed (sed -i '').
@@ -57,8 +81,9 @@ jobs:
       - name: Regenerate variants and require a clean tree
         run: |
           ./tool/generate_variant_packages.sh
-          git add -N packages/
-          git diff --exit-code -- packages/
+          # Only the generated variants: packages/didit_auth is hand-written.
+          git add -N packages/didit_sdk_core packages/didit_sdk_autodetection packages/didit_sdk_nfc
+          git diff --exit-code -- packages/didit_sdk_core packages/didit_sdk_autodetection packages/didit_sdk_nfc
 
   build-android-example:
     name: Example app builds (Android)
@@ -209,3 +234,76 @@ jobs:
       # stand-in for the verification API, and Dart checks the result.
       - name: Bridge test (iOS)
         run: bash tool/ios_bridge_test.sh
+
+  # didit_auth has no example app of its own. These two jobs generate a throwaway
+  # app that depends on the package by path, so the Kotlin and Swift plugin code
+  # compiles against the RELEASED native DiditAuth binaries (Maven, CocoaPods)
+  # on every pull request.
+  auth-package-android:
+    name: didit_auth builds in an app (Android)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Generate an app that uses the package
+        run: |
+          flutter create --platforms=android --org com.example.authprobe "$RUNNER_TEMP/auth_probe"
+          cd "$RUNNER_TEMP/auth_probe"
+          flutter pub add didit_auth --path "$GITHUB_WORKSPACE/packages/didit_auth"
+
+      - name: Build the app
+        working-directory: ${{ runner.temp }}/auth_probe
+        run: flutter build apk --debug
+
+      - name: The plugin class is in the APK
+        working-directory: ${{ runner.temp }}/auth_probe
+        run: |
+          apk=build/app/outputs/flutter-apk/app-debug.apk
+          unzip -p "$apk" 'classes*.dex' | grep -aq 'Lme/didit/auth/flutter/DiditAuthPlugin;'
+          unzip -p "$apk" 'classes*.dex' | grep -aq 'Lme/didit/sdk/auth/DiditAuth;'
+
+      - name: Plugin unit tests (Android)
+        working-directory: ${{ runner.temp }}/auth_probe/android
+        run: ./gradlew :didit_auth:testDebugUnitTest
+
+  auth-package-ios:
+    name: didit_auth builds in an app (iOS)
+    runs-on: macos-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      # CocoaPods path, as in the example app's job: the released binaries'
+      # .swiftinterface is what the plugin's `import DiditAuth` compiles against.
+      - name: Generate an app that uses the package
+        run: |
+          flutter config --no-enable-swift-package-manager
+          flutter create --platforms=ios --org com.example.authprobe "$RUNNER_TEMP/auth_probe"
+          cd "$RUNNER_TEMP/auth_probe"
+          flutter pub add didit_auth --path "$GITHUB_WORKSPACE/packages/didit_auth"
+          # DiditSDK is not on the CocoaPods trunk: the app names its podspec, as the README says.
+          sed -i '' "s|^# platform :ios, .*|platform :ios, '15.0'|" ios/Podfile
+          native=$(sed -n "s/.*didit_auth_native_version = '\(.*\)'/\1/p" "$GITHUB_WORKSPACE/packages/didit_auth/ios/didit_auth.podspec")
+          perl -0pi -e "s|(  use_frameworks!\n)|\$1  pod 'DiditSDK/Auth', :podspec => 'https://raw.githubusercontent.com/didit-protocol/sdk-ios/$native/DiditSDK.podspec'\n|" ios/Podfile
+          sed -i '' 's/IPHONEOS_DEPLOYMENT_TARGET = [0-9.]*;/IPHONEOS_DEPLOYMENT_TARGET = 15.0;/' ios/Runner.xcodeproj/project.pbxproj
+          grep -n "DiditSDK/Auth\|platform :ios" ios/Podfile
+
+      - name: Build the app (no codesign)
+        working-directory: ${{ runner.temp }}/auth_probe
+        run: flutter build ios --debug --no-codesign

@@ -2,3 +2,9 @@ include: package:flutter_lints/flutter.yaml
 
 # Additional information about this file can be found at
 # https://dart.dev/guides/language/analysis-options
+
+analyzer:
+  exclude:
+    # An independent package with its own analysis_options.yaml and its own CI
+    # job; the root package's analysis cannot resolve its imports.
+    - packages/didit_auth/**

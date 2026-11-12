@@ -44,6 +44,17 @@ The variant packages expose exactly the same Dart API as `didit_sdk` and pin the
 Depend on exactly one of them and import from the package you chose (e.g. `package:didit_sdk_core/sdk_flutter.dart`).
 On iOS this works under both Swift Package Manager and CocoaPods; on Android the variant package sets the default for `diditSdkAndroidVariant` (still overridable in `gradle.properties`).
 
+### Authentication
+
+Didit Authentication (end-user sign-up and sign-in on the hosted Didit page, passkeys, sessions in the Keychain or Android Keystore, sign-out and step-ups) is a separate package in this repository, with its own version:
+
+| Package | Purpose | Native module | Version |
+|---------|---------|---------------|---------|
+| `didit_sdk` (and its variants above) | Identity verification | `DiditSDK` / `me.didit:didit-sdk` | Shares the native SDK version |
+| [`didit_auth`](packages/didit_auth) | Authentication | `DiditSDK/Auth` / `me.didit:didit-auth` | Own version, pinned to the same native release |
+
+Both can be installed in one app.
+
 ### iOS Setup
 
 The plugin supports both of Flutter's iOS dependency managers: Swift Package Manager and CocoaPods.
