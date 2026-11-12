@@ -1,3 +1,12 @@
+## 4.15.0
+
+Pins the iOS and Android native SDKs exactly to 4.15.0.
+No Dart API changes. The native changes below run inside the existing start-verification call and return the same `VerificationResult`.
+
+- KYB Key People: when the workflow allows it, a company listed on a stock exchange, or owned by a listed company, can declare that instead of naming a beneficial owner. It chooses the type, and can add the stock exchange, the ISIN and the listed parent company. At least one director or other senior managing official is still required.
+- The native SDKs also gain DiditSignals automatic capture and DiditAuth re-authentication, both native API that these packages do not expose.
+
+
 ## 4.14.7
 
 Pins the iOS and Android native SDKs exactly to 4.14.7.

@@ -10,7 +10,7 @@ A Flutter plugin for Didit Identity Verification. Wraps the native iOS and Andro
 | Dart | 3.11+ |
 | iOS | 13.0+ (`all`/`nfc` variants require 15.0+) |
 | Android | API 23+ (6.0 Marshmallow) |
-| Android build toolchain | Kotlin 2.1.10+, Android Gradle Plugin 8.6.0+, Gradle 8.7+, JDK 17 (required by the native 4.14.7 artifacts) |
+| Android build toolchain | Kotlin 2.1.10+, Android Gradle Plugin 8.6.0+, Gradle 8.7+, JDK 17 (required by the native 4.15.0 artifacts) |
 
 ## Installation
 
@@ -18,7 +18,7 @@ Add the dependency to your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  didit_sdk: ^4.14.7
+  didit_sdk: ^4.15.0
 ```
 
 Then run:
@@ -74,7 +74,7 @@ To use a smaller native SDK variant, depend on the matching variant package inst
 
 ```yaml
 dependencies:
-  didit_sdk_core: ^4.14.7 # or didit_sdk_autodetection / didit_sdk_nfc
+  didit_sdk_core: ^4.15.0 # or didit_sdk_autodetection / didit_sdk_nfc
 ```
 
 The `core` and `autodetection` variants allow an iOS 13.0 deployment target; `nfc` requires 15.0+ like the default.
@@ -105,7 +105,7 @@ didit_sdk_ios_pod = case $DiditSdkIosVariant
                       raise "Invalid $DiditSdkIosVariant '#{$DiditSdkIosVariant}'. Supported values: all, core, autodetection, nfc."
                     end
 didit_sdk_ios_pod += '-Location' if $DiditSdkIosLocationEnabled # only for workflows with a Location step
-didit_sdk_ios_podspec = 'https://raw.githubusercontent.com/didit-protocol/sdk-ios/4.14.7/DiditSDK.podspec'
+didit_sdk_ios_podspec = 'https://raw.githubusercontent.com/didit-protocol/sdk-ios/4.15.0/DiditSDK.podspec'
 
 target 'Runner' do
   use_frameworks!
