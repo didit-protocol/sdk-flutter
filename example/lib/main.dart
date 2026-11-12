@@ -1,3 +1,6 @@
+// The Material library moved to package:material_ui in newer Flutter releases;
+// the import still works, so the deprecation is acknowledged here.
+// ignore_for_file: deprecated_member_use
 import 'package:flutter/material.dart';
 import 'package:didit_sdk/sdk_flutter.dart';
 
