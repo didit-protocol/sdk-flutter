@@ -259,7 +259,7 @@ void main() {
       });
       expect(session.userId, 'user-1');
       expect(session.methods, ['passkey']);
-      expect(session.expiresAt, '2030-01-02T03:04:05Z');
+      expect(session.expiresAt, DateTime.utc(2030, 1, 2, 3, 4, 5));
     });
 
     test('sends the method asked for', () async {
