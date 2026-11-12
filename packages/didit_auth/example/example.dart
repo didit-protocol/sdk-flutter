@@ -21,6 +21,10 @@ Future<void> runAuthFlow() async {
     session ??= await auth.signIn();
     print('Signed in as ${session.userId} until ${session.expiresAt}');
 
+    // Ask the same person to sign in again, for example before adding a
+    // passkey. A different person signing in throws step_up_user_mismatch.
+    session = await auth.reauthenticate();
+
     // A five-minute token for your backend, renewed when needed.
     final token = await auth.getToken();
     print(
@@ -39,6 +43,10 @@ Future<void> runAuthFlow() async {
   } on DiditAuthException catch (error) {
     // A person closing the page is not an error.
     if (error.code == DiditAuthErrorCodes.cancelled) return;
+    if (error.code == DiditAuthErrorCodes.stepUpUserMismatch) {
+      print('A different person signed in; the stored session is unchanged');
+      return;
+    }
     if (error.code == DiditAuthErrorCodes.rateLimited) {
       print('Try again in ${error.retryAfter} seconds');
       return;

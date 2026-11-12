@@ -1,6 +1,7 @@
 package me.didit.auth.flutter
 
 import me.didit.sdk.auth.DiditAuthException
+import me.didit.sdk.auth.DiditReauthMethod
 import me.didit.sdk.auth.DiditSession
 import me.didit.sdk.auth.DiditStepUpAction
 import me.didit.sdk.auth.DiditStepUpResult
@@ -47,6 +48,13 @@ internal object AuthWire {
         "bank" -> DiditStepUpAction.BankAccount
         "contact" -> DiditStepUpAction.ContactChange
         else -> throw DiditAuthException("invalid_request", "Unknown step-up action: $action.")
+    }
+
+    /** The method of a re-authentication; no value is the native default, the hosted page. */
+    fun reauthMethod(method: String?): DiditReauthMethod = when (method) {
+        null, "hosted" -> DiditReauthMethod.HOSTED
+        "passkey" -> DiditReauthMethod.PASSKEY
+        else -> throw DiditAuthException("invalid_request", "Unknown re-authentication method: $method.")
     }
 
     fun sessionJson(session: DiditSession): String = toJson(

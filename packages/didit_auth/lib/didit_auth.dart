@@ -11,6 +11,7 @@ export 'src/models.dart'
         DiditContactStepUp,
         DiditOrganization,
         DiditPayoutStepUp,
+        DiditReauthMethod,
         DiditSession,
         DiditStepUpAction,
         DiditStepUpResult;

@@ -29,6 +29,14 @@ public class DiditAuthPlugin: NSObject, FlutterPlugin {
             forward(args, result) { auth in
                 try DiditAuthWire.sessionJson(try await auth.signInWithPasskey(from: try Self.presenter()))
             }
+        case "reauthenticate":
+            let method = args["method"] as? String
+            forward(args, result) { auth in
+                let reauthMethod = try DiditAuthWire.reauthMethod(method)
+                return try DiditAuthWire.sessionJson(
+                    try await auth.reauthenticate(method: reauthMethod, from: try Self.presenter())
+                )
+            }
         case "registerPasskey":
             forward(args, result) { auth in
                 try await auth.registerPasskey(from: try Self.presenter())

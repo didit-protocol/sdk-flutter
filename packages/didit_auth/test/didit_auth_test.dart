@@ -245,6 +245,76 @@ void main() {
     });
   });
 
+  group('reauthenticate', () {
+    test('defaults to the hosted page and parses the session', () async {
+      answer((_) async => jsonEncode(_sessionJson));
+
+      final session = await auth.reauthenticate();
+
+      expect(calls.single.method, 'reauthenticate');
+      expect(calls.single.arguments, {
+        'publishableKey': _key,
+        'redirectUri': _redirect,
+        'method': 'hosted',
+      });
+      expect(session.userId, 'user-1');
+      expect(session.methods, ['passkey']);
+      expect(session.expiresAt, '2030-01-02T03:04:05Z');
+    });
+
+    test('sends the method asked for', () async {
+      answer((_) async => jsonEncode(_sessionJson));
+
+      await auth.reauthenticate(method: DiditReauthMethod.hosted);
+      await auth.reauthenticate(method: DiditReauthMethod.passkey);
+
+      expect(calls.map((call) => call.arguments), [
+        {'publishableKey': _key, 'redirectUri': _redirect, 'method': 'hosted'},
+        {'publishableKey': _key, 'redirectUri': _redirect, 'method': 'passkey'},
+      ]);
+    });
+
+    for (final code in [
+      'not_signed_in',
+      'step_up_user_mismatch',
+      'cancelled',
+    ]) {
+      test('$code reaches Dart with its code', () async {
+        answer(
+          (_) async => throw PlatformException(code: code, message: 'm $code'),
+        );
+
+        await expectLater(
+          auth.reauthenticate(method: DiditReauthMethod.passkey),
+          throwsA(
+            isA<DiditAuthException>()
+                .having((e) => e.code, 'code', code)
+                .having((e) => e.message, 'message', 'm $code'),
+          ),
+        );
+      });
+    }
+
+    test('no answer from the native module is a server error', () async {
+      answer((_) async => null);
+
+      await expectLater(
+        auth.reauthenticate(),
+        throwsA(
+          isA<DiditAuthException>().having(
+            (e) => e.code,
+            'code',
+            DiditAuthErrorCodes.serverError,
+          ),
+        ),
+      );
+    });
+
+    test('the mismatch code has a constant', () {
+      expect(DiditAuthErrorCodes.stepUpUserMismatch, 'step_up_user_mismatch');
+    });
+  });
+
   group('stepUp', () {
     const resultJson = <String, Object?>{
       'id': 'step-up-1',
@@ -332,6 +402,7 @@ void main() {
       'cancelled',
       'invalid_state',
       'not_signed_in',
+      'step_up_user_mismatch',
       'passkey_cancelled',
       'passkey_unavailable',
       'browser_unavailable',
@@ -371,6 +442,7 @@ void main() {
         DiditAuthErrorCodes.cancelled,
         DiditAuthErrorCodes.invalidState,
         DiditAuthErrorCodes.notSignedIn,
+        DiditAuthErrorCodes.stepUpUserMismatch,
         DiditAuthErrorCodes.passkeyCancelled,
         DiditAuthErrorCodes.passkeyUnavailable,
         DiditAuthErrorCodes.browserUnavailable,
@@ -382,7 +454,7 @@ void main() {
         DiditAuthErrorCodes.networkError,
         DiditAuthErrorCodes.serverError,
         DiditAuthErrorCodes.unspecified,
-      }, nativeCodes.sublist(0, 14).toSet());
+      }, nativeCodes.sublist(0, 15).toSet());
       expect(DiditAuthErrorCodes.unavailable, 'ERR_DIDIT_AUTH_UNAVAILABLE');
     });
 
