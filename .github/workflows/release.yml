@@ -35,6 +35,8 @@ jobs:
           # guarantee this at fetch-depth 1).
           git fetch --quiet origin '+refs/tags/*:refs/tags/*'
           for f in pubspec.yaml packages/*/pubspec.yaml; do
+            # didit_auth has its own version and its own tag (release-auth.yml).
+            [ "$f" = "packages/didit_auth/pubspec.yaml" ] && continue
             v=$(sed -n 's/^version: //p' "$f")
             if [ "$v" != "$VERSION" ]; then
               echo "$f has version $v but the tag says $VERSION" >&2

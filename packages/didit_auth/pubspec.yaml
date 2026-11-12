@@ -1,0 +1,36 @@
+name: didit_auth
+description: Didit Authentication for Flutter. Sign end users up and in on the hosted Didit page with PKCE or with passkeys, keep sessions in the Keychain or Android Keystore, read tokens for your backend, sign out and run step-ups before sensitive actions.
+version: 0.1.0
+homepage: https://didit.me
+repository: https://github.com/didit-protocol/sdk-flutter/tree/main/packages/didit_auth
+issue_tracker: https://github.com/didit-protocol/sdk-flutter/issues
+documentation: https://docs.didit.me/authentication
+topics:
+  - authentication
+  - passkeys
+  - identity
+  - login
+  - didit
+
+environment:
+  sdk: ^3.11.0
+  flutter: '>=3.3.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  plugin_platform_interface: ^2.0.2
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+
+flutter:
+  plugin:
+    platforms:
+      android:
+        package: me.didit.auth.flutter
+        pluginClass: DiditAuthPlugin
+      ios:
+        pluginClass: DiditAuthPlugin
