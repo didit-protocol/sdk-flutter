@@ -13,7 +13,7 @@ Identity verification has its own package, [`didit_sdk`](https://pub.dev/package
 
 | Requirement | Minimum |
 |-------------|---------|
-| Flutter | 3.3 |
+| Flutter | 3.41 (the first release that includes Dart 3.11) |
 | Dart | 3.11 |
 | Android | API 23 (passkeys need Android 9 or later) |
 | iOS | 15.0 (the hosted pages need iOS 17.4 at run time) |

@@ -6,7 +6,7 @@ A Flutter plugin for Didit Identity Verification. Wraps the native iOS and Andro
 
 | Requirement | Minimum Version |
 |-------------|----------------|
-| Flutter | 3.3+ |
+| Flutter | 3.41+ |
 | Dart | 3.11+ |
 | iOS | 13.0+ (`all`/`nfc` variants require 15.0+) |
 | Android | API 23+ (6.0 Marshmallow) |
