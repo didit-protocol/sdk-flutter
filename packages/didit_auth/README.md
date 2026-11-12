@@ -5,7 +5,7 @@ Sign your app's end users up and in with the hosted Didit page (PKCE), or with a
 Sessions stay in the iOS Keychain or the Android Keystore.
 Read an access token for your backend, sign out, and run a step-up before a sensitive action.
 
-This package wraps the native DiditAuth modules (`me.didit:didit-auth` on Android, `DiditSDK/Auth` or the `DiditAuth` Swift package product on iOS), pinned to native release **4.15.0**.
+This package wraps the native DiditAuth modules (`me.didit:didit-auth` on Android, `DiditSDK/Auth` or the `DiditAuth` Swift package product on iOS), pinned to native release **4.15.1**.
 It has the same calls, result shapes and error codes as the React Native package.
 Identity verification has its own package, [`didit_sdk`](https://pub.dev/packages/didit_sdk); both can be installed in one app because they pin the same native release.
 
@@ -44,7 +44,7 @@ Register the redirect URI and copy the publishable key in the Didit console (Aut
 
 ### Android
 
-Nothing else is needed: the plugin adds Didit's Maven repository (`https://raw.githubusercontent.com/didit-protocol/sdk-android/main/repository`, group `me.didit` only) to your build and resolves `me.didit:didit-auth:4.15.0` from it.
+Nothing else is needed: the plugin adds Didit's Maven repository (`https://raw.githubusercontent.com/didit-protocol/sdk-android/main/repository`, group `me.didit` only) to your build and resolves `me.didit:didit-auth:4.15.1` from it.
 Declare the redirect activity in your app's `AndroidManifest.xml` as the quickstart shows.
 
 ### iOS
@@ -59,7 +59,7 @@ platform :ios, '15.0'
 target 'Runner' do
   use_frameworks!
 
-  pod 'DiditSDK/Auth', :podspec => 'https://raw.githubusercontent.com/didit-protocol/sdk-ios/4.15.0/DiditSDK.podspec'
+  pod 'DiditSDK/Auth', :podspec => 'https://raw.githubusercontent.com/didit-protocol/sdk-ios/4.15.1/DiditSDK.podspec'
 
   flutter_install_all_ios_pods File.dirname(File.realpath(__FILE__))
 end

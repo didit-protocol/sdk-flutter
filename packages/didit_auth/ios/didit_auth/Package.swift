@@ -15,7 +15,7 @@ let package = Package(
     dependencies: [
         // The native release this plugin pins; ios/didit_auth.podspec and
         // android/build.gradle.kts pin the same one.
-        .package(url: "https://github.com/didit-protocol/sdk-ios.git", exact: "4.15.0")
+        .package(url: "https://github.com/didit-protocol/sdk-ios.git", exact: "4.15.1")
     ],
     targets: [
         .target(

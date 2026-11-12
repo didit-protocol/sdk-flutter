@@ -4,7 +4,7 @@ version = "1.0-SNAPSHOT"
 // The one place that pins the native DiditAuth release (me.didit:didit-auth).
 // ios/didit_auth.podspec and ios/didit_auth/Package.swift pin the same release;
 // test/native_pin_test.dart keeps the three equal.
-val diditAuthNativeVersion = "4.15.0"
+val diditAuthNativeVersion = "4.15.1"
 
 buildscript {
     val kotlinVersion = "2.2.20"
