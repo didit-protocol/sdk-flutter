@@ -1,15 +1,15 @@
 PODS:
-  - didit_sdk (4.15.0):
-    - DiditSDK/All (= 4.15.0)
+  - didit_sdk (4.15.1):
+    - DiditSDK/All (= 4.15.1)
     - Flutter
-  - DiditSDK/All (4.15.0)
+  - DiditSDK/All (4.15.1)
   - Flutter (1.0.0)
   - integration_test (0.0.1):
     - Flutter
 
 DEPENDENCIES:
   - didit_sdk (from `.symlinks/plugins/didit_sdk/ios`)
-  - DiditSDK/All (from `https://raw.githubusercontent.com/didit-protocol/sdk-ios/4.15.0/DiditSDK.podspec`)
+  - DiditSDK/All (from `https://raw.githubusercontent.com/didit-protocol/sdk-ios/4.15.1/DiditSDK.podspec`)
   - Flutter (from `Flutter`)
   - integration_test (from `.symlinks/plugins/integration_test/ios`)
 
@@ -17,18 +17,18 @@ EXTERNAL SOURCES:
   didit_sdk:
     :path: ".symlinks/plugins/didit_sdk/ios"
   DiditSDK:
-    :podspec: https://raw.githubusercontent.com/didit-protocol/sdk-ios/4.15.0/DiditSDK.podspec
+    :podspec: https://raw.githubusercontent.com/didit-protocol/sdk-ios/4.15.1/DiditSDK.podspec
   Flutter:
     :path: Flutter
   integration_test:
     :path: ".symlinks/plugins/integration_test/ios"
 
 SPEC CHECKSUMS:
-  didit_sdk: 4d8237807f1155e788fd40f255409f645ae1682b
-  DiditSDK: ec2acca36fd871cd6a89a2ae3dd7905a6963b68a
+  didit_sdk: f2c8ed1c5280508847c2da97ac4967f5ff9a04ee
+  DiditSDK: c6b320c7eaec9ca8a36d3732d8bdb75ca56e459e
   Flutter: cabc95a1d2626b1b06e7179b784ebcf0c0cde467
   integration_test: 4a889634ef21a45d28d50d622cf412dc6d9f586e
 
-PODFILE CHECKSUM: 2eb867a5dad8db9b073be25bdf64a20c35ae1506
+PODFILE CHECKSUM: 2a5d1d2183aea112dd55260f53a201282df3e46e
 
 COCOAPODS: 1.16.2

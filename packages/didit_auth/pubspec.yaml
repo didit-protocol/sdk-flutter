@@ -1,6 +1,6 @@
 name: didit_auth
 description: Didit Authentication for Flutter. Sign end users up and in on the hosted Didit page with PKCE or with passkeys, keep sessions in the Keychain or Android Keystore, read tokens for your backend, sign out and run step-ups before sensitive actions.
-version: 0.1.0
+version: 0.1.1
 homepage: https://didit.me
 repository: https://github.com/didit-protocol/sdk-flutter/tree/main/packages/didit_auth
 issue_tracker: https://github.com/didit-protocol/sdk-flutter/issues
