@@ -1,5 +1,9 @@
+// ignore_for_file: avoid_print
+// Every call of Didit Authentication, in the order an app uses them. Call
+// `runAuthFlow` from a button handler of your app; `signIn` and `stepUp` open
+// the hosted Didit page, so they need a running app with a screen in the
+// foreground.
 import 'package:didit_auth/didit_auth.dart';
-import 'package:flutter/material.dart';
 
 // One client per application; reuse it.
 const auth = DiditAuth(
@@ -7,99 +11,38 @@ const auth = DiditAuth(
   redirectUri: 'https://app.example.com/didit/callback',
 );
 
-void main() => runApp(const MaterialApp(home: SignInPage()));
+Future<void> runAuthFlow() async {
+  try {
+    // Is somebody already signed in? Null when not.
+    var session = await auth.currentSession();
 
-class SignInPage extends StatefulWidget {
-  const SignInPage({super.key});
+    // Hosted page: sign-up and sign-in. A passkey of this device also works:
+    // await auth.signInWithPasskey();
+    session ??= await auth.signIn();
+    print('Signed in as ${session.userId} until ${session.expiresAt}');
 
-  @override
-  State<SignInPage> createState() => _SignInPageState();
-}
+    // A five-minute token for your backend, renewed when needed.
+    final token = await auth.getToken();
+    print(
+      'Send ${token?.length ?? 0} characters to your backend as a Bearer token',
+    );
 
-class _SignInPageState extends State<SignInPage> {
-  DiditSession? _session;
-  String? _message;
-
-  @override
-  void initState() {
-    super.initState();
-    _refresh();
-  }
-
-  Future<void> _refresh() => _run(() async {
-    _session = await auth.currentSession();
-  });
-
-  Future<void> _signIn() => _run(() async {
-    _session = await auth.signIn();
-  });
-
-  Future<void> _signInWithPasskey() => _run(() async {
-    _session = await auth.signInWithPasskey();
-  });
-
-  Future<void> _signOut() => _run(() async {
-    await auth.signOut();
-    _session = null;
-  });
-
-  Future<void> _payout() => _run(() async {
+    // Before a sensitive action, run the step-up your rules ask for.
     final result = await auth.stepUp(
       const DiditPayoutStepUp(amount: '900.00', currency: 'EUR'),
     );
-    // Your backend confirms with GET step-up/{id}/ before it pays out.
-    _message = result.approved ? 'Step-up passed' : 'Step-up ${result.status}';
-  });
-
-  /// Runs a call, shows its failure by code, and redraws.
-  Future<void> _run(Future<void> Function() call) async {
-    String? message;
-    try {
-      await call();
-    } on DiditAuthException catch (error) {
-      // A person closing the page is not an error.
-      if (error.code != DiditAuthErrorCodes.cancelled) {
-        message = '${error.code}: ${error.message}';
-      }
+    if (result.approved) {
+      // Your backend confirms with GET step-up/{result.id}/ before it pays out.
     }
-    if (!mounted) return;
-    setState(() => _message = message ?? _message);
-  }
 
-  @override
-  Widget build(BuildContext context) {
-    final session = _session;
-    return Scaffold(
-      appBar: AppBar(title: const Text('Didit Authentication')),
-      body: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          spacing: 12,
-          children: [
-            Text(
-              session == null ? 'Signed out' : 'Signed in as ${session.userId}',
-            ),
-            if (_message != null) Text(_message!),
-            if (session == null) ...[
-              FilledButton(onPressed: _signIn, child: const Text('Sign in')),
-              OutlinedButton(
-                onPressed: _signInWithPasskey,
-                child: const Text('Sign in with a passkey'),
-              ),
-            ] else ...[
-              FilledButton(
-                onPressed: _payout,
-                child: const Text('Pay out 900.00 EUR'),
-              ),
-              OutlinedButton(
-                onPressed: _signOut,
-                child: const Text('Sign out'),
-              ),
-            ],
-          ],
-        ),
-      ),
-    );
+    await auth.signOut();
+  } on DiditAuthException catch (error) {
+    // A person closing the page is not an error.
+    if (error.code == DiditAuthErrorCodes.cancelled) return;
+    if (error.code == DiditAuthErrorCodes.rateLimited) {
+      print('Try again in ${error.retryAfter} seconds');
+      return;
+    }
+    print('${error.code}: ${error.message}');
   }
 }
