@@ -1,3 +1,11 @@
+## 4.15.3
+
+Pins the iOS and Android native SDKs exactly to 4.15.3.
+No Dart API changes. The native changes run inside the existing start-verification call and return the same `VerificationResult`.
+
+- The Travel Rule transfer step asks for the wallet choice before Continue, resumes the company list with the earlier answer after the proof step, and guards against sending twice, as the web flow does.
+
+
 ## 4.15.1
 
 Pins the iOS and Android native SDKs exactly to 4.15.1.
