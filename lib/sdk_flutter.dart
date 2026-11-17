@@ -164,6 +164,7 @@ class DiditSdk {
   ///   config: DiditConfig(loggingEnabled: true),
   /// );
   /// ```
+  ///
   /// While a verification is running, calling this again with the same
   /// workflow, vendor data and config returns that verification's future;
   /// calling it with anything else resolves [VerificationFailed] with "A
