@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 
@@ -18,6 +20,72 @@ export 'src/types.dart';
 /// - [submitTransaction] — with a transaction SDK token from your backend
 /// - [getTransaction] — fetch a submitted transaction's current state
 class DiditSdk {
+  /// One verification at a time.
+  ///
+  /// A verification owns the screen until its native presentation goes away, so
+  /// a second one started meanwhile behaves differently on each platform: the
+  /// Android plugin opens a second verification UI, and on iOS the new
+  /// presentation supersedes the first one, whose Dart future then never
+  /// settles. Callers reach this by calling twice, for example on a double tap.
+  static _ActiveVerification? _activeVerification;
+
+  static VerificationResult _verificationAlreadyInProgress() =>
+      const VerificationFailed(
+        error: VerificationError(
+          type: VerificationErrorType.unknown,
+          message: 'A verification is already in progress.',
+        ),
+      );
+
+  /// Identifies the verification a call would start, so a repeat of the same
+  /// call can join it while anything else is rejected.
+  ///
+  /// The config map is flattened in a fixed key order: the same options passed
+  /// in a different order must not read as a different verification.
+  static String _verificationKey(
+    String kind,
+    List<String?> identity,
+    Map<String, dynamic> config,
+  ) {
+    final sortedConfig = <String, dynamic>{
+      for (final key in config.keys.toList()..sort()) key: config[key],
+    };
+    return jsonEncode([kind, ...identity, sortedConfig]);
+  }
+
+  /// Runs [start] as the one verification in flight.
+  ///
+  /// An identical repeat call returns the running verification's own future, so
+  /// every caller gets the same result. A different call resolves as failed
+  /// without reaching the platform. The guard is released as soon as [start]
+  /// settles, including when it throws or its future fails.
+  ///
+  /// Not `async`: the guard has to be in place before the first call returns to
+  /// its caller, or two calls in the same event-loop turn both pass the check.
+  static Future<VerificationResult> _startExclusively(
+    String key,
+    Future<Map<String, dynamic>> Function() start,
+  ) {
+    final inFlight = _activeVerification;
+    if (inFlight != null) {
+      return inFlight.key == key
+          ? inFlight.result
+          : Future<VerificationResult>.value(_verificationAlreadyInProgress());
+    }
+
+    final entry = _ActiveVerification(
+      key,
+      Future<Map<String, dynamic>>.sync(start).then(VerificationResult.fromMap),
+    );
+    _activeVerification = entry;
+    void release() {
+      if (identical(_activeVerification, entry)) _activeVerification = null;
+    }
+
+    entry.result.then((_) => release(), onError: (_) => release());
+    return entry.result;
+  }
+
   static Map<String, dynamic> _verificationConfig(DiditConfig? config) {
     final resolvedConfig = config?.toMap() ?? <String, dynamic>{};
     resolvedConfig.putIfAbsent('languageCode', _deviceLanguageCode);
@@ -59,6 +127,11 @@ class DiditSdk {
   /// The returned future completes when the user finishes, cancels, or
   /// encounters an error during the verification flow.
   ///
+  /// While a verification is running, calling this again with the same token
+  /// and config returns that verification's future; calling it with anything
+  /// else resolves [VerificationFailed] with "A verification is already in
+  /// progress." without starting a second verification.
+  ///
   /// Example:
   /// ```dart
   /// final result = await DiditSdk.startVerification('session-token');
@@ -69,12 +142,13 @@ class DiditSdk {
   static Future<VerificationResult> startVerification(
     String token, {
     DiditConfig? config,
-  }) async {
-    final raw = await SdkFlutterPlatform.instance.startVerification(
-      token,
-      _verificationConfig(config),
+  }) {
+    final resolvedConfig = _verificationConfig(config);
+    return _startExclusively(
+      _verificationKey('token', [token], resolvedConfig),
+      () =>
+          SdkFlutterPlatform.instance.startVerification(token, resolvedConfig),
     );
-    return VerificationResult.fromMap(raw);
   }
 
   /// Start identity verification by creating a new session with a workflow ID.
@@ -90,17 +164,24 @@ class DiditSdk {
   ///   config: DiditConfig(loggingEnabled: true),
   /// );
   /// ```
+  /// While a verification is running, calling this again with the same
+  /// workflow, vendor data and config returns that verification's future;
+  /// calling it with anything else resolves [VerificationFailed] with "A
+  /// verification is already in progress." without starting a second one.
   static Future<VerificationResult> startVerificationWithWorkflow(
     String workflowId, {
     String? vendorData,
     DiditConfig? config,
-  }) async {
-    final raw = await SdkFlutterPlatform.instance.startVerificationWithWorkflow(
-      workflowId,
-      vendorData,
-      _verificationConfig(config),
+  }) {
+    final resolvedConfig = _verificationConfig(config);
+    return _startExclusively(
+      _verificationKey('workflow', [workflowId, vendorData], resolvedConfig),
+      () => SdkFlutterPlatform.instance.startVerificationWithWorkflow(
+        workflowId,
+        vendorData,
+        resolvedConfig,
+      ),
     );
-    return VerificationResult.fromMap(raw);
   }
 
   static int _transactionCallCounter = 0;
@@ -203,4 +284,11 @@ class DiditSdk {
       throw DiditTransactionException.fromPlatformException(e);
     }
   }
+}
+
+class _ActiveVerification {
+  const _ActiveVerification(this.key, this.result);
+
+  final String key;
+  final Future<VerificationResult> result;
 }
