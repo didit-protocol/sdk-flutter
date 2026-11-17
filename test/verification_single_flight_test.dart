@@ -49,16 +49,14 @@ class _SynchronouslyThrowingPlatform
     String transactionToken,
     Map<String, dynamic> transaction,
     Map<String, dynamic> options,
-  ) =>
-      throw UnimplementedError();
+  ) => throw UnimplementedError();
 
   @override
   Future<Map<String, dynamic>> getTransaction(
     String transactionToken,
     String transactionId,
     Map<String, dynamic> options,
-  ) =>
-      throw UnimplementedError();
+  ) => throw UnimplementedError();
 
   @override
   void setTransactionUpdateHandler(
@@ -82,8 +80,6 @@ void main() {
   void answerFromNative(Map<String, dynamic> result) =>
       inFlight.removeAt(0).complete(result);
 
-  void failFromNative(Object error) => inFlight.removeAt(0).completeError(error);
-
   setUp(() {
     nativeCalls = <MethodCall>[];
     inFlight = <Completer<Map<String, dynamic>>>[];
@@ -102,32 +98,34 @@ void main() {
         .setMockMethodCallHandler(channel, null);
   });
 
-  test('an identical startVerification call joins the running verification',
-      () async {
-    final first = DiditSdk.startVerification(
-      'token-a',
-      config: _config('es'),
-    );
-    final second = DiditSdk.startVerification(
-      'token-a',
-      config: _config('es'),
-    );
-    await _settle();
+  test(
+    'an identical startVerification call joins the running verification',
+    () async {
+      final first = DiditSdk.startVerification(
+        'token-a',
+        config: _config('es'),
+      );
+      final second = DiditSdk.startVerification(
+        'token-a',
+        config: _config('es'),
+      );
+      await _settle();
 
-    expect(nativeCalls, hasLength(1));
-    expect(nativeCalls.single.method, 'startVerification');
+      expect(nativeCalls, hasLength(1));
+      expect(nativeCalls.single.method, 'startVerification');
 
-    answerFromNative(completed);
+      answerFromNative(completed);
 
-    final results = await Future.wait([first, second]);
-    expect(results[0], isA<VerificationCompleted>());
-    expect(results[1], isA<VerificationCompleted>());
-    expect(identical(results[0], results[1]), isTrue);
-    expect(
-      (results[1] as VerificationCompleted).session.sessionId,
-      'test-session',
-    );
-  });
+      final results = await Future.wait([first, second]);
+      expect(results[0], isA<VerificationCompleted>());
+      expect(results[1], isA<VerificationCompleted>());
+      expect(identical(results[0], results[1]), isTrue);
+      expect(
+        (results[1] as VerificationCompleted).session.sessionId,
+        'test-session',
+      );
+    },
+  );
 
   test('an identical startVerificationWithWorkflow call joins the running '
       'verification', () async {
@@ -157,10 +155,21 @@ void main() {
     await _settle();
     expect(nativeCalls, hasLength(1));
 
+    final otherToken = DiditSdk.startVerification('token-b');
+    final otherConfig = DiditSdk.startVerification(
+      'token-a',
+      config: _config('fr'),
+    );
+    final otherWorkflow = DiditSdk.startVerificationWithWorkflow('workflow-a');
+    await _settle();
+
+    // Nothing else may reach the platform while the first verification runs.
+    expect(nativeCalls, hasLength(1));
+
     final blocked = <VerificationResult>[
-      await DiditSdk.startVerification('token-b'),
-      await DiditSdk.startVerification('token-a', config: _config('fr')),
-      await DiditSdk.startVerificationWithWorkflow('workflow-a'),
+      await otherToken,
+      await otherConfig,
+      await otherWorkflow,
     ];
 
     for (final result in blocked) {
@@ -190,40 +199,50 @@ void main() {
     expect(await second, isA<VerificationCompleted>());
   });
 
-  test('rejects every joined caller and releases when the native call fails',
-      () async {
-    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
-        .setMockMethodCallHandler(channel, (MethodCall call) {
-          nativeCalls.add(call);
-          return Future<Map<String, dynamic>>.error(
-            PlatformException(code: 'native_failure', message: 'native failure'),
-          );
-        });
+  test(
+    'rejects every joined caller and releases when the native call fails',
+    () async {
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(channel, (MethodCall call) {
+            nativeCalls.add(call);
+            return Future<Map<String, dynamic>>.error(
+              PlatformException(
+                code: 'native_failure',
+                message: 'native failure',
+              ),
+            );
+          });
 
-    final first = DiditSdk.startVerification('token-a');
-    final second = DiditSdk.startVerification('token-a');
-    await _settle();
-    expect(nativeCalls, hasLength(1));
+      final first = DiditSdk.startVerification('token-a');
+      final second = DiditSdk.startVerification('token-a');
+      // Listen before the failure lands, so the error is never unhandled.
+      final expectations = <Future<void>>[
+        expectLater(first, throwsA(isA<PlatformException>())),
+        expectLater(second, throwsA(isA<PlatformException>())),
+      ];
 
-    await expectLater(first, throwsA(isA<PlatformException>()));
-    await expectLater(second, throwsA(isA<PlatformException>()));
+      await _settle();
+      expect(nativeCalls, hasLength(1));
 
-    nativeCalls.clear();
-    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
-        .setMockMethodCallHandler(channel, (MethodCall call) {
-          nativeCalls.add(call);
-          final completer = Completer<Map<String, dynamic>>();
-          inFlight.add(completer);
-          return completer.future;
-        });
+      await Future.wait(expectations);
 
-    final third = DiditSdk.startVerification('token-b');
-    await _settle();
-    expect(nativeCalls, hasLength(1));
+      nativeCalls.clear();
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(channel, (MethodCall call) {
+            nativeCalls.add(call);
+            final completer = Completer<Map<String, dynamic>>();
+            inFlight.add(completer);
+            return completer.future;
+          });
 
-    answerFromNative(completed);
-    expect(await third, isA<VerificationCompleted>());
-  });
+      final third = DiditSdk.startVerification('token-b');
+      await _settle();
+      expect(nativeCalls, hasLength(1));
+
+      answerFromNative(completed);
+      expect(await third, isA<VerificationCompleted>());
+    },
+  );
 
   test('releases when the platform call throws synchronously', () async {
     final throwing = _SynchronouslyThrowingPlatform();
