@@ -1,0 +1,4 @@
+/* Spanish usage descriptions for the location keys in Info.plist. */
+"NSLocationWhenInUseUsageDescription" = "Tu ubicación se usa para confirmar dónde estás en esta verificación.";
+/* Purpose key of NSLocationTemporaryUsageDescriptionDictionary, looked up here by Core Location. */
+"DiditLocationVerification" = "Esta verificación necesita tu ubicación precisa una vez.";
