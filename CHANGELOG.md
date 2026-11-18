@@ -1,3 +1,15 @@
+## 4.15.5
+
+Pins the iOS and Android native SDKs exactly to 4.15.5.
+No Dart API changes. The native changes run inside the existing start-verification call and return the same `VerificationResult`.
+
+- Workflows that ask for the same face step twice no longer list two identical selfie rows on the welcome screen. They now read "Selfie 1 of 2" and "Selfie 2 of 2".
+- Questionnaire branching: an empty Else step no longer breaks SDK initialization, and the Else path no longer shows before a country is chosen.
+- Bank: a failed ownership check no longer shows a linked account when the result is kept private.
+- The session status connection now spreads out its reconnect delay, so many devices reconnecting after a service restart no longer arrive in synchronized waves.
+- Phone: when the number typed reads as a mobile number from another country, the SDK offers the suggested number, as the web flow does.
+
+
 ## 4.15.4
 
 Pins the iOS and Android native SDKs exactly to 4.15.4.
