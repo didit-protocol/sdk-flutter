@@ -1,0 +1,90 @@
+name: Release didit_auth
+
+# didit_auth has its own version, unlike the didit_sdk packages that share the
+# native SDK's version and release together (release.yml, tags v*). A tag
+# didit_auth-v<version> releases only it. The tag does not match release.yml's
+# v* trigger.
+on:
+  push:
+    tags: ['didit_auth-v*']
+
+permissions:
+  contents: write
+
+jobs:
+  github-release:
+    name: Create the GitHub Release from the changelog
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+
+      - name: Verify tag matches the pubspec and changelog, create release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          TAG="${GITHUB_REF_NAME}"
+          VERSION="${TAG#didit_auth-v}"
+          v=$(sed -n 's/^version: //p' packages/didit_auth/pubspec.yaml)
+          if [ "$v" != "$VERSION" ]; then
+            echo "packages/didit_auth/pubspec.yaml has version $v but the tag says $VERSION" >&2
+            exit 1
+          fi
+          awk -v ver="$VERSION" '$0 == "## " ver {f=1; next} /^## /{f=0} f' packages/didit_auth/CHANGELOG.md > /tmp/notes.md
+          if ! grep -q '[^[:space:]]' /tmp/notes.md; then
+            echo "Missing packages/didit_auth/CHANGELOG.md section for $VERSION." >&2
+            exit 1
+          fi
+          if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            echo "Release $TAG already exists - nothing to do."
+            exit 0
+          fi
+          # Never takes the Latest badge: that belongs to the didit_sdk releases.
+          case "${VERSION%%+*}" in
+            *-*) FLAGS="--prerelease --latest=false" ;;
+            *) FLAGS="--latest=false" ;;
+          esac
+          gh release create "$TAG" --repo "$GITHUB_REPOSITORY" --verify-tag $FLAGS \
+            --title "didit_auth ${VERSION}" --notes-file /tmp/notes.md
+
+  publish-pub-dev:
+    name: Publish didit_auth to pub.dev
+    # DISABLED until a person with publisher rights has published the first
+    # version by hand and enabled automated publishing for didit_auth on pub.dev
+    # (Admin -> Automated publishing -> "Publishing from GitHub Actions",
+    # repository didit-protocol/sdk-flutter, tag pattern didit_auth-v{{version}}),
+    # then set the repository variable PUB_DEV_AUTOPUBLISH_DIDIT_AUTH=true.
+    # No secrets involved: pub.dev exchanges the GitHub OIDC token per run.
+    if: vars.PUB_DEV_AUTOPUBLISH_DIDIT_AUTH == 'true'
+    needs: github-release
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    # A job-level permissions block REPLACES the workflow-level one.
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+
+      # setup-dart performs the pub.dev OIDC exchange.
+      - uses: dart-lang/setup-dart@65eb853c7ba17dde3be364c3d2858773e7144260 # v1
+
+      - uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2
+        with:
+          channel: stable
+          cache: true
+
+      # Idempotent: a re-run after a partial failure skips a published version.
+      - name: Publish
+        working-directory: packages/didit_auth
+        run: |
+          set -euo pipefail
+          VERSION="${GITHUB_REF_NAME#didit_auth-v}"
+          if curl -sf "https://pub.dev/api/packages/didit_auth" \
+            | python3 -c 'import json,sys; vs={v["version"] for v in json.load(sys.stdin)["versions"]}; sys.exit(0 if sys.argv[1] in vs else 1)' "$VERSION"; then
+            echo "didit_auth $VERSION is already on pub.dev - skipping."
+            exit 0
+          fi
+          flutter pub get
+          flutter pub publish --force
