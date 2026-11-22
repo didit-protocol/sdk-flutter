@@ -85,7 +85,7 @@ internal class BankLinkBridgeTest {
         )
         bridge.emit(BankLinkWire.Event("exit", mapOf("reason" to "closed", "link_id" to "link-1")))
 
-        assertEquals(
+        assertEquals<List<Any?>>(
             listOf(
                 mapOf(
                     "name" to "opened",
@@ -113,7 +113,7 @@ internal class BankLinkBridgeTest {
             )
         )
 
-        assertEquals(
+        assertEquals<List<Any?>>(
             listOf(
                 mapOf(
                     "type" to "success",
@@ -137,7 +137,7 @@ internal class BankLinkBridgeTest {
             call("presentBankLink", mapOf("token" to "blt_Hs8Pa4Rb6Ye0Gf2Jc7Qm3Zx9Vd2Lc5W"))
             bridge.finish(BankLinkWire.Outcome.Exit(reason, "bank_hop", false))
 
-            assertEquals(
+            assertEquals<List<Any?>>(
                 listOf(
                     mapOf(
                         "type" to "exit",
@@ -199,7 +199,7 @@ internal class BankLinkBridgeTest {
 
         call("resumeBankLink", null)
 
-        assertEquals(
+        assertEquals<List<Any?>>(
             listOf(
                 mapOf(
                     "type" to "success",
