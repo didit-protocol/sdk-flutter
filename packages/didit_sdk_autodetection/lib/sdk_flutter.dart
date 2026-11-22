@@ -252,6 +252,10 @@ class DiditSdk {
   /// what a bridge that cannot answer says, so a host never has to special-case
   /// an SDK version without Bank Link.
   static Future<BankLinkResult?> resumeBankLink() async {
+    // A link is already open: calling native here would replace the running
+    // flow's callbacks before native knows whether anything is pending, and
+    // the presenting future would never settle.
+    if (_activeBankLink != null) return null;
     try {
       final raw = await SdkFlutterPlatform.instance.resumeBankLink();
       return raw == null ? null : BankLinkResult.fromMap(raw);
