@@ -23,6 +23,18 @@ val diditSdkAndroidRepositoryUrl = (
         ?: findProperty("diditSdkAndroidRepositoryUrl")
     )?.toString()
 
+// Bank Link hand-off. The released native AAR (4.15.6) does not carry
+// `DiditSdk.presentBankLink` yet - it lands with mobile-sdks DID-12137 - so the
+// plugin ships `src/bankLinkOff/kotlin`: a bridge that answers "unavailable" and
+// leaves Dart's BankLinkExit(failed) as the only visible effect. The real
+// hand-off in `src/bankLinkOn/kotlin` compiles against the AAR that carries Bank
+// Link, and `-PdiditSdkBankLink=true` is the one switch the native pin flips,
+// together with `diditSdkAndroidVersion` above.
+val diditSdkBankLink = (
+    rootProject.findProperty("diditSdkBankLink")
+        ?: findProperty("diditSdkBankLink")
+    )?.toString()?.toBoolean() ?: false
+
 buildscript {
     val kotlinVersion = "2.2.20"
     repositories {
@@ -81,6 +93,7 @@ android {
     sourceSets {
         getByName("main") {
             java.srcDirs("src/main/kotlin")
+            java.srcDir(if (diditSdkBankLink) "src/bankLinkOn/kotlin" else "src/bankLinkOff/kotlin")
         }
         getByName("test") {
             java.srcDirs("src/test/kotlin")
