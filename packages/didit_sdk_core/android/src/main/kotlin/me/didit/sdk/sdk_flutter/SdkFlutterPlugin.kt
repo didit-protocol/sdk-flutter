@@ -6,6 +6,7 @@ import io.flutter.embedding.engine.plugins.activity.ActivityAware
 import io.flutter.embedding.engine.plugins.activity.ActivityPluginBinding
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
+import io.flutter.plugin.common.EventChannel
 import io.flutter.plugin.common.MethodChannel.MethodCallHandler
 import io.flutter.plugin.common.MethodChannel.Result
 import kotlinx.coroutines.CoroutineScope
@@ -37,6 +38,7 @@ class SdkFlutterPlugin :
     ActivityAware {
 
     private lateinit var channel: MethodChannel
+    private var bankLinkEvents: EventChannel.EventSink? = null
     private var activity: Activity? = null
     private var applicationContext: android.content.Context? = null
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
@@ -46,6 +48,16 @@ class SdkFlutterPlugin :
     override fun onAttachedToEngine(binding: FlutterPlugin.FlutterPluginBinding) {
         channel = MethodChannel(binding.binaryMessenger, "didit_sdk")
         channel.setMethodCallHandler(this)
+        EventChannel(binding.binaryMessenger, "didit_sdk/bank_link_events")
+            .setStreamHandler(object : EventChannel.StreamHandler {
+                override fun onListen(arguments: Any?, events: EventChannel.EventSink?) {
+                    bankLinkEvents = events
+                }
+
+                override fun onCancel(arguments: Any?) {
+                    bankLinkEvents = null
+                }
+            })
         applicationContext = binding.applicationContext
 
         if (!DiditSdk.isInitialized()) {
@@ -55,6 +67,7 @@ class SdkFlutterPlugin :
 
     override fun onDetachedFromEngine(binding: FlutterPlugin.FlutterPluginBinding) {
         channel.setMethodCallHandler(null)
+        bankLinkEvents = null
         applicationContext = null
     }
 
@@ -84,6 +97,9 @@ class SdkFlutterPlugin :
             "startVerificationWithWorkflow" -> handleStartVerificationWithWorkflow(call, result)
             "submitTransaction" -> handleSubmitTransaction(call, result)
             "getTransaction" -> handleGetTransaction(call, result)
+            "presentBankLink" -> handlePresentBankLink(call, result)
+            "resumeBankLink" -> handleResumeBankLink(result)
+            "handleBankLinkReturn" -> handleBankLinkReturn(call, result)
             else -> result.notImplemented()
         }
     }
@@ -255,6 +271,56 @@ class SdkFlutterPlugin :
             "errorMessage" to (e.message ?: "An unexpected error occurred.")
         )
         result.success(errorResult)
+    }
+
+    // ── Bank Link ────────────────────────────────────────────────────────────
+    //
+    // The wrapper adds no flow of its own: the native SDK owns every screen of
+    // Bank Link, its copy and its state machine, and reports the flow's events
+    // through the `didit_sdk/bank_link_events` channel registered above.
+    // The hand-off into the native
+    // `DiditSdk.presentBankLink(activity, token, configuration, onEvent, onResult)`
+    // lands with the native version that carries Bank Link; until one is pinned,
+    // opening a link answers `unavailable`, which the Dart side reads as a
+    // `failed` exit - the same answer the native layer gives when it cannot open
+    // a link.
+
+    private fun handlePresentBankLink(call: MethodCall, result: Result) {
+        val token = call.argument<String>("token")
+        if (token == null) {
+            result.error("INVALID_ARGUMENT", "Token is required", null)
+            return
+        }
+        if (activity == null) {
+            result.error(
+                "unavailable",
+                "No active Activity to present a Bank Link from.",
+                null
+            )
+            return
+        }
+        result.error(
+            "unavailable",
+            "This version of the native Didit SDK does not carry Bank Link.",
+            null
+        )
+    }
+
+    private fun handleResumeBankLink(result: Result) {
+        // Nothing to resume: a native layer without Bank Link kept no link, and
+        // the Dart side reads null as "nothing pending".
+        result.success(null)
+    }
+
+    private fun handleBankLinkReturn(call: MethodCall, result: Result) {
+        val url = call.argument<String>("url")
+        if (url == null) {
+            result.error("INVALID_ARGUMENT", "url is required", null)
+            return
+        }
+        // The address reaches the native handler unchanged once Bank Link is
+        // pinned; nothing here splits or validates it.
+        result.success(false)
     }
 
     // ── Transactions ─────────────────────────────────────────────────────────
