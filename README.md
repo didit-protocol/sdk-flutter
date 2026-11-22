@@ -549,13 +549,13 @@ if (resumed is BankLinkSuccess) {
 | `opened` | `link_id`, `mode`, `access`, `presentation` |
 | `consent_shown` | `link_id`, `consent_version` |
 | `consent_accepted` | `link_id`, `consent_version` |
-| `institution_selected` | `institution_id`, `country` |
-| `bank_redirect` | `via` |
-| `bank_returned` | `result` |
-| `accounts_selected` | `count` |
+| `institution_selected` | `link_id`, `institution_id`, `country` |
+| `bank_redirect` | `link_id`, `via` |
+| `bank_returned` | `link_id`, `result` |
+| `accounts_selected` | `link_id`, `count` |
 | `success` | `link_id`, `connection_id`, `check_id` |
-| `exit` | `reason`, `step` |
-| `error` | `code` |
+| `exit` | `link_id`, `reason`, `step` |
+| `error` | `link_id`, `code` |
 
 Events carry ids only: never a name, a token, an email or an account number. A name a newer native SDK adds reaches the stream as it is. Once a bank is picked, the native screens show its name from the session state (`detail.institution_name`); the stream still carries only its `institution_id`.
 

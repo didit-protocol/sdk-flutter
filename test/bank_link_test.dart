@@ -14,13 +14,13 @@ const _eventPayloadKeys = <String, Set<String>>{
   'opened': {'link_id', 'mode', 'access', 'presentation'},
   'consent_shown': {'link_id', 'consent_version'},
   'consent_accepted': {'link_id', 'consent_version'},
-  'institution_selected': {'institution_id', 'country'},
-  'bank_redirect': {'via'},
-  'bank_returned': {'result'},
-  'accounts_selected': {'count'},
+  'institution_selected': {'link_id', 'institution_id', 'country'},
+  'bank_redirect': {'link_id', 'via'},
+  'bank_returned': {'link_id', 'result'},
+  'accounts_selected': {'link_id', 'count'},
   'success': {'link_id', 'connection_id', 'check_id'},
-  'exit': {'reason', 'step'},
-  'error': {'code'},
+  'exit': {'link_id', 'reason', 'step'},
+  'error': {'link_id', 'code'},
 };
 
 /// Fields that must never reach a host through an event model.
@@ -466,19 +466,24 @@ void main() {
           'consent_version': '2026-11-22.1',
         },
         'institution_selected': {
+          'link_id': 'link-1',
           'institution_id': 'es-banco-norte',
           'country': 'ES',
         },
-        'bank_redirect': {'via': 'popup'},
-        'bank_returned': {'result': 'ok'},
-        'accounts_selected': {'count': 2},
+        'bank_redirect': {'link_id': 'link-1', 'via': 'popup'},
+        'bank_returned': {'link_id': 'link-1', 'result': 'ok'},
+        'accounts_selected': {'link_id': 'link-1', 'count': 2},
         'success': {
           'link_id': 'link-1',
           'connection_id': 'connection-1',
           'check_id': null,
         },
-        'exit': {'reason': 'cancelled', 'step': 'accounts'},
-        'error': {'code': 'unknown'},
+        'exit': {
+          'link_id': 'link-1',
+          'reason': 'cancelled',
+          'step': 'accounts',
+        },
+        'error': {'link_id': 'link-1', 'code': 'unknown'},
       };
 
       for (final entry in payloads.entries) {

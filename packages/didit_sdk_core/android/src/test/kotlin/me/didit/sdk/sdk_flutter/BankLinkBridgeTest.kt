@@ -246,7 +246,7 @@ internal class BankLinkBridgeTest {
     // The service pins every identifier it hands to a client in one file. The
     // wrapper applies no pattern of its own, so every example must reach the
     // native SDK unchanged - a resume code keeps its dot, a token keeps its
-    // prefix. The native validators are walked by mobile-sdks' own suite.
+    // prefix. The native validators are walked by the native SDK tests.
     @Test
     fun everyFormatExampleIsForwardedUnchanged() {
         val examples = formatsExamples()

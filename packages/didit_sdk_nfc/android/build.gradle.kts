@@ -24,7 +24,7 @@ val diditSdkAndroidRepositoryUrl = (
     )?.toString()
 
 // Bank Link hand-off. The released native AAR (4.15.6) does not carry
-// `DiditSdk.presentBankLink` yet - it lands with mobile-sdks DID-12137 - so the
+// `DiditSdk.presentBankLink` yet, so the
 // plugin ships `src/bankLinkOff/kotlin`: a bridge that answers "unavailable" and
 // leaves Dart's BankLinkExit(failed) as the only visible effect. The real
 // hand-off in `src/bankLinkOn/kotlin` compiles against the AAR that carries Bank

@@ -4,8 +4,7 @@ import DiditSDK
 
 #if DIDIT_BANK_LINK
 
-/// The hand-off into the native iOS Bank Link, written against the public API
-/// of mobile-sdks pull request #419:
+/// The hand-off into the native iOS Bank Link, written against the public API:
 /// `DiditSdk.shared.presentBankLink(token:from:configuration:onEvent:onResult:)`,
 /// `resumeBankLink(from:onEvent:onResult:)` and `handleBankLinkReturn(_:)`.
 ///
@@ -25,17 +24,19 @@ final class DiditBankLinkBridge: BankLinkBridging {
         onEvent: @escaping (BankLinkWire.Event) -> Void,
         onResult: @escaping (BankLinkWire.Outcome) -> Void
     ) -> Bool {
-        DiditSdk.shared.presentBankLink(
-            token: token,
-            from: nil,
-            configuration: configuration,
-            onEvent: { event in
-                onEvent(BankLinkWire.Event(name: event.name.rawValue, payload: event.payload))
-            },
-            onResult: { result in
-                onResult(Self.outcome(result))
-            }
-        )
+        MainActor.assumeIsolated {
+            DiditSdk.shared.presentBankLink(
+                token: token,
+                from: nil,
+                configuration: configuration,
+                onEvent: { event in
+                    onEvent(BankLinkWire.Event(name: event.name.rawValue, payload: event.payload))
+                },
+                onResult: { result in
+                    onResult(Self.outcome(result))
+                }
+            )
+        }
         return true
     }
 
@@ -43,20 +44,24 @@ final class DiditBankLinkBridge: BankLinkBridging {
         onEvent: @escaping (BankLinkWire.Event) -> Void,
         onResult: @escaping (BankLinkWire.Outcome) -> Void
     ) -> Bool {
-        return DiditSdk.shared.resumeBankLink(
-            from: nil,
-            onEvent: { event in
-                onEvent(BankLinkWire.Event(name: event.name.rawValue, payload: event.payload))
-            },
-            onResult: { result in
-                onResult(Self.outcome(result))
-            }
-        )
+        return MainActor.assumeIsolated {
+            DiditSdk.shared.resumeBankLink(
+                from: nil,
+                onEvent: { event in
+                    onEvent(BankLinkWire.Event(name: event.name.rawValue, payload: event.payload))
+                },
+                onResult: { result in
+                    onResult(Self.outcome(result))
+                }
+            )
+        }
     }
 
     func handleReturn(_ url: String) -> Bool {
         guard let address = URL(string: url) else { return false }
-        return DiditSdk.shared.handleBankLinkReturn(address)
+        return MainActor.assumeIsolated {
+            DiditSdk.shared.handleBankLinkReturn(address)
+        }
     }
 
     private static func outcome(_ result: BankLinkResult) -> BankLinkWire.Outcome {
