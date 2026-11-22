@@ -8,3 +8,6 @@ analyzer:
     # An independent package with its own analysis_options.yaml and its own CI
     # job; the root package's analysis cannot resolve its imports.
     - packages/didit_auth/**
+    - build/**
+    - android/**
+    - ios/**
