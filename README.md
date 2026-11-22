@@ -518,6 +518,8 @@ switch (result) {
 }
 ```
 
+A link that has already finished cannot be opened again: the service answers `410 link_ended` with the link's status (`completed` or `failed`), the native SDK shows the matching ending, and the result is a `failed` exit. `409 link_already_redeemed` only means the link is open in another instance.
+
 ### Resume after the bank
 
 Only the bank's own sign-in page opens in the system browser sheet. When the person comes back through your registered app link or universal link, hand the address to the SDK, unchanged:
@@ -528,6 +530,8 @@ final handled = await DiditSdk.handleBankLinkReturn(uri.toString());
 ```
 
 If the app was closed while the person was at their bank, pick the link up on startup or when the app returns to the foreground. The same step is restored and the result carries `resumed: true`; `null` means there was nothing to resume.
+
+Calling it from both places is safe: while one resume is in flight, a second call gets the same future and native is asked once. While a resume or a presented link is in flight, `presentBankLink` settles as a `failed` exit without opening a second link.
 
 ```dart
 final resumed = await DiditSdk.resumeBankLink();
@@ -553,7 +557,7 @@ if (resumed is BankLinkSuccess) {
 | `exit` | `reason`, `step` |
 | `error` | `code` |
 
-Events carry ids only: never a name, a token, an email or an account number. A name a newer native SDK adds reaches the stream as it is.
+Events carry ids only: never a name, a token, an email or an account number. A name a newer native SDK adds reaches the stream as it is. Once a bank is picked, the native screens show its name from the session state (`detail.institution_name`); the stream still carries only its `institution_id`.
 
 ## Verification Results
 
@@ -730,7 +734,7 @@ Returns: `Future<BankLinkResult>` — a `BankLinkSuccess(linkId, connectionId?, 
 
 Pick up a link whose bank trip outlived the app, restoring the step the person was on.
 
-Returns: `Future<BankLinkResult?>` — the replayed result with `resumed: true`, or `null` when nothing is pending.
+Returns: `Future<BankLinkResult?>` — the replayed result with `resumed: true`, or `null` when nothing is pending. A call while a resume is in flight returns that same future; a call while a presented link is open returns `null` without reaching native.
 
 ### `DiditSdk.handleBankLinkReturn(url)`
 
