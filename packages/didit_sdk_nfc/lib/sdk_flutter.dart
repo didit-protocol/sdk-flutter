@@ -196,10 +196,8 @@ class DiditSdk {
   /// presentation goes away, exactly like a verification.
   static Future<BankLinkResult>? _activeBankLink;
 
-  static BankLinkResult _bankLinkAlreadyInProgress() => const BankLinkExit(
-    reason: BankLinkExitReason.failed,
-    resumed: false,
-  );
+  static BankLinkResult _bankLinkAlreadyInProgress() =>
+      const BankLinkExit(reason: BankLinkExitReason.failed, resumed: false);
 
   /// Open a Bank Link.
   ///
@@ -228,14 +226,15 @@ class DiditSdk {
     }
 
     final config = _verificationConfig(options?.config);
-    final result = Future<Map<String, dynamic>>.sync(
-      () => SdkFlutterPlatform.instance.presentBankLink(token, {
-        'config': config,
-      }),
-    ).then<BankLinkResult>(
-      BankLinkResult.fromMap,
-      onError: (Object _) => _bankLinkAlreadyInProgress(),
-    );
+    final result =
+        Future<Map<String, dynamic>>.sync(
+          () => SdkFlutterPlatform.instance.presentBankLink(token, {
+            'config': config,
+          }),
+        ).then<BankLinkResult>(
+          BankLinkResult.fromMap,
+          onError: (Object _) => _bankLinkAlreadyInProgress(),
+        );
     _activeBankLink = result;
     void release() {
       if (identical(_activeBankLink, result)) _activeBankLink = null;
