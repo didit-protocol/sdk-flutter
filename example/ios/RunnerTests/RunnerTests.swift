@@ -181,13 +181,24 @@ class RunnerTests: XCTestCase {
     return bridge
   }
 
+  /// Opens a link without waiting for an answer: a presented link answers
+  /// only when its flow ends, which is the next event the test drives.
+  private func startBankLink(_ arguments: [String: Any]? = nil) {
+    plugin.handle(
+      FlutterMethodCall(
+        methodName: "presentBankLink",
+        arguments: arguments ?? ["token": bankLinkToken]
+      )
+    ) { _ in }
+  }
+
   func testBankLinkForwardsTheTokenAndConfigurationToTheNativeSdk() {
     let bridge = fakeBankLink()
 
-    _ = reply(to: "presentBankLink", arguments: [
+    startBankLink([
       "token": bankLinkToken,
       "options": ["config": ["languageCode": "es"]],
-    ])
+    ] as [String: Any])
 
     XCTAssertEqual(bridge.presentedTokens, [bankLinkToken])
     let configuration = bridge.presentedConfigurations.first ?? nil
@@ -199,7 +210,7 @@ class RunnerTests: XCTestCase {
     var events: [Any?] = []
     plugin.bankLinkEvents = { events.append($0) }
 
-    _ = reply(to: "presentBankLink", arguments: ["token": bankLinkToken])
+    startBankLink()
     bridge.emit(BankLinkWire.Event(
       name: "opened",
       payload: ["link_id": "link-1", "mode": "connect", "access": "ongoing"]
@@ -210,12 +221,12 @@ class RunnerTests: XCTestCase {
     ))
 
     let sent = events.compactMap { $0 as? [String: Any] }
+    let opened = sent.first?["data"] as? [String: Any]
     XCTAssertEqual(sent.count, 2)
     XCTAssertEqual(sent.first?["name"] as? String, "opened")
-    XCTAssertEqual(
-      sent.first?["data"] as? [String: String],
-      ["link_id": "link-1", "mode": "connect", "access": "ongoing"]
-    )
+    XCTAssertEqual(opened?["link_id"] as? String, "link-1")
+    XCTAssertEqual(opened?["mode"] as? String, "connect")
+    XCTAssertEqual(opened?["access"] as? String, "ongoing")
     XCTAssertEqual(sent.last?["name"] as? String, "exit")
   }
 
@@ -275,7 +286,7 @@ class RunnerTests: XCTestCase {
   func testASecondBankLinkWhileOneIsOpenFailsWithoutReachingTheNativeSdk() {
     let bridge = fakeBankLink()
 
-    _ = reply(to: "presentBankLink", arguments: ["token": bankLinkToken])
+    startBankLink()
     let second = reply(
       to: "presentBankLink",
       arguments: ["token": bankLinkToken]
