@@ -70,19 +70,16 @@ class _SynchronouslyThrowingPlatform
   ) => throw StateError('bridge unavailable');
 
   @override
-  Future<Map<String, dynamic>?> resumeBankLink() => throw StateError(
-    'bridge unavailable',
-  );
+  Future<Map<String, dynamic>?> resumeBankLink() =>
+      throw StateError('bridge unavailable');
 
   @override
-  Future<bool> handleBankLinkReturn(String url) => throw StateError(
-    'bridge unavailable',
-  );
+  Future<bool> handleBankLinkReturn(String url) =>
+      throw StateError('bridge unavailable');
 
   @override
-  Stream<BankLinkEvent> get bankLinkEvents => throw StateError(
-    'bridge unavailable',
-  );
+  Stream<BankLinkEvent> get bankLinkEvents =>
+      throw StateError('bridge unavailable');
 }
 
 void main() {

@@ -84,7 +84,10 @@ class _BankLinkPageState extends State<BankLinkPage> {
         title: Text(title),
         content: Text(message),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('OK')),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('OK'),
+          ),
         ],
       ),
     );
@@ -167,10 +170,7 @@ class _BankLinkPageState extends State<BankLinkPage> {
                 const SizedBox(height: 8),
                 Text(
                   _describe(result),
-                  style: const TextStyle(
-                    fontSize: 13,
-                    fontFamily: 'monospace',
-                  ),
+                  style: const TextStyle(fontSize: 13, fontFamily: 'monospace'),
                 ),
               ],
               const SizedBox(height: 24),

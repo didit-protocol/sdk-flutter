@@ -107,7 +107,8 @@ class MockSdkFlutterPlatform
   }
 
   @override
-  Future<Map<String, dynamic>?> resumeBankLink() async => bankLinkResumeResponse;
+  Future<Map<String, dynamic>?> resumeBankLink() async =>
+      bankLinkResumeResponse;
 
   @override
   Future<bool> handleBankLinkReturn(String url) async {

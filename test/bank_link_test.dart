@@ -110,14 +110,17 @@ void main() {
       expect(success.resumed, false);
     });
 
-    test('settles the device language when the host passes no config', () async {
-      nextResult = _success();
+    test(
+      'settles the device language when the host passes no config',
+      () async {
+        nextResult = _success();
 
-      await DiditSdk.presentBankLink('blt_Hs8Pa4Rb6Ye0Gf2Jc7Qm3Zx9Vd2Lc5W');
+        await DiditSdk.presentBankLink('blt_Hs8Pa4Rb6Ye0Gf2Jc7Qm3Zx9Vd2Lc5W');
 
-      final config = nativeCalls.single.arguments['options']['config'] as Map;
-      expect(config['languageCode'], isNotNull);
-    });
+        final config = nativeCalls.single.arguments['options']['config'] as Map;
+        expect(config['languageCode'], isNotNull);
+      },
+    );
 
     for (final (wire, expected) in <(String, BankLinkExitReason)>[
       ('closed', BankLinkExitReason.closed),
@@ -147,21 +150,24 @@ void main() {
       });
     }
 
-    test('reads a reason it does not know as failed, never as an error', () async {
-      nextResult = <String, dynamic>{
-        'type': 'exit',
-        'reason': 'a_reason_from_a_newer_sdk',
-        'step': null,
-        'resumed': false,
-      };
+    test(
+      'reads a reason it does not know as failed, never as an error',
+      () async {
+        nextResult = <String, dynamic>{
+          'type': 'exit',
+          'reason': 'a_reason_from_a_newer_sdk',
+          'step': null,
+          'resumed': false,
+        };
 
-      final result = await DiditSdk.presentBankLink(
-        'blt_Hs8Pa4Rb6Ye0Gf2Jc7Qm3Zx9Vd2Lc5W',
-      );
+        final result = await DiditSdk.presentBankLink(
+          'blt_Hs8Pa4Rb6Ye0Gf2Jc7Qm3Zx9Vd2Lc5W',
+        );
 
-      expect((result as BankLinkExit).reason, BankLinkExitReason.failed);
-      expect(result.step, isNull);
-    });
+        expect((result as BankLinkExit).reason, BankLinkExitReason.failed);
+        expect(result.step, isNull);
+      },
+    );
 
     test('an empty bridge answer is a failed exit, not an exception', () async {
       nextResult = null;
@@ -188,13 +194,10 @@ void main() {
     test('a second link while one is open fails cleanly', () async {
       final first = Completer<Map<String, dynamic>>();
       TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
-          .setMockMethodCallHandler(
-            channel,
-            (MethodCall call) {
-              nativeCalls.add(call);
-              return first.future;
-            },
-          );
+          .setMockMethodCallHandler(channel, (MethodCall call) {
+            nativeCalls.add(call);
+            return first.future;
+          });
 
       final open = DiditSdk.presentBankLink(
         'blt_Hs8Pa4Rb6Ye0Gf2Jc7Qm3Zx9Vd2Lc5W',
@@ -276,7 +279,10 @@ void main() {
           'access': 'ongoing',
           'presentation': 'flutter',
         },
-        'consent_shown': {'link_id': 'link-1', 'consent_version': '2026-11-22.1'},
+        'consent_shown': {
+          'link_id': 'link-1',
+          'consent_version': '2026-11-22.1',
+        },
         'consent_accepted': {
           'link_id': 'link-1',
           'consent_version': '2026-11-22.1',
@@ -369,20 +375,24 @@ void main() {
     final fixture = File(
       'test/fixtures/bank_link_contract/formats.json',
     ).readAsStringSync();
-    final formats = (jsonDecode(fixture) as Map<String, dynamic>)['formats']
-        as List<dynamic>;
+    final formats =
+        (jsonDecode(fixture) as Map<String, dynamic>)['formats']
+            as List<dynamic>;
 
-    test('is the contract’s own file and every example matches its pattern', () {
-      expect(formats, hasLength(14));
-      for (final entry in formats.cast<Map<String, dynamic>>()) {
-        final example = entry['example'] as String;
-        expect(
-          RegExp(entry['pattern'] as String).hasMatch(example),
-          isTrue,
-          reason: '${entry['name']}: $example',
-        );
-      }
-    });
+    test(
+      'is the contract’s own file and every example matches its pattern',
+      () {
+        expect(formats, hasLength(14));
+        for (final entry in formats.cast<Map<String, dynamic>>()) {
+          final example = entry['example'] as String;
+          expect(
+            RegExp(entry['pattern'] as String).hasMatch(example),
+            isTrue,
+            reason: '${entry['name']}: $example',
+          );
+        }
+      },
+    );
 
     test('every example is accepted as a token, unchanged', () async {
       for (final entry in formats.cast<Map<String, dynamic>>()) {

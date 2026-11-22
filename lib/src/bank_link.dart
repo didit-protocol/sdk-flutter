@@ -86,10 +86,7 @@ sealed class BankLinkResult {
       }
     }
     if (map['type'] != 'exit') {
-      return BankLinkExit(
-        reason: BankLinkExitReason.failed,
-        resumed: resumed,
-      );
+      return BankLinkExit(reason: BankLinkExitReason.failed, resumed: resumed);
     }
     return BankLinkExit(
       reason: BankLinkExitReason.fromWire(map['reason'] as String?),
@@ -130,11 +127,7 @@ class BankLinkExit extends BankLinkResult {
   /// first poll.
   final String? step;
 
-  const BankLinkExit({
-    required this.reason,
-    this.step,
-    required super.resumed,
-  });
+  const BankLinkExit({required this.reason, this.step, required super.resumed});
 }
 
 /// One event of a running link, with its ids-only payload.
