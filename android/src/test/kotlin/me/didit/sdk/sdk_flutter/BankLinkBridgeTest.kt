@@ -8,10 +8,10 @@ import io.flutter.plugin.common.MethodChannel
 import io.mockk.every
 import io.mockk.mockk
 import me.didit.sdk.Configuration
+import me.didit.sdk.core.localization.SupportedLanguage
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 /*
@@ -65,7 +65,10 @@ internal class BankLinkBridgeTest {
             listOf("blt_Hs8Pa4Rb6Ye0Gf2Jc7Qm3Zx9Vd2Lc5W"),
             bridge.presentedTokens
         )
-        assertEquals("es", bridge.presentedConfigurations.single()?.languageLocale?.code)
+        assertEquals(
+            SupportedLanguage.SPANISH,
+            bridge.presentedConfigurations.single()?.languageLocale
+        )
         assertEquals(hostActivity, bridge.presentedFrom.single())
         assertEquals<List<Any?>>(emptyList(), delivered)
     }
