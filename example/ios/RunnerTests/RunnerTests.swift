@@ -322,6 +322,41 @@ class RunnerTests: XCTestCase {
     XCTAssertEqual(answer?["resumed"] as? Bool, true)
   }
 
+  func testResumeWhileALinkIsOpenAnswersNilWithoutReachingTheNativeSdk() {
+    let bridge = fakeBankLink()
+    var presented: [Any?] = []
+    plugin.handle(
+      FlutterMethodCall(methodName: "presentBankLink", arguments: ["token": bankLinkToken])
+    ) { presented.append($0) }
+    bridge.resumes = true
+
+    var resumed: [Any?] = []
+    plugin.handle(FlutterMethodCall(methodName: "resumeBankLink", arguments: nil)) {
+      resumed.append($0)
+    }
+    bridge.finish(.exit(reason: "closed", step: "consent", resumed: false))
+
+    // The resume did not take the open link's callbacks: the presenting call
+    // gets its result, and the resume answered nil once.
+    XCTAssertEqual(resumed.count, 1)
+    XCTAssertNil(resumed.first ?? nil)
+    XCTAssertEqual(presented.count, 1)
+    XCTAssertEqual((presented.first as? [String: Any?])?["reason"] as? String, "closed")
+  }
+
+  func testAResumeThatFoundNothingIsNotAnsweredAgainByALateCallback() {
+    let bridge = fakeBankLink()
+    var answers: [Any?] = []
+
+    plugin.handle(FlutterMethodCall(methodName: "resumeBankLink", arguments: nil)) {
+      answers.append($0)
+    }
+    bridge.finish(.exit(reason: "failed", step: nil, resumed: true))
+
+    XCTAssertEqual(answers.count, 1)
+    XCTAssertNil(answers.first ?? nil)
+  }
+
   func testABankLinkReturnAddressReachesTheNativeHandlerUnchanged() {
     let bridge = fakeBankLink()
     bridge.handles = true

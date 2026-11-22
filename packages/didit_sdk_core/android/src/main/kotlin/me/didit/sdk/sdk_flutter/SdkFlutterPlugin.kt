@@ -359,8 +359,15 @@ class SdkFlutterPlugin :
             return
         }
 
+        // One link at a time: native keeps one set of callbacks, so resuming
+        // over an open link or another resume would hand the running flow's
+        // result to this call and leave the earlier one unanswered.
+        if (openBankLink != null) {
+            result.success(null)
+            return
+        }
+
         val link = BankLinkCall(result)
-        val previous = openBankLink
         openBankLink = link
         val resumed = bankLinkBridge.resume(
             host,
@@ -368,8 +375,13 @@ class SdkFlutterPlugin :
         ) { outcome -> resolveBankLink(link, outcome) }
 
         if (!resumed) {
-            if (openBankLink === link) openBankLink = previous
-            if (!link.delivered) result.success(null)
+            if (openBankLink === link) openBankLink = null
+            // Marked answered, so a late native callback cannot answer this
+            // call a second time.
+            if (!link.delivered) {
+                link.delivered = true
+                result.success(null)
+            }
         }
     }
 
