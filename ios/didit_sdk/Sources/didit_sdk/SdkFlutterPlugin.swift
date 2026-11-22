@@ -7,7 +7,7 @@ public class SdkFlutterPlugin: NSObject, FlutterPlugin, FlutterStreamHandler {
 
     private var hostingController: UIViewController?
     private var channel: FlutterMethodChannel?
-    private var bankLinkEvents: FlutterEventSink?
+    var bankLinkEvents: FlutterEventSink?
     private var presentationGeneration = 0
     private var hasDeliveredResult = false
 
