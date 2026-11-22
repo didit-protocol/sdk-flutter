@@ -1,3 +1,7 @@
+// The Material library moved to package:material_ui in newer Flutter releases;
+// the import still works, so the deprecation is acknowledged here.
+// ignore_for_file: deprecated_member_use
+
 // The Bank Link page: paste a link's client token, open the flow, and watch the
 // event stream and the result next to it. Used by the manual device matrix on
 // both platforms against the sandbox test bank.
