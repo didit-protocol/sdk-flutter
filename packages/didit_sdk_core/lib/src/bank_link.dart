@@ -63,8 +63,9 @@ enum BankLinkExitReason {
 sealed class BankLinkResult {
   const BankLinkResult({required this.resumed});
 
-  /// `true` when the result was replayed by [BankLinkResult] after the app was
-  /// closed during the bank trip (`resumeBankLink`), `false` otherwise.
+  /// `true` when the result was replayed after the app was closed during the
+  /// bank trip and the host called `DiditSdk.resumeBankLink`, `false`
+  /// otherwise.
   final bool resumed;
 
   /// Maps the result map the platform channel sends.
