@@ -267,6 +267,25 @@ void main() {
   });
 
   group('resumeBankLink', () {
+    test('answers null while a link is open without reaching native', () async {
+      final first = Completer<Map<String, dynamic>>();
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(channel, (MethodCall call) {
+            nativeCalls.add(call);
+            return first.future;
+          });
+
+      final open = DiditSdk.presentBankLink(
+        'blt_Hs8Pa4Rb6Ye0Gf2Jc7Qm3Zx9Vd2Lc5W',
+      );
+
+      expect(await DiditSdk.resumeBankLink(), isNull);
+      expect(nativeCalls.map((call) => call.method), ['presentBankLink']);
+
+      first.complete(_success());
+      expect(await open, isA<BankLinkSuccess>());
+    });
+
     test('returns null when nothing is pending', () async {
       nextResume = null;
 
