@@ -255,7 +255,8 @@ class DiditSdk {
     try {
       final raw = await SdkFlutterPlatform.instance.resumeBankLink();
       return raw == null ? null : BankLinkResult.fromMap(raw);
-    } on Exception {
+    } catch (_) {
+      // Nothing pending, or a bridge that cannot answer: never an exception.
       return null;
     }
   }
@@ -269,7 +270,7 @@ class DiditSdk {
   static Future<bool> handleBankLinkReturn(String url) async {
     try {
       return await SdkFlutterPlatform.instance.handleBankLinkReturn(url);
-    } on Exception {
+    } catch (_) {
       return false;
     }
   }
