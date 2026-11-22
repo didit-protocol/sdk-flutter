@@ -31,14 +31,13 @@ internal class NativeBankLinkBridge : BankLinkBridge {
         onEvent: (BankLinkWire.Event) -> Unit,
         onResult: (BankLinkWire.Outcome) -> Unit
     ): Boolean {
-        DiditSdk.presentBankLink(
+        return DiditSdk.presentBankLink(
             activity = activity,
             token = token,
             configuration = configuration,
-            onEvent = { event -> onEvent(BankLinkWire.Event(event.name, event.payload)) },
+            onEvent = { event -> onEvent(BankLinkWire.Event(event.name.wire, event.payload)) },
             onResult = { result -> onResult(result.toWire()) }
         )
-        return true
     }
 
     override fun resume(
@@ -47,7 +46,7 @@ internal class NativeBankLinkBridge : BankLinkBridge {
         onResult: (BankLinkWire.Outcome) -> Unit
     ): Boolean = DiditSdk.resumeBankLink(
         activity = activity,
-        onEvent = { event -> onEvent(BankLinkWire.Event(event.name, event.payload)) },
+        onEvent = { event -> onEvent(BankLinkWire.Event(event.name.wire, event.payload)) },
         onResult = { result -> onResult(result.toWire()) }
     )
 
@@ -56,16 +55,16 @@ internal class NativeBankLinkBridge : BankLinkBridge {
 
     private fun BankLinkResult.toWire(): BankLinkWire.Outcome = when (this) {
         is BankLinkResult.Success -> BankLinkWire.Outcome.Success(
-            linkId = linkId,
-            connectionId = connectionId,
-            checkId = checkId,
-            resumed = resumed
+            linkId = success.linkId,
+            connectionId = success.connectionId,
+            checkId = success.checkId,
+            resumed = success.resumed
         )
 
         is BankLinkResult.Exit -> BankLinkWire.Outcome.Exit(
-            reason = reason,
-            step = step,
-            resumed = resumed
+            reason = exit.reason.wire,
+            step = exit.step?.wire,
+            resumed = exit.resumed
         )
     }
 }
