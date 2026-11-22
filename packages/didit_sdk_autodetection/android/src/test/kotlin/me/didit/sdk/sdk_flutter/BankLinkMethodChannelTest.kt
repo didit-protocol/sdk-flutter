@@ -78,6 +78,68 @@ internal class BankLinkMethodChannelTest {
         assertEquals<List<String>>(emptyList(), errors)
     }
 
+    /** A fake native module that keeps the last callbacks, like the native SDK. */
+    private class FakeBridge(var resumes: Boolean) : BankLinkBridge {
+        var resumeCalls = 0
+        private var onResult: ((BankLinkWire.Outcome) -> Unit)? = null
+
+        fun finish(outcome: BankLinkWire.Outcome) {
+            onResult?.invoke(outcome)
+        }
+
+        override fun present(
+            activity: Activity,
+            token: String,
+            configuration: me.didit.sdk.Configuration?,
+            onEvent: (BankLinkWire.Event) -> Unit,
+            onResult: (BankLinkWire.Outcome) -> Unit
+        ): Boolean {
+            this.onResult = onResult
+            return true
+        }
+
+        override fun resume(
+            activity: Activity,
+            onEvent: (BankLinkWire.Event) -> Unit,
+            onResult: (BankLinkWire.Outcome) -> Unit
+        ): Boolean {
+            resumeCalls++
+            this.onResult = onResult
+            return resumes
+        }
+
+        override fun handleReturn(url: String): Boolean = false
+    }
+
+    @Test
+    fun resumeBankLink_whileALinkIsOpen_answersNullWithoutReachingNative() {
+        val bridge = FakeBridge(resumes = true)
+        plugin.bankLinkBridge = bridge
+        call("presentBankLink", mapOf("token" to "blt_Hs8Pa4Rb6Ye0Gf2Jc7Qm3Zx9Vd2Lc5W"))
+
+        call("resumeBankLink", null)
+        bridge.finish(BankLinkWire.Outcome.Exit(reason = "closed", step = "consent", resumed = false))
+
+        // The resume did not take the open link's callbacks: it answered null,
+        // and the presenting call got its own result.
+        assertEquals(0, bridge.resumeCalls)
+        assertEquals(2, delivered.size)
+        assertEquals(null, delivered[0])
+        assertEquals("closed", (delivered[1] as Map<*, *>)["reason"])
+    }
+
+    @Test
+    fun resumeBankLink_thatFoundNothing_isNotAnsweredAgainByALateCallback() {
+        val bridge = FakeBridge(resumes = false)
+        plugin.bankLinkBridge = bridge
+
+        call("resumeBankLink", null)
+        bridge.finish(BankLinkWire.Outcome.Exit(reason = "failed", step = null, resumed = true))
+
+        assertEquals<List<Any?>>(listOf(null), delivered)
+        assertEquals<List<String>>(emptyList(), errors)
+    }
+
     @Test
     fun handleBankLinkReturn_withoutAddress_answersInvalidArgument() {
         call("handleBankLinkReturn", emptyMap<String, Any?>())
