@@ -5,8 +5,13 @@ import io.flutter.embedding.engine.plugins.activity.ActivityPluginBinding
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
 import io.mockk.every
-import io.mockk.isNull
 import io.mockk.mockk
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
+import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.setMain
+import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -14,11 +19,12 @@ import kotlin.test.assertEquals
 /*
  * Bank Link on the Android plugin. The wrapper adds no flow of its own - every
  * screen, the copy and the state machine are native - so these tests pin the two
- * things that cross the channel and belong to this repository: the answers the
- * Dart side reads as a BankLinkResult, and that an address is never re-parsed.
+ * things that cross the channel and belong to this repository: the answers Dart
+ * reads as a BankLinkResult, and that an address is never re-parsed.
  *
  * Run them with `./gradlew :didit_sdk:testDebugUnitTest` from example/android.
  */
+@OptIn(ExperimentalCoroutinesApi::class)
 internal class BankLinkMethodChannelTest {
     private val hostActivity = mockk<Activity>()
     private val result = mockk<MethodChannel.Result>(relaxed = true)
@@ -28,8 +34,8 @@ internal class BankLinkMethodChannelTest {
 
     @BeforeTest
     fun setUp() {
+        Dispatchers.setMain(UnconfinedTestDispatcher())
         every { result.success(any()) } answers { delivered += firstArg<Any?>() }
-        every { result.success(isNull()) } answers { delivered += null }
         every { result.error(any(), any(), any()) } answers { errors += firstArg<String>() }
 
         plugin = SdkFlutterPlugin()
@@ -38,12 +44,17 @@ internal class BankLinkMethodChannelTest {
         })
     }
 
+    @AfterTest
+    fun tearDown() {
+        Dispatchers.resetMain()
+    }
+
     private fun call(method: String, arguments: Map<String, Any?>?) =
         plugin.onMethodCall(MethodCall(method, arguments), result)
 
     @Test
     fun presentBankLink_withoutToken_answersInvalidArgument() {
-        call("presentBankLink", mapOf("options" to mapOf("config" to mapOf("languageCode" to "es"))))
+        call("presentBankLink", mapOf("options" to mapOf("config" to emptyMap<String, Any>())))
 
         assertEquals(listOf("INVALID_ARGUMENT"), errors)
         assertEquals<List<Any?>>(emptyList(), delivered)
@@ -62,13 +73,14 @@ internal class BankLinkMethodChannelTest {
     fun resumeBankLink_answersNullWhenNoLinkIsKept() {
         call("resumeBankLink", null)
 
-        assertEquals(listOf<Any?>(null), delivered)
+        assertEquals(1, delivered.size)
+        assertEquals(null, delivered.single())
         assertEquals<List<String>>(emptyList(), errors)
     }
 
     @Test
     fun handleBankLinkReturn_withoutAddress_answersInvalidArgument() {
-        call("handleBankLinkReturn", mapOf<String, Any?>())
+        call("handleBankLinkReturn", emptyMap<String, Any?>())
 
         assertEquals(listOf("INVALID_ARGUMENT"), errors)
     }
