@@ -262,19 +262,12 @@ void main() {
 
   group('bankLinkEvents', () {
     test('delivers each event once with the exact keys', () async {
-      final events = <BankLinkEvent>[];
-      final subscription = DiditSdk.bankLinkEvents.listen(events.add);
-      addTearDown(subscription.cancel);
-
-      final sink = Completer<MockStreamHandlerEventSink>();
-      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
-          .setMockStreamHandler(
-            eventChannel,
-            MockStreamHandler.inline(
-              onListen: (arguments, events) => sink.complete(events),
-            ),
-          );
-      final sender = await sink.future;
+      final native = await _FakeNativeEvents.open(
+        eventChannel,
+        DiditSdk.bankLinkEvents,
+      );
+      addTearDown(native.subscription.cancel);
+      final events = native.received;
 
       final payloads = <String, Map<String, Object?>>{
         'opened': {
@@ -305,7 +298,7 @@ void main() {
       };
 
       for (final entry in payloads.entries) {
-        sender.success(<String, Object?>{
+        native.sender.success(<String, Object?>{
           'name': entry.key,
           'data': entry.value,
         });
@@ -328,26 +321,20 @@ void main() {
     });
 
     test('keeps an event name it does not know', () async {
-      final events = <BankLinkEvent>[];
-      final subscription = DiditSdk.bankLinkEvents.listen(events.add);
-      addTearDown(subscription.cancel);
+      final native = await _FakeNativeEvents.open(
+        eventChannel,
+        DiditSdk.bankLinkEvents,
+      );
+      addTearDown(native.subscription.cancel);
 
-      final sink = Completer<MockStreamHandlerEventSink>();
-      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
-          .setMockStreamHandler(
-            eventChannel,
-            MockStreamHandler.inline(
-              onListen: (arguments, events) => sink.complete(events),
-            ),
-          );
-      (await sink.future).success(<String, Object?>{
+      native.sender.success(<String, Object?>{
         'name': 'a_new_event',
         'data': <String, Object?>{'link_id': 'link-1'},
       });
       await Future<void>.delayed(Duration.zero);
 
-      expect(events.single.name, 'a_new_event');
-      expect(events.single.data, {'link_id': 'link-1'});
+      expect(native.received.single.name, 'a_new_event');
+      expect(native.received.single.data, {'link_id': 'link-1'});
     });
   });
 
@@ -445,4 +432,32 @@ void main() {
       expect(example.substring(example.indexOf('.') + 1), isNotEmpty);
     });
   });
+}
+
+/// The native side of the wrapper's event channel, with a subscription on the
+/// Dart stream so events sent through [sender] reach it.
+class _FakeNativeEvents {
+  _FakeNativeEvents._(this.sender, this.subscription, this.received);
+
+  final MockStreamHandlerEventSink sender;
+  final StreamSubscription<BankLinkEvent> subscription;
+  final List<BankLinkEvent> received;
+
+  static Future<_FakeNativeEvents> open(
+    EventChannel channel,
+    Stream<BankLinkEvent> events,
+  ) async {
+    final received = <BankLinkEvent>[];
+    final sink = Completer<MockStreamHandlerEventSink>();
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockStreamHandler(
+          channel,
+          MockStreamHandler.inline(
+            onListen: (arguments, native) => sink.complete(native),
+          ),
+        );
+    final subscription = events.listen(received.add);
+    final sender = await sink.future.timeout(const Duration(seconds: 5));
+    return _FakeNativeEvents._(sender, subscription, received);
+  }
 }
