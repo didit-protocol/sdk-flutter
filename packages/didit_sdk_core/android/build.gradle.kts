@@ -35,6 +35,10 @@ val diditSdkBankLink = (
         ?: findProperty("diditSdkBankLink")
     )?.toString()?.toBoolean() ?: false
 
+// The one directory that holds `newBankLinkBridge()` for the chosen side.
+val bankLinkSourceDir =
+    if (diditSdkBankLink) "src/bankLinkOn/kotlin" else "src/bankLinkOff/kotlin"
+
 buildscript {
     val kotlinVersion = "2.2.20"
     repositories {
@@ -93,7 +97,12 @@ android {
     sourceSets {
         getByName("main") {
             java.srcDirs("src/main/kotlin")
-            java.srcDir(if (diditSdkBankLink) "src/bankLinkOn/kotlin" else "src/bankLinkOff/kotlin")
+            // With the Kotlin Gradle Plugin (AGP 8) Kotlin is compiled from the
+            // source set's java directories; AGP 9's built-in Kotlin compiles
+            // only its `kotlin` directories. The bridge lives in a directory of
+            // its own, so it is added to both and compiles either way.
+            java.srcDir(bankLinkSourceDir)
+            kotlin.srcDir(bankLinkSourceDir)
         }
         getByName("test") {
             java.srcDirs("src/test/kotlin")
