@@ -11,13 +11,6 @@ class BankLinkOptions {
   final DiditConfig? config;
 
   const BankLinkOptions({this.config});
-
-  Map<String, dynamic> toMap() {
-    final map = <String, dynamic>{};
-    final config = this.config;
-    if (config != null) map['config'] = config.toMap();
-    return map;
-  }
 }
 
 /// Why a Bank Link ended without a connection.
