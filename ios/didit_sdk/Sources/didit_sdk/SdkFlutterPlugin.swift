@@ -3,10 +3,11 @@ import UIKit
 import SwiftUI
 @preconcurrency import DiditSDK
 
-public class SdkFlutterPlugin: NSObject, FlutterPlugin {
+public class SdkFlutterPlugin: NSObject, FlutterPlugin, FlutterStreamHandler {
 
     private var hostingController: UIViewController?
     private var channel: FlutterMethodChannel?
+    private var bankLinkEvents: FlutterEventSink?
     private var presentationGeneration = 0
     private var hasDeliveredResult = false
 
@@ -15,6 +16,27 @@ public class SdkFlutterPlugin: NSObject, FlutterPlugin {
         let instance = SdkFlutterPlugin()
         instance.channel = channel
         registrar.addMethodCallDelegate(instance, channel: channel)
+
+        let events = FlutterEventChannel(
+            name: "didit_sdk/bank_link_events",
+            binaryMessenger: registrar.messenger()
+        )
+        events.setStreamHandler(instance)
+    }
+
+    // MARK: - Bank Link events
+
+    public func onListen(
+        withArguments arguments: Any?,
+        eventSink events: @escaping FlutterEventSink
+    ) -> FlutterError? {
+        bankLinkEvents = events
+        return nil
+    }
+
+    public func onCancel(withArguments arguments: Any?) -> FlutterError? {
+        bankLinkEvents = nil
+        return nil
     }
 
     public func handle(_ call: FlutterMethodCall, result: @escaping FlutterResult) {
@@ -27,6 +49,12 @@ public class SdkFlutterPlugin: NSObject, FlutterPlugin {
             handleSubmitTransaction(call, result: result)
         case "getTransaction":
             handleGetTransaction(call, result: result)
+        case "presentBankLink":
+            handlePresentBankLink(call, result: result)
+        case "resumeBankLink":
+            handleResumeBankLink(result: result)
+        case "handleBankLinkReturn":
+            handleBankLinkReturn(call, result: result)
         default:
             result(FlutterMethodNotImplemented)
         }
@@ -77,6 +105,48 @@ public class SdkFlutterPlugin: NSObject, FlutterPlugin {
                 }
             }
         }
+    }
+
+    // MARK: - Bank Link
+
+    // The wrapper adds no flow of its own: the native SDK owns every screen of
+    // Bank Link, its copy and its state machine, and reports the flow's events
+    // through the `didit_sdk/bank_link_events` channel registered above.
+    // The hand-off into
+    // `DiditSdk.shared.presentBankLink(token:from:configuration:onEvent:onResult:)`
+    // lands with the native version that carries Bank Link; until one is pinned,
+    // opening a link answers `unavailable`, which the Dart side reads as a
+    // `failed` exit - the same answer the native layer gives when it cannot open
+    // a link.
+
+    private func handlePresentBankLink(_ call: FlutterMethodCall, result: @escaping FlutterResult) {
+        guard let args = call.arguments as? [String: Any],
+              let token = args["token"] as? String,
+              !token.isEmpty else {
+            result(FlutterError(code: "INVALID_ARGUMENT", message: "Token is required", details: nil))
+            return
+        }
+        result(FlutterError(
+            code: "unavailable",
+            message: "This version of the native Didit SDK does not carry Bank Link.",
+            details: nil
+        ))
+    }
+
+    private func handleResumeBankLink(result: @escaping FlutterResult) {
+        // Nothing to resume: a native layer without Bank Link kept no link, and
+        // the Dart side reads nil as "nothing pending".
+        result(nil)
+    }
+
+    private func handleBankLinkReturn(_ call: FlutterMethodCall, result: @escaping FlutterResult) {
+        guard let args = call.arguments as? [String: Any], args["url"] is String else {
+            result(FlutterError(code: "INVALID_ARGUMENT", message: "url is required", details: nil))
+            return
+        }
+        // The address reaches the native handler unchanged once Bank Link is
+        // pinned; nothing here splits or validates it.
+        result(false)
     }
 
     // MARK: - Presentation Logic

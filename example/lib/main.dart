@@ -4,6 +4,8 @@
 import 'package:flutter/material.dart';
 import 'package:didit_sdk/sdk_flutter.dart';
 
+import 'bank_link_page.dart';
+
 void main() {
   runApp(const MyApp());
 }
@@ -255,6 +257,15 @@ class _VerificationScreenState extends State<VerificationScreen> {
                 'Flutter Example',
                 style: TextStyle(fontSize: 16, color: Color(0xFF666666)),
                 textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 16),
+              OutlinedButton(
+                onPressed: () => Navigator.of(context).push(
+                  MaterialPageRoute<void>(
+                    builder: (_) => const BankLinkPage(),
+                  ),
+                ),
+                child: const Text('Open Bank Link'),
               ),
               const SizedBox(height: 32),
 

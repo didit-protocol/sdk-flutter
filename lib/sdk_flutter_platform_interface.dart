@@ -1,6 +1,7 @@
 import 'package:plugin_platform_interface/plugin_platform_interface.dart';
 
 import 'sdk_flutter_method_channel.dart';
+import 'src/bank_link.dart';
 
 abstract class SdkFlutterPlatform extends PlatformInterface {
   SdkFlutterPlatform() : super(token: _token);
@@ -51,6 +52,38 @@ abstract class SdkFlutterPlatform extends PlatformInterface {
     Map<String, dynamic> options,
   ) {
     throw UnimplementedError('getTransaction() has not been implemented.');
+  }
+
+  /// Open a Bank Link from the link's client token (`blt_...`).
+  ///
+  /// Answers the result map `{'type': 'success', 'linkId': ..., 'resumed':
+  /// bool}` or `{'type': 'exit', 'reason': ..., 'step': ..., 'resumed': bool}`.
+  Future<Map<String, dynamic>> presentBankLink(
+    String token,
+    Map<String, dynamic> options,
+  ) {
+    throw UnimplementedError('presentBankLink() has not been implemented.');
+  }
+
+  /// Pick up a link whose bank trip outlived the app.
+  ///
+  /// `null` when there is nothing to resume.
+  Future<Map<String, dynamic>?> resumeBankLink() {
+    throw UnimplementedError('resumeBankLink() has not been implemented.');
+  }
+
+  /// Hand the platform an address the app was opened with.
+  ///
+  /// `true` when the address was a Bank Link return.
+  Future<bool> handleBankLinkReturn(String url) {
+    throw UnimplementedError(
+      'handleBankLinkReturn() has not been implemented.',
+    );
+  }
+
+  /// The events of the running link, as the native SDK emits them.
+  Stream<BankLinkEvent> get bankLinkEvents {
+    throw UnimplementedError('bankLinkEvents has not been implemented.');
   }
 
   /// Register the handler invoked when the platform reports a refreshed
