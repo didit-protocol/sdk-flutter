@@ -173,6 +173,29 @@ void main() {
       expect(platform.vendorData, 'user-1');
     });
 
+    test(
+      'the Bank Link entry point forwards the token and every option',
+      () async {
+        platform.bankLinkResponse = <String, dynamic>{
+          'type': 'success',
+          'linkId': 'link-1',
+          'resumed': false,
+        };
+
+        final result = await DiditSdk.presentBankLink(
+          'blt_Hs8Pa4Rb6Ye0Gf2Jc7Qm3Zx9Vd2Lc5W',
+          options: const BankLinkOptions(config: _everyOption),
+        );
+
+        expect(
+          platform.lastBankLinkToken,
+          'blt_Hs8Pa4Rb6Ye0Gf2Jc7Qm3Zx9Vd2Lc5W',
+        );
+        expect(platform.lastBankLinkOptions?['config'], _everyOptionMap);
+        expect(result, isA<BankLinkSuccess>());
+      },
+    );
+
     test('unset native defaults are omitted and the documented defaults '
         'are sent explicitly', () async {
       await DiditSdk.startVerification('token', config: const DiditConfig());
