@@ -377,15 +377,12 @@ class DiditSdk {
       _pendingTransactionUpdates[callId] = onTransactionUpdated;
     }
     try {
-      final raw = await SdkFlutterPlatform.instance.submitTransaction(
-        transactionToken,
-        transaction.toMap(),
-        {
-          'callId': callId,
-          'autoLaunchAction': options.autoLaunchAction,
-          if (options.baseUrl != null) 'baseUrl': options.baseUrl,
-        },
-      );
+      final raw = await SdkFlutterPlatform.instance
+          .submitTransaction(transactionToken, transaction.toMap(), {
+            'callId': callId,
+            'autoLaunchAction': options.autoLaunchAction,
+            if (options.baseUrl != null) 'baseUrl': options.baseUrl,
+          });
       final result = DiditTransactionResult.fromMap(raw);
       if (result.actionRequired == null) {
         _pendingTransactionUpdates.remove(callId);

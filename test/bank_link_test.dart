@@ -590,8 +590,9 @@ void main() {
     // platform copies it and proves its own validation accepts every example. A
     // validator may be looser than the file, never stricter: the web SDK's
     // stricter resume-code pattern is what broke its flow on staging.
-    final fixture = File('test/fixtures/bank_link_contract/formats.json')
-        .readAsStringSync();
+    final fixture = File(
+      'test/fixtures/bank_link_contract/formats.json',
+    ).readAsStringSync();
     final formats =
         (jsonDecode(fixture) as Map<String, dynamic>)['formats']
             as List<dynamic>;
@@ -674,8 +675,9 @@ void main() {
 
     test('the Android test copy is the same file', () {
       expect(
-        File('android/src/test/resources/bank_link_contract/formats.json')
-            .readAsBytesSync(),
+        File(
+          'android/src/test/resources/bank_link_contract/formats.json',
+        ).readAsBytesSync(),
         File('test/fixtures/bank_link_contract/formats.json').readAsBytesSync(),
       );
     });
