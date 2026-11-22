@@ -498,7 +498,7 @@ Bank Link connects a bank account once, verifies who owns it, and keeps reading 
 
 The token is the link's `client_token` (`blt_...`), minted by your backend with `POST /v3/bank/links/`. **The API key stays on your server**: the app only ever receives that client token.
 
-> **Availability:** Bank Link ships with a native SDK release that carries it. Until your app depends on such a version, `presentBankLink` settles as a `failed` exit and `resumeBankLink` returns `null`; the Dart API below is the same one you will call then.
+> **Availability:** Bank Link ships with a native SDK release that carries it. Until your app depends on such a version, `presentBankLink` settles as a `failed` exit, `resumeBankLink` returns `null` and `handleBankLinkReturn` answers `false` for every address; the Dart API below is the same one you will call then. Nothing else of the SDK changes, so wiring the calls now is safe.
 
 ```dart
 final result = await DiditSdk.presentBankLink(

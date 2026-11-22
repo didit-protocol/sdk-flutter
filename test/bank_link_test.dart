@@ -180,6 +180,50 @@ void main() {
       expect((result as BankLinkExit).reason, BankLinkExitReason.failed);
     });
 
+    test(
+      'a field sent as a non-string is read as absent, never thrown',
+      () async {
+        nextResult = <String, dynamic>{
+          'type': 'success',
+          'linkId': 'link-1',
+          'connectionId': 42,
+          'checkId': <String>[],
+          'resumed': false,
+        };
+
+        final result = await DiditSdk.presentBankLink(
+          'blt_Hs8Pa4Rb6Ye0Gf2Jc7Qm3Zx9Vd2Lc5W',
+        );
+
+        expect(result, isA<BankLinkSuccess>());
+        final success = result as BankLinkSuccess;
+        expect(success.linkId, 'link-1');
+        expect(success.connectionId, isNull);
+        expect(success.checkId, isNull);
+      },
+    );
+
+    test(
+      'an exit whose reason and step are not strings is a failed exit',
+      () async {
+        nextResult = <String, dynamic>{
+          'type': 'exit',
+          'reason': <String>[],
+          'step': 7,
+          'resumed': false,
+        };
+
+        final result = await DiditSdk.presentBankLink(
+          'blt_Hs8Pa4Rb6Ye0Gf2Jc7Qm3Zx9Vd2Lc5W',
+        );
+
+        expect(result, isA<BankLinkExit>());
+        final exit = result as BankLinkExit;
+        expect(exit.reason, BankLinkExitReason.failed);
+        expect(exit.step, isNull);
+      },
+    );
+
     test('a platform failure is a failed exit, not a thrown error', () async {
       nextError = PlatformException(code: 'unavailable', message: 'no native');
 
@@ -261,6 +305,15 @@ void main() {
 
       expect(await DiditSdk.resumeBankLink(), isNull);
     });
+
+    test(
+      'a bridge that throws an error, not an exception, is also null',
+      () async {
+        nextError = StateError('the native side threw');
+
+        expect(await DiditSdk.resumeBankLink(), isNull);
+      },
+    );
   });
 
   group('bankLinkEvents', () {
@@ -365,6 +418,15 @@ void main() {
         isFalse,
       );
     });
+
+    test('a bridge that throws an error is reported as not handled', () async {
+      nextError = StateError('the native side threw');
+
+      expect(
+        await DiditSdk.handleBankLinkReturn('https://app.example.com/other'),
+        isFalse,
+      );
+    });
   });
 
   group('the identifier formats file', () {
@@ -429,6 +491,39 @@ void main() {
           );
         }
       }
+    });
+
+    test('the wrapper applies no pattern of its own, only emptiness', () async {
+      // A validator may be looser than formats.json, never stricter: these are
+      // shapes the pinned patterns do not accept, and every one of them must
+      // still reach the native SDK as it was given.
+      for (final token in <String>[
+        'blt_',
+        'BLU_ABC',
+        'blt_${'0' * 32}',
+        'blt_0b9c.4f1e',
+        'blt_${'a' * 512}',
+      ]) {
+        nextResult = _success();
+        nativeCalls.clear();
+
+        await DiditSdk.presentBankLink(token);
+
+        expect(
+          nativeCalls.single.arguments['token'],
+          token,
+          reason: 'the wrapper narrowed the token it forwards',
+        );
+      }
+    });
+
+    test('the Android test copy is the same file', () {
+      expect(
+        File(
+          'android/src/test/resources/bank_link_contract/formats.json',
+        ).readAsBytesSync(),
+        File('test/fixtures/bank_link_contract/formats.json').readAsBytesSync(),
+      );
     });
 
     test('the resume code the backend mints carries a dot', () {

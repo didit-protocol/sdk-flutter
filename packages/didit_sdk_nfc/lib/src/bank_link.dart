@@ -73,8 +73,8 @@ sealed class BankLinkResult {
       if (linkId is String && linkId.isNotEmpty) {
         return BankLinkSuccess(
           linkId: linkId,
-          connectionId: map['connectionId'] as String?,
-          checkId: map['checkId'] as String?,
+          connectionId: _stringOf(map['connectionId']),
+          checkId: _stringOf(map['checkId']),
           resumed: resumed,
         );
       }
@@ -83,10 +83,17 @@ sealed class BankLinkResult {
       return BankLinkExit(reason: BankLinkExitReason.failed, resumed: resumed);
     }
     return BankLinkExit(
-      reason: BankLinkExitReason.fromWire(map['reason'] as String?),
-      step: map['step'] as String?,
+      reason: BankLinkExitReason.fromWire(_stringOf(map['reason'])),
+      step: _stringOf(map['step']),
       resumed: resumed,
     );
+  }
+
+  /// A field the bridge sent as something other than a string is read as
+  /// absent: a malformed answer still settles the future, never throws.
+  static String? _stringOf(Object? value) {
+    if (value is String && value.isNotEmpty) return value;
+    return null;
   }
 }
 
