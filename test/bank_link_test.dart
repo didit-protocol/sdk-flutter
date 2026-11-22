@@ -429,6 +429,37 @@ void main() {
     });
   });
 
+  group('the plugin build', () {
+    // The bridge for the pinned native version lives in a directory of its
+    // own, chosen at build time. AGP 8 with the Kotlin Gradle Plugin compiles
+    // Kotlin from the source set's java directories; AGP 9's built-in Kotlin
+    // compiles only its kotlin directories, where `newBankLinkBridge()` is then
+    // missing and every Android build fails to compile.
+    final script = File('android/build.gradle.kts').readAsStringSync();
+
+    test('compiles the bridge directory under AGP 8 and AGP 9', () {
+      expect(script, contains('java.srcDir(bankLinkSourceDir)'));
+      expect(script, contains('kotlin.srcDir(bankLinkSourceDir)'));
+    });
+
+    test('picks the bridge directory from the native pin', () {
+      expect(
+        script,
+        contains(
+          'if (diditSdkBankLink) "src/bankLinkOn/kotlin" '
+          'else "src/bankLinkOff/kotlin"',
+        ),
+      );
+      for (final dir in <String>['src/bankLinkOn', 'src/bankLinkOff']) {
+        expect(
+          Directory('android/$dir/kotlin').existsSync(),
+          isTrue,
+          reason: 'android/$dir/kotlin is missing',
+        );
+      }
+    });
+  });
+
   group('the identifier formats file', () {
     // The service pins every identifier it hands to a client in one file; each
     // platform copies it and proves its own validation accepts every example. A
