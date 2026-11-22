@@ -2,11 +2,17 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 
 import 'sdk_flutter_platform_interface.dart';
+import 'src/bank_link.dart';
 
 /// MethodChannel implementation of [SdkFlutterPlatform].
 class MethodChannelSdkFlutter extends SdkFlutterPlatform {
   @visibleForTesting
   final methodChannel = const MethodChannel('didit_sdk');
+
+  @visibleForTesting
+  final bankLinkEventChannel = const EventChannel('didit_sdk/bank_link_events');
+
+  Stream<BankLinkEvent>? _bankLinkEvents;
 
   void Function(String callId, Map<String, dynamic> result)?
   _transactionUpdateHandler;
@@ -63,6 +69,41 @@ class MethodChannelSdkFlutter extends SdkFlutterPlatform {
     });
     return Map<String, dynamic>.from(result ?? {});
   }
+
+  @override
+  Future<Map<String, dynamic>> presentBankLink(
+    String token,
+    Map<String, dynamic> options,
+  ) async {
+    final result = await methodChannel.invokeMethod<Map>('presentBankLink', {
+      'token': token,
+      'options': options,
+    });
+    return Map<String, dynamic>.from(result ?? {});
+  }
+
+  @override
+  Future<Map<String, dynamic>?> resumeBankLink() async {
+    final result = await methodChannel.invokeMethod<Map>('resumeBankLink');
+    return result == null ? null : Map<String, dynamic>.from(result);
+  }
+
+  @override
+  Future<bool> handleBankLinkReturn(String url) async {
+    final handled = await methodChannel.invokeMethod<bool>(
+      'handleBankLinkReturn',
+      {'url': url},
+    );
+    return handled ?? false;
+  }
+
+  /// One broadcast subscription for the whole app: the native side opens its
+  /// event sink on the first listen and keeps it for later listeners.
+  @override
+  Stream<BankLinkEvent> get bankLinkEvents =>
+      _bankLinkEvents ??= bankLinkEventChannel
+          .receiveBroadcastStream()
+          .map(BankLinkEvent.fromChannel);
 
   @override
   void setTransactionUpdateHandler(
