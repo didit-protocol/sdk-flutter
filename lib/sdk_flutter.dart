@@ -193,30 +193,11 @@ class DiditSdk {
   }
 
   /// The Bank Link in flight, if any: a link owns the screen until its native
-  /// presentation goes away, exactly like a verification. A presentation and
-  /// a resume share this one slot, because the native SDKs keep one set of
-  /// callbacks for both: a second call would replace the first one's and leave
-  /// its future unsettled.
-  static Future<BankLinkResult?>? _activeBankLink;
-
-  /// The resume in flight, if any: the same future every concurrent
-  /// [resumeBankLink] caller gets.
-  static Future<BankLinkResult?>? _activeBankLinkResume;
+  /// presentation goes away, exactly like a verification.
+  static Future<BankLinkResult>? _activeBankLink;
 
   static BankLinkResult _bankLinkAlreadyInProgress() =>
       const BankLinkExit(reason: BankLinkExitReason.failed, resumed: false);
-
-  /// Holds [link] as the active Bank Link until it settles, however it
-  /// settles.
-  static void _holdBankLink(Future<BankLinkResult?> link) {
-    _activeBankLink = link;
-    void release() {
-      if (identical(_activeBankLink, link)) _activeBankLink = null;
-      if (identical(_activeBankLinkResume, link)) _activeBankLinkResume = null;
-    }
-
-    link.then((_) => release(), onError: (Object _) => release());
-  }
 
   /// Open a Bank Link.
   ///
@@ -226,8 +207,8 @@ class DiditSdk {
   ///
   /// The future settles once with a [BankLinkSuccess] or a [BankLinkExit]; a
   /// bridge failure settles it as [BankLinkExitReason.failed], never as an
-  /// exception. Calling it again while a link is open or a [resumeBankLink] is
-  /// in flight resolves the same way without opening a second link.
+  /// exception. Calling it again while a link is open resolves the same way
+  /// without opening a second link.
   ///
   /// Example:
   /// ```dart
@@ -254,7 +235,12 @@ class DiditSdk {
           BankLinkResult.fromMap,
           onError: (Object _) => _bankLinkAlreadyInProgress(),
         );
-    _holdBankLink(result);
+    _activeBankLink = result;
+    void release() {
+      if (identical(_activeBankLink, result)) _activeBankLink = null;
+    }
+
+    result.then((_) => release(), onError: (_) => release());
     return result;
   }
 
@@ -265,31 +251,18 @@ class DiditSdk {
   /// `resumed: true`. `null` when there is nothing to resume, which is also
   /// what a bridge that cannot answer says, so a host never has to special-case
   /// an SDK version without Bank Link.
-  ///
-  /// One resume reaches native at a time: callers that ask while a resume is
-  /// in flight get that same future, and a [presentBankLink] during it is
-  /// refused as during a presentation. While a presented link is open this
-  /// answers `null` without calling native.
-  static Future<BankLinkResult?> resumeBankLink() {
-    final inFlight = _activeBankLinkResume;
-    if (inFlight != null) return inFlight;
+  static Future<BankLinkResult?> resumeBankLink() async {
     // A link is already open: calling native here would replace the running
     // flow's callbacks before native knows whether anything is pending, and
     // the presenting future would never settle.
-    if (_activeBankLink != null) return Future<BankLinkResult?>.value(null);
-
-    final result =
-        Future<Map<String, dynamic>?>.sync(
-              SdkFlutterPlatform.instance.resumeBankLink,
-            )
-            .then<BankLinkResult?>(
-              (raw) => raw == null ? null : BankLinkResult.fromMap(raw),
-            )
-            // Nothing pending, or a bridge that cannot answer: never an exception.
-            .catchError((Object _) => null);
-    _activeBankLinkResume = result;
-    _holdBankLink(result);
-    return result;
+    if (_activeBankLink != null) return null;
+    try {
+      final raw = await SdkFlutterPlatform.instance.resumeBankLink();
+      return raw == null ? null : BankLinkResult.fromMap(raw);
+    } catch (_) {
+      // Nothing pending, or a bridge that cannot answer: never an exception.
+      return null;
+    }
   }
 
   /// Hand the SDK an address the app was opened with, for hosts whose bank
@@ -377,15 +350,12 @@ class DiditSdk {
       _pendingTransactionUpdates[callId] = onTransactionUpdated;
     }
     try {
-      final raw = await SdkFlutterPlatform.instance.submitTransaction(
-        transactionToken,
-        transaction.toMap(),
-        {
-          'callId': callId,
-          'autoLaunchAction': options.autoLaunchAction,
-          if (options.baseUrl != null) 'baseUrl': options.baseUrl,
-        },
-      );
+      final raw = await SdkFlutterPlatform.instance
+          .submitTransaction(transactionToken, transaction.toMap(), {
+            'callId': callId,
+            'autoLaunchAction': options.autoLaunchAction,
+            if (options.baseUrl != null) 'baseUrl': options.baseUrl,
+          });
       final result = DiditTransactionResult.fromMap(raw);
       if (result.actionRequired == null) {
         _pendingTransactionUpdates.remove(callId);
