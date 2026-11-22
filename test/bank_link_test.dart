@@ -180,43 +180,49 @@ void main() {
       expect((result as BankLinkExit).reason, BankLinkExitReason.failed);
     });
 
-    test('a field sent as a non-string is read as absent, never thrown', () async {
-      nextResult = <String, dynamic>{
-        'type': 'success',
-        'linkId': 'link-1',
-        'connectionId': 42,
-        'checkId': <String>[],
-        'resumed': false,
-      };
+    test(
+      'a field sent as a non-string is read as absent, never thrown',
+      () async {
+        nextResult = <String, dynamic>{
+          'type': 'success',
+          'linkId': 'link-1',
+          'connectionId': 42,
+          'checkId': <String>[],
+          'resumed': false,
+        };
 
-      final result = await DiditSdk.presentBankLink(
-        'blt_Hs8Pa4Rb6Ye0Gf2Jc7Qm3Zx9Vd2Lc5W',
-      );
+        final result = await DiditSdk.presentBankLink(
+          'blt_Hs8Pa4Rb6Ye0Gf2Jc7Qm3Zx9Vd2Lc5W',
+        );
 
-      expect(result, isA<BankLinkSuccess>());
-      final success = result as BankLinkSuccess;
-      expect(success.linkId, 'link-1');
-      expect(success.connectionId, isNull);
-      expect(success.checkId, isNull);
-    });
+        expect(result, isA<BankLinkSuccess>());
+        final success = result as BankLinkSuccess;
+        expect(success.linkId, 'link-1');
+        expect(success.connectionId, isNull);
+        expect(success.checkId, isNull);
+      },
+    );
 
-    test('an exit whose reason and step are not strings is a failed exit', () async {
-      nextResult = <String, dynamic>{
-        'type': 'exit',
-        'reason': <String>[],
-        'step': 7,
-        'resumed': false,
-      };
+    test(
+      'an exit whose reason and step are not strings is a failed exit',
+      () async {
+        nextResult = <String, dynamic>{
+          'type': 'exit',
+          'reason': <String>[],
+          'step': 7,
+          'resumed': false,
+        };
 
-      final result = await DiditSdk.presentBankLink(
-        'blt_Hs8Pa4Rb6Ye0Gf2Jc7Qm3Zx9Vd2Lc5W',
-      );
+        final result = await DiditSdk.presentBankLink(
+          'blt_Hs8Pa4Rb6Ye0Gf2Jc7Qm3Zx9Vd2Lc5W',
+        );
 
-      expect(result, isA<BankLinkExit>());
-      final exit = result as BankLinkExit;
-      expect(exit.reason, BankLinkExitReason.failed);
-      expect(exit.step, isNull);
-    });
+        expect(result, isA<BankLinkExit>());
+        final exit = result as BankLinkExit;
+        expect(exit.reason, BankLinkExitReason.failed);
+        expect(exit.step, isNull);
+      },
+    );
 
     test('a platform failure is a failed exit, not a thrown error', () async {
       nextError = PlatformException(code: 'unavailable', message: 'no native');
@@ -300,11 +306,14 @@ void main() {
       expect(await DiditSdk.resumeBankLink(), isNull);
     });
 
-    test('a bridge that throws an error, not an exception, is also null', () async {
-      nextError = StateError('the native side threw');
+    test(
+      'a bridge that throws an error, not an exception, is also null',
+      () async {
+        nextError = StateError('the native side threw');
 
-      expect(await DiditSdk.resumeBankLink(), isNull);
-    });
+        expect(await DiditSdk.resumeBankLink(), isNull);
+      },
+    );
   });
 
   group('bankLinkEvents', () {
@@ -513,9 +522,7 @@ void main() {
         File(
           'android/src/test/resources/bank_link_contract/formats.json',
         ).readAsBytesSync(),
-        File(
-          'test/fixtures/bank_link_contract/formats.json',
-        ).readAsBytesSync(),
+        File('test/fixtures/bank_link_contract/formats.json').readAsBytesSync(),
       );
     });
 
