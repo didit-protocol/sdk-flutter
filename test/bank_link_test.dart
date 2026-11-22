@@ -286,6 +286,112 @@ void main() {
       expect(await open, isA<BankLinkSuccess>());
     });
 
+    /// Answers every native call with the next completer the test settles.
+    List<Completer<Map<String, dynamic>?>> holdNativeCalls() {
+      final pending = <Completer<Map<String, dynamic>?>>[];
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(channel, (MethodCall call) {
+            nativeCalls.add(call);
+            final answer = Completer<Map<String, dynamic>?>();
+            pending.add(answer);
+            return answer.future;
+          });
+      return pending;
+    }
+
+    test(
+      'two concurrent resumes share one native call and one future',
+      () async {
+        final pending = holdNativeCalls();
+
+        final atStartup = DiditSdk.resumeBankLink();
+        final fromAppLink = DiditSdk.resumeBankLink();
+
+        expect(identical(atStartup, fromAppLink), isTrue);
+        await Future<void>.delayed(Duration.zero);
+        expect(nativeCalls.map((call) => call.method), ['resumeBankLink']);
+
+        pending.single.complete(_success(resumed: true));
+        final first = await atStartup;
+        final second = await fromAppLink;
+        expect(first, isA<BankLinkSuccess>());
+        expect(identical(first, second), isTrue);
+        expect(first!.resumed, isTrue);
+      },
+    );
+
+    test(
+      'a present during a resume is refused without reaching native',
+      () async {
+        final pending = holdNativeCalls();
+
+        final resuming = DiditSdk.resumeBankLink();
+        final presented = await DiditSdk.presentBankLink(
+          'blt_Hs8Pa4Rb6Ye0Gf2Jc7Qm3Zx9Vd2Lc5W',
+        );
+
+        expect(presented, isA<BankLinkExit>());
+        expect((presented as BankLinkExit).reason, BankLinkExitReason.failed);
+        expect(presented.resumed, isFalse);
+        await Future<void>.delayed(Duration.zero);
+        expect(nativeCalls.map((call) => call.method), ['resumeBankLink']);
+
+        pending.single.complete(null);
+        expect(await resuming, isNull);
+      },
+    );
+
+    group('the guard is cleared once the resume settles', () {
+      Future<void> expectGuardCleared() async {
+        nextResult = _success();
+        TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+            .setMockMethodCallHandler(channel, (MethodCall call) async {
+              nativeCalls.add(call);
+              return call.method == 'presentBankLink' ? nextResult : null;
+            });
+        nativeCalls.clear();
+
+        expect(
+          await DiditSdk.presentBankLink('blt_Hs8Pa4Rb6Ye0Gf2Jc7Qm3Zx9Vd2Lc5W'),
+          isA<BankLinkSuccess>(),
+        );
+        expect(await DiditSdk.resumeBankLink(), isNull);
+        expect(nativeCalls.map((call) => call.method), [
+          'presentBankLink',
+          'resumeBankLink',
+        ]);
+      }
+
+      test('after a success', () async {
+        nextResume = _success(resumed: true);
+        expect(await DiditSdk.resumeBankLink(), isA<BankLinkSuccess>());
+        await expectGuardCleared();
+      });
+
+      test('after a failure', () async {
+        nextResume = <String, dynamic>{
+          'type': 'exit',
+          'reason': 'failed',
+          'resumed': true,
+        };
+        final result = await DiditSdk.resumeBankLink();
+        expect((result! as BankLinkExit).reason, BankLinkExitReason.failed);
+        await expectGuardCleared();
+      });
+
+      test('after a thrown platform exception', () async {
+        nextError = PlatformException(code: 'unavailable');
+        expect(await DiditSdk.resumeBankLink(), isNull);
+        nextError = null;
+        await expectGuardCleared();
+      });
+
+      test('after nothing was pending', () async {
+        expect(await DiditSdk.resumeBankLink(), isNull);
+        await expectGuardCleared();
+      });
+    });
+
     test('returns null when nothing is pending', () async {
       nextResume = null;
 

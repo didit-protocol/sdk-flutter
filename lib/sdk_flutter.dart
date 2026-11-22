@@ -278,14 +278,15 @@ class DiditSdk {
     // the presenting future would never settle.
     if (_activeBankLink != null) return Future<BankLinkResult?>.value(null);
 
-    final result = Future<Map<String, dynamic>?>.sync(
-      SdkFlutterPlatform.instance.resumeBankLink,
-    )
-        .then<BankLinkResult?>(
-          (raw) => raw == null ? null : BankLinkResult.fromMap(raw),
-        )
-        // Nothing pending, or a bridge that cannot answer: never an exception.
-        .catchError((Object _) => null);
+    final result =
+        Future<Map<String, dynamic>?>.sync(
+              SdkFlutterPlatform.instance.resumeBankLink,
+            )
+            .then<BankLinkResult?>(
+              (raw) => raw == null ? null : BankLinkResult.fromMap(raw),
+            )
+            // Nothing pending, or a bridge that cannot answer: never an exception.
+            .catchError((Object _) => null);
     _activeBankLinkResume = result;
     _holdBankLink(result);
     return result;
