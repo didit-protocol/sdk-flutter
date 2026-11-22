@@ -38,7 +38,7 @@ class SdkFlutterPlugin :
     ActivityAware {
 
     private lateinit var channel: MethodChannel
-    private var bankLinkEvents: EventChannel.EventSink? = null
+    internal var bankLinkEvents: EventChannel.EventSink? = null
     private var activity: Activity? = null
 
     /**
