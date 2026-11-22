@@ -32,6 +32,13 @@ enum BankLinkExitReason {
   expired,
 
   /// Any other failure: the flow could not be completed.
+  ///
+  /// This is also how a link that has already finished ends when it is
+  /// opened again: the service answers `410 link_ended` with its
+  /// `link_status` (`completed` or `failed`), the native SDK shows the ending
+  /// that status names, and the result is a `failed` exit either way. A link
+  /// open in another instance (`409 link_already_redeemed`) ends the same way;
+  /// that code no longer means a finished link.
   failed;
 
   /// The `exit.reason` value of the link contract.
@@ -137,6 +144,10 @@ class BankLinkExit extends BankLinkResult {
 /// `success`, `exit`, `error`); [data] holds the snake_case payload keys
 /// (`link_id`, `institution_id`, `consent_version`, ...). The wrapper never
 /// rewrites either: a name a newer native SDK adds reaches the host as it is.
+///
+/// Once the person picks a bank, the native session state names it
+/// (`detail.institution_id`, `detail.institution_name`) and the native screens
+/// show that name; events still carry only `institution_id`, never the name.
 class BankLinkEvent {
   /// The event name, identical to native and web.
   final String name;
