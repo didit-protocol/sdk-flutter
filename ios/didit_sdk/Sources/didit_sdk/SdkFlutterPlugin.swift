@@ -172,8 +172,15 @@ public class SdkFlutterPlugin: NSObject, FlutterPlugin, FlutterStreamHandler {
     }
 
     func handleResumeBankLink(result: @escaping FlutterResult) {
+        // One link at a time: native keeps one set of callbacks, so resuming
+        // over an open link or another resume would hand the running flow's
+        // result to this call and leave the earlier one unanswered.
+        guard openBankLink == nil else {
+            result(nil)
+            return
+        }
+
         let link = BankLinkCall(result: result)
-        let previous = openBankLink
         openBankLink = link
 
         let resumed = bankLinkBridge.resume(
@@ -182,10 +189,14 @@ public class SdkFlutterPlugin: NSObject, FlutterPlugin, FlutterStreamHandler {
         )
 
         if !resumed {
-            if openBankLink === link { openBankLink = previous }
+            if openBankLink === link { openBankLink = nil }
             // Nothing pending: a native layer without Bank Link kept no link,
-            // and Dart reads nil as "nothing pending".
-            if !link.delivered { result(nil) }
+            // and Dart reads nil as "nothing pending". Marked answered, so a
+            // late native callback cannot answer this call a second time.
+            if !link.delivered {
+                link.delivered = true
+                result(nil)
+            }
         }
     }
 
