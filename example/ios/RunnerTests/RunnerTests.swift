@@ -16,7 +16,7 @@ import XCTest
 
 class RunnerTests: XCTestCase {
 
-  private let plugin = SdkFlutterPlugin()
+  private var plugin = SdkFlutterPlugin()
 
   private func reply(to method: String, arguments: Any?) -> Any? {
     var reply: Any?
@@ -168,37 +168,38 @@ class RunnerTests: XCTestCase {
     }
   }
 
-  private let token = "blt_Hs8Pa4Rb6Ye0Gf2Jc7Qm3Zx9Vd2Lc5W"
+  private let bankLinkToken = "blt_Hs8Pa4Rb6Ye0Gf2Jc7Qm3Zx9Vd2Lc5W"
 
-  private let resumeReturn = "https://app.example.com/bank/return"
+  private let bankLinkReturn = "https://app.example.com/bank/return"
     + "?didit_resume=rsc_0b9c4f1e6a2d4e8b9f317c5d2e1a8b40"
     + ".7Hq3Zx9Wd2Lm5Tn8Vc1Ks4Pa6Rb0Uv3"
 
-  private func bankLinkPlugin() -> (SdkFlutterPlugin, FakeBankLinkBridge) {
-    let plugin = SdkFlutterPlugin()
+  /// Puts a fake native module behind the plugin every bridge test drives.
+  private func fakeBankLink() -> FakeBankLinkBridge {
     let bridge = FakeBankLinkBridge()
     plugin.bankLinkBridge = bridge
-    return (plugin, bridge)
+    return bridge
   }
 
   func testBankLinkForwardsTheTokenAndConfigurationToTheNativeSdk() {
-    let (plugin, bridge) = bankLinkPlugin()
+    let bridge = fakeBankLink()
 
     _ = reply(to: "presentBankLink", arguments: [
-      "token": token,
+      "token": bankLinkToken,
       "options": ["config": ["languageCode": "es"]],
     ])
 
-    XCTAssertEqual(bridge.presentedTokens, [token])
-    XCTAssertEqual(bridge.presentedConfigurations.first??.languageLocale, .spanish)
+    XCTAssertEqual(bridge.presentedTokens, [bankLinkToken])
+    let configuration = bridge.presentedConfigurations.first ?? nil
+    XCTAssertEqual(configuration?.languageLocale, .spanish)
   }
 
   func testEveryBankLinkEventReachesTheChannelWithItsNameAndPayloadUntouched() {
-    let (plugin, bridge) = bankLinkPlugin()
+    let bridge = fakeBankLink()
     var events: [Any?] = []
     plugin.bankLinkEvents = { events.append($0) }
 
-    _ = reply(to: "presentBankLink", arguments: ["token": token])
+    _ = reply(to: "presentBankLink", arguments: ["token": bankLinkToken])
     bridge.emit(BankLinkWire.Event(
       name: "opened",
       payload: ["link_id": "link-1", "mode": "connect", "access": "ongoing"]
@@ -219,12 +220,12 @@ class RunnerTests: XCTestCase {
   }
 
   func testBankLinkSuccessSettlesDartWithItsIdsAndResumedFlag() {
-    let (plugin, bridge) = bankLinkPlugin()
-    var reply: Any?
+    let bridge = fakeBankLink()
+    var answer: Any?
 
     plugin.handle(
-      FlutterMethodCall(methodName: "presentBankLink", arguments: ["token": token])
-    ) { reply = $0 }
+      FlutterMethodCall(methodName: "presentBankLink", arguments: ["token": bankLinkToken])
+    ) { answer = $0 }
     bridge.finish(.success(
       linkId: "link-1",
       connectionId: "connection-1",
@@ -232,7 +233,7 @@ class RunnerTests: XCTestCase {
       resumed: true
     ))
 
-    let map = reply as? [String: Any?]
+    let map = answer as? [String: Any?]
     XCTAssertEqual(map?["type"] as? String, "success")
     XCTAssertEqual(map?["linkId"] as? String, "link-1")
     XCTAssertEqual(map?["connectionId"] as? String, "connection-1")
@@ -242,15 +243,16 @@ class RunnerTests: XCTestCase {
 
   func testEveryBankLinkExitReasonReachesDartAsItsWireName() {
     for reason in ["closed", "cancelled", "bank_unavailable", "expired", "failed"] {
-      let (plugin, bridge) = bankLinkPlugin()
-      var reply: Any?
+      plugin = SdkFlutterPlugin()
+      let bridge = fakeBankLink()
+      var answer: Any?
 
       plugin.handle(
-        FlutterMethodCall(methodName: "presentBankLink", arguments: ["token": token])
-      ) { reply = $0 }
+        FlutterMethodCall(methodName: "presentBankLink", arguments: ["token": bankLinkToken])
+      ) { answer = $0 }
       bridge.finish(.exit(reason: reason, step: "bank_hop", resumed: false))
 
-      let map = reply as? [String: Any?]
+      let map = answer as? [String: Any?]
       XCTAssertEqual(map?["type"] as? String, "exit", reason)
       XCTAssertEqual(map?["reason"] as? String, reason)
       XCTAssertEqual(map?["step"] as? String, "bank_hop")
@@ -258,23 +260,26 @@ class RunnerTests: XCTestCase {
   }
 
   func testASecondBankLinkResultIsDroppedSoDartSettlesOnce() {
-    let (plugin, bridge) = bankLinkPlugin()
-    var replies: [Any?] = []
+    let bridge = fakeBankLink()
+    var answers: [Any?] = []
 
     plugin.handle(
-      FlutterMethodCall(methodName: "presentBankLink", arguments: ["token": token])
-    ) { replies.append($0) }
+      FlutterMethodCall(methodName: "presentBankLink", arguments: ["token": bankLinkToken])
+    ) { answers.append($0) }
     bridge.finish(.exit(reason: "closed", step: "consent", resumed: false))
     bridge.finish(.exit(reason: "failed", step: nil, resumed: false))
 
-    XCTAssertEqual(replies.count, 1)
+    XCTAssertEqual(answers.count, 1)
   }
 
   func testASecondBankLinkWhileOneIsOpenFailsWithoutReachingTheNativeSdk() {
-    let (plugin, bridge) = bankLinkPlugin()
+    let bridge = fakeBankLink()
 
-    _ = reply(to: "presentBankLink", arguments: ["token": token])
-    let second = reply(to: "presentBankLink", arguments: ["token": token]) as? [String: Any?]
+    _ = reply(to: "presentBankLink", arguments: ["token": bankLinkToken])
+    let second = reply(
+      to: "presentBankLink",
+      arguments: ["token": bankLinkToken]
+    ) as? [String: Any?]
 
     XCTAssertEqual(bridge.presentedTokens.count, 1)
     XCTAssertEqual(second?["type"] as? String, "exit")
@@ -282,7 +287,7 @@ class RunnerTests: XCTestCase {
   }
 
   func testResumeAnswersNilWhenTheNativeSdkHasNothingPending() {
-    let (plugin, _) = bankLinkPlugin()
+    _ = fakeBankLink()
 
     let answer = reply(to: "resumeBankLink", arguments: nil)
 
@@ -290,7 +295,7 @@ class RunnerTests: XCTestCase {
   }
 
   func testResumeAnswersAReplayedResultWithItsResumedFlag() {
-    let (plugin, bridge) = bankLinkPlugin()
+    let bridge = fakeBankLink()
     bridge.resumes = true
     bridge.resumeOutcome = .success(
       linkId: "link-1",
@@ -307,36 +312,36 @@ class RunnerTests: XCTestCase {
   }
 
   func testABankLinkReturnAddressReachesTheNativeHandlerUnchanged() {
-    let (plugin, bridge) = bankLinkPlugin()
+    let bridge = fakeBankLink()
     bridge.handles = true
 
-    let answer = reply(to:
-      "handleBankLinkReturn",
-      arguments: ["url": resumeReturn]
+    let answer = reply(
+      to: "handleBankLinkReturn",
+      arguments: ["url": bankLinkReturn]
     )
 
-    XCTAssertEqual(bridge.returnAddresses, [resumeReturn])
+    XCTAssertEqual(bridge.returnAddresses, [bankLinkReturn])
     XCTAssertEqual(answer as? Bool, true)
   }
 
   func testAnAddressThatIsNotABankLinkReturnIsReportedAsSuch() {
-    let (plugin, _) = bankLinkPlugin()
+    _ = fakeBankLink()
 
-    let answer = reply(to:
-      "handleBankLinkReturn",
+    let answer = reply(
+      to: "handleBankLinkReturn",
       arguments: ["url": "https://app.example.com/other"]
     )
 
     XCTAssertEqual(answer as? Bool, false)
   }
 
-  func testAFormatExampleWithItsDotReachesTheNativeHandlerUnchanged() {
-    let (plugin, bridge) = bankLinkPlugin()
+  func testAResumeCodeWithItsDotReachesTheNativeHandlerUnchanged() {
+    let bridge = fakeBankLink()
     bridge.handles = true
 
-    _ = reply(to: "handleBankLinkReturn", arguments: ["url": resumeReturn])
+    _ = reply(to: "handleBankLinkReturn", arguments: ["url": bankLinkReturn])
 
-    XCTAssertEqual(bridge.returnAddresses.first, resumeReturn)
+    XCTAssertEqual(bridge.returnAddresses.first, bankLinkReturn)
     XCTAssertTrue(bridge.returnAddresses.first?.contains("rsc_") ?? false)
     XCTAssertTrue(bridge.returnAddresses.first?.contains(".7Hq3") ?? false)
   }
