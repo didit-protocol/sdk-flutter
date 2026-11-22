@@ -131,7 +131,6 @@ internal class BankLinkBridgeTest {
     @Test
     fun everyExitReasonReachesDartAsItsWireName() {
         for (reason in listOf("closed", "cancelled", "bank_unavailable", "expired", "failed")) {
-            setUp()
             delivered.clear()
             events.clear()
 
@@ -253,16 +252,18 @@ internal class BankLinkBridgeTest {
         val examples = formatsExamples()
         assertTrue(examples.size >= 14, "formats.json: ${examples.size} examples")
 
+        bridge.handled = true
         for (example in examples) {
-            setUp()
             delivered.clear()
             events.clear()
             bridge.presentedTokens.clear()
+            bridge.returnAddresses.clear()
 
             call("presentBankLink", mapOf("token" to example))
             assertEquals(listOf(example), bridge.presentedTokens, example)
+            // Close the link so the next example opens on a free screen.
+            bridge.finish(BankLinkWire.Outcome.Exit("closed", null, false))
 
-            bridge.handled = true
             val url = "https://app.example.com/bank/return?didit_resume=$example"
             call("handleBankLinkReturn", mapOf("url" to url))
             assertEquals(listOf(url), bridge.returnAddresses, example)
