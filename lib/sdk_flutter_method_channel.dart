@@ -101,9 +101,11 @@ class MethodChannelSdkFlutter extends SdkFlutterPlatform {
   /// event sink on the first listen and keeps it for later listeners.
   @override
   Stream<BankLinkEvent> get bankLinkEvents =>
-      _bankLinkEvents ??= bankLinkEventChannel.receiveBroadcastStream().map(
-        BankLinkEvent.fromChannel,
-      );
+      _bankLinkEvents ??= bankLinkEventChannel
+          .receiveBroadcastStream()
+          .map(BankLinkEvent.fromChannel)
+          .where((event) => event != null)
+          .cast<BankLinkEvent>();
 
   @override
   void setTransactionUpdateHandler(

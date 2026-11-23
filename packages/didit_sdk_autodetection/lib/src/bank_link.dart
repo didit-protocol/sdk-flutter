@@ -143,7 +143,8 @@ class BankLinkExit extends BankLinkResult {
 /// [name] is the native and web event name (`opened`, `consent_shown`, ...,
 /// `success`, `exit`, `error`); [data] holds the snake_case payload keys
 /// (`link_id`, `institution_id`, `consent_version`, ...). The wrapper never
-/// rewrites either: a name a newer native SDK adds reaches the host as it is.
+/// renames either: a name a newer native SDK adds reaches the host as it is,
+/// with its `link_id` only. Keys outside an event's contract are dropped.
 ///
 /// Once the person picks a bank, the native session state names it
 /// (`detail.institution_id`, `detail.institution_name`) and the native screens
@@ -157,22 +158,42 @@ class BankLinkEvent {
 
   const BankLinkEvent({required this.name, this.data = const {}});
 
-  /// Maps one event-channel message.
-  factory BankLinkEvent.fromChannel(Object? message) {
-    if (message is Map) {
-      final name = message['name'];
-      final data = message['data'];
-      return BankLinkEvent(
-        name: name is String ? name : '',
-        data: data is Map
-            ? <String, Object?>{
-                for (final entry in data.entries)
+  /// The payload keys each known event may carry (ids and short codes only).
+  /// A key outside the list is dropped, so a token or a session credential can
+  /// never reach a host through the stream, whatever native sends.
+  static const Map<String, Set<String>> _allowedKeys = {
+    'opened': {'link_id', 'mode', 'access', 'presentation'},
+    'consent_shown': {'link_id', 'consent_version'},
+    'consent_accepted': {'link_id', 'consent_version'},
+    'institution_selected': {'link_id', 'institution_id', 'country'},
+    'bank_redirect': {'link_id', 'via'},
+    'bank_returned': {'link_id', 'result'},
+    'accounts_selected': {'link_id', 'count'},
+    'success': {'link_id', 'connection_id', 'check_id'},
+    'exit': {'link_id', 'reason', 'step'},
+    'error': {'link_id', 'code'},
+  };
+
+  /// Maps one event-channel message, or returns `null` for a malformed one
+  /// (not a map, or without a non-empty string `name`), which the stream drops.
+  ///
+  /// A name a newer native SDK adds is kept, with only its `link_id`.
+  static BankLinkEvent? fromChannel(Object? message) {
+    if (message is! Map) return null;
+    final name = message['name'];
+    if (name is! String || name.isEmpty) return null;
+    final data = message['data'];
+    final allowed = _allowedKeys[name] ?? const {'link_id'};
+    return BankLinkEvent(
+      name: name,
+      data: data is Map
+          ? <String, Object?>{
+              for (final entry in data.entries)
+                if (allowed.contains(entry.key.toString()))
                   entry.key.toString(): entry.value,
-              }
-            : const <String, Object?>{},
-      );
-    }
-    return const BankLinkEvent(name: '');
+            }
+          : const <String, Object?>{},
+    );
   }
 
   @override

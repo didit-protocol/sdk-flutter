@@ -8,7 +8,7 @@ import 'package:didit_sdk/sdk_flutter_platform_interface.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-/// The payload keys of every event (`link-contract/events.md`, section 1).
+/// The payload keys of every event (the Bank Link event contract).
 /// Payloads carry ids only: no name, token, email or account number.
 const _eventPayloadKeys = <String, Set<String>>{
   'opened': {'link_id', 'mode', 'access', 'presentation'},
@@ -524,6 +524,55 @@ void main() {
 
       expect(native.received.single.name, 'a_new_event');
       expect(native.received.single.data, {'link_id': 'link-1'});
+    });
+  });
+
+  group('bankLinkEvents filtering', () {
+    test(
+      'drops a malformed message instead of emitting an unnamed event',
+      () async {
+        final native = await _FakeNativeEvents.open(
+          eventChannel,
+          DiditSdk.bankLinkEvents,
+        );
+        addTearDown(native.subscription.cancel);
+
+        native.sender.success('not a map');
+        native.sender.success(<String, Object?>{'data': <String, Object?>{}});
+        native.sender.success(<String, Object?>{'name': '', 'data': null});
+        native.sender.success(<String, Object?>{'name': 7});
+        native.sender.success(<String, Object?>{'name': 'opened'});
+        await Future<void>.delayed(Duration.zero);
+
+        expect(native.received.map((event) => event.name), ['opened']);
+        expect(native.received.single.data, isEmpty);
+      },
+    );
+
+    test('never forwards a key outside the event contract', () async {
+      final native = await _FakeNativeEvents.open(
+        eventChannel,
+        DiditSdk.bankLinkEvents,
+      );
+      addTearDown(native.subscription.cancel);
+
+      native.sender.success(<String, Object?>{
+        'name': 'bank_redirect',
+        'data': <String, Object?>{
+          'link_id': 'link-1',
+          'via': 'popup',
+          'session': 'secret-session',
+          'client_token': 'secret-token',
+        },
+      });
+      native.sender.success(<String, Object?>{
+        'name': 'a_new_event',
+        'data': <String, Object?>{'link_id': 'link-1', 'session': 'secret'},
+      });
+      await Future<void>.delayed(Duration.zero);
+
+      expect(native.received[0].data, {'link_id': 'link-1', 'via': 'popup'});
+      expect(native.received[1].data, {'link_id': 'link-1'});
     });
   });
 

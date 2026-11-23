@@ -24,7 +24,7 @@ final class DiditBankLinkBridge: BankLinkBridging {
         onEvent: @escaping (BankLinkWire.Event) -> Void,
         onResult: @escaping (BankLinkWire.Outcome) -> Void
     ) -> Bool {
-        MainActor.assumeIsolated {
+        Self.onMainActor {
             DiditSdk.shared.presentBankLink(
                 token: token,
                 from: nil,
@@ -44,7 +44,7 @@ final class DiditBankLinkBridge: BankLinkBridging {
         onEvent: @escaping (BankLinkWire.Event) -> Void,
         onResult: @escaping (BankLinkWire.Outcome) -> Void
     ) -> Bool {
-        return MainActor.assumeIsolated {
+        return Self.onMainActor {
             DiditSdk.shared.resumeBankLink(
                 from: nil,
                 onEvent: { event in
@@ -59,9 +59,19 @@ final class DiditBankLinkBridge: BankLinkBridging {
 
     func handleReturn(_ url: String) -> Bool {
         guard let address = URL(string: url) else { return false }
-        return MainActor.assumeIsolated {
+        return Self.onMainActor {
             DiditSdk.shared.handleBankLinkReturn(address)
         }
+    }
+
+    /// `DiditSdk` is `@MainActor`. Flutter delivers method calls on the main
+    /// thread, where the isolation is asserted without a hop; from any other
+    /// thread the call hops synchronously to the main queue first.
+    private static func onMainActor<T>(_ body: @MainActor () -> T) -> T {
+        if Thread.isMainThread {
+            return MainActor.assumeIsolated(body)
+        }
+        return DispatchQueue.main.sync { MainActor.assumeIsolated(body) }
     }
 
     private static func outcome(_ result: BankLinkResult) -> BankLinkWire.Outcome {
