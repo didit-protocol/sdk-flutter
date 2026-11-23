@@ -18,6 +18,19 @@ import DiditSDK
 /// re-derived, so a resume code that carries a dot survives the trip.
 final class DiditBankLinkBridge: BankLinkBridging {
 
+    /// Where a link is presented from: the top-most view controller of the
+    /// app's key window. Injected so a test can answer "none".
+    private let presenter: () -> UIViewController?
+
+    init(presenter: @escaping () -> UIViewController? = { SdkFlutterPlugin.findRootViewController() }) {
+        self.presenter = presenter
+    }
+
+    /// The presenting view controller is resolved here, never left to the
+    /// native SDK: native logs and returns without opening a flow when it has
+    /// none, and a flow that never reports a result would leave the Dart call
+    /// waiting forever. With no view controller nothing is called and the
+    /// answer is `false`, which Dart reads as a declined presentation.
     func present(
         token: String,
         configuration: DiditSdk.Configuration?,
@@ -25,28 +38,33 @@ final class DiditBankLinkBridge: BankLinkBridging {
         onResult: @escaping (BankLinkWire.Outcome) -> Void
     ) -> Bool {
         Self.onMainActor {
-            DiditSdk.shared.presentBankLink(
-                token: token,
-                from: nil,
-                configuration: configuration,
-                onEvent: { event in
-                    onEvent(BankLinkWire.Event(name: event.name.rawValue, payload: event.payload))
-                },
-                onResult: { result in
-                    onResult(Self.outcome(result))
-                }
+            guard let host = presenter() else { return false }
+            return Self.opened(
+                DiditSdk.shared.presentBankLink(
+                    token: token,
+                    from: host,
+                    configuration: configuration,
+                    onEvent: { event in
+                        onEvent(BankLinkWire.Event(name: event.name.rawValue, payload: event.payload))
+                    },
+                    onResult: { result in
+                        onResult(Self.outcome(result))
+                    }
+                )
             )
         }
-        return true
     }
 
+    /// With no view controller a resume cannot present, so it answers `false`
+    /// (nothing resumed, `null` in Dart) instead of calling native.
     func resume(
         onEvent: @escaping (BankLinkWire.Event) -> Void,
         onResult: @escaping (BankLinkWire.Outcome) -> Void
     ) -> Bool {
-        return Self.onMainActor {
-            DiditSdk.shared.resumeBankLink(
-                from: nil,
+        Self.onMainActor {
+            guard let host = presenter() else { return false }
+            return DiditSdk.shared.resumeBankLink(
+                from: host,
                 onEvent: { event in
                     onEvent(BankLinkWire.Event(name: event.name.rawValue, payload: event.payload))
                 },
@@ -72,6 +90,13 @@ final class DiditBankLinkBridge: BankLinkBridging {
             return MainActor.assumeIsolated(body)
         }
         return DispatchQueue.main.sync { MainActor.assumeIsolated(body) }
+    }
+
+    /// Reads the answer of a native `presentBankLink` that returns `Bool`
+    /// (`false` when nothing opened) and also compiles against one that returns
+    /// nothing, which counts as opened.
+    private static func opened<T>(_ nativeAnswer: T) -> Bool {
+        (nativeAnswer as? Bool) ?? true
     }
 
     private static func outcome(_ result: BankLinkResult) -> BankLinkWire.Outcome {

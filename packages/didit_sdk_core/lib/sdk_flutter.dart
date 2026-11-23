@@ -270,7 +270,13 @@ class DiditSdk {
   /// in flight get that same future, and a [presentBankLink] during it is
   /// refused as during a presentation. While a presented link is open this
   /// answers `null` without calling native.
-  static Future<BankLinkResult?> resumeBankLink() {
+  ///
+  /// [options] takes the same [BankLinkOptions] as [presentBankLink] (language,
+  /// fonts, logging), so a resumed link looks like the presented one; a caller
+  /// that joins a resume already in flight gets that resume's configuration.
+  /// The Android SDK applies it; the iOS SDK's resume takes none and keeps its
+  /// own, so it is ignored there.
+  static Future<BankLinkResult?> resumeBankLink({BankLinkOptions? options}) {
     final inFlight = _activeBankLinkResume;
     if (inFlight != null) return inFlight;
     // A link is already open: calling native here would replace the running
@@ -280,7 +286,9 @@ class DiditSdk {
 
     final result =
         Future<Map<String, dynamic>?>.sync(
-              SdkFlutterPlatform.instance.resumeBankLink,
+              () => SdkFlutterPlatform.instance.resumeBankLink(
+                config: _verificationConfig(options?.config),
+              ),
             )
             .then<BankLinkResult?>(
               (raw) => raw == null ? null : BankLinkResult.fromMap(raw),

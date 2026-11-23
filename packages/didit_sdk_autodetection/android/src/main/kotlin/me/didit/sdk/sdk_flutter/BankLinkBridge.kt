@@ -39,6 +39,7 @@ internal interface BankLinkBridge {
      */
     fun resume(
         activity: Activity,
+        configuration: Configuration?,
         onEvent: (BankLinkWire.Event) -> Unit,
         onResult: (BankLinkWire.Outcome) -> Unit
     ): Boolean
@@ -114,6 +115,7 @@ internal class UnavailableBankLinkBridge : BankLinkBridge {
 
     override fun resume(
         activity: Activity,
+        configuration: Configuration?,
         onEvent: (BankLinkWire.Event) -> Unit,
         onResult: (BankLinkWire.Outcome) -> Unit
     ): Boolean = false

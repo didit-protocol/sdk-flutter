@@ -68,7 +68,10 @@ abstract class SdkFlutterPlatform extends PlatformInterface {
   /// Pick up a link whose bank trip outlived the app.
   ///
   /// `null` when there is nothing to resume.
-  Future<Map<String, dynamic>?> resumeBankLink() {
+  ///
+  /// [config] is the same configuration map a presentation takes (language,
+  /// fonts, logging), so a resumed link looks like the presented one.
+  Future<Map<String, dynamic>?> resumeBankLink({Map<String, dynamic>? config}) {
     throw UnimplementedError('resumeBankLink() has not been implemented.');
   }
 

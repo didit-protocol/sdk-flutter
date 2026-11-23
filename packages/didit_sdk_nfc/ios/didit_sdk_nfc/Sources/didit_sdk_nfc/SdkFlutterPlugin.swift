@@ -306,7 +306,7 @@ public class SdkFlutterPlugin: NSObject, FlutterPlugin, FlutterStreamHandler {
 
     // MARK: - View Controller Helpers
 
-    private static func findRootViewController() -> UIViewController? {
+    static func findRootViewController() -> UIViewController? {
         guard let windowScene = UIApplication.shared.connectedScenes
             .compactMap({ $0 as? UIWindowScene })
             .first,

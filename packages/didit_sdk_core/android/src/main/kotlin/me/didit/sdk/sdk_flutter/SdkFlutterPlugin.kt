@@ -108,7 +108,7 @@ class SdkFlutterPlugin :
             "submitTransaction" -> handleSubmitTransaction(call, result)
             "getTransaction" -> handleGetTransaction(call, result)
             "presentBankLink" -> handlePresentBankLink(call, result)
-            "resumeBankLink" -> handleResumeBankLink(result)
+            "resumeBankLink" -> handleResumeBankLink(call, result)
             "handleBankLinkReturn" -> handleBankLinkReturn(call, result)
             else -> result.notImplemented()
         }
@@ -350,7 +350,7 @@ class SdkFlutterPlugin :
         }
     }
 
-    private fun handleResumeBankLink(result: Result) {
+    private fun handleResumeBankLink(call: MethodCall, result: Result) {
         val host = activity
         if (host == null) {
             // Nothing to resume: a native layer without a screen kept no link,
@@ -367,10 +367,18 @@ class SdkFlutterPlugin :
             return
         }
 
+        // The same configuration a presented link takes, so a resumed link
+        // looks like the one the person started.
+        val options = call.argument<Map<String, Any?>>("options")
+        val configuration = parseConfiguration(
+            options?.get("config") as? Map<String, Any>
+        )
+
         val link = BankLinkCall(result)
         openBankLink = link
         val resumed = bankLinkBridge.resume(
             host,
+            configuration,
             onEvent = ::emitBankLinkEvent
         ) { outcome -> resolveBankLink(link, outcome) }
 

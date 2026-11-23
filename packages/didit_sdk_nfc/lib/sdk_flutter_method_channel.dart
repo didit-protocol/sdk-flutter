@@ -83,8 +83,17 @@ class MethodChannelSdkFlutter extends SdkFlutterPlatform {
   }
 
   @override
-  Future<Map<String, dynamic>?> resumeBankLink() async {
-    final result = await methodChannel.invokeMethod<Map>('resumeBankLink');
+  Future<Map<String, dynamic>?> resumeBankLink({
+    Map<String, dynamic>? config,
+  }) async {
+    final result = await methodChannel.invokeMethod<Map>(
+      'resumeBankLink',
+      config == null
+          ? null
+          : {
+              'options': {'config': config},
+            },
+    );
     return result == null ? null : Map<String, dynamic>.from(result);
   }
 

@@ -319,6 +319,7 @@ internal class BankLinkBridgeTest {
 
         override fun resume(
             activity: Activity,
+            configuration: Configuration?,
             onEvent: (BankLinkWire.Event) -> Unit,
             onResult: (BankLinkWire.Outcome) -> Unit
         ): Boolean {

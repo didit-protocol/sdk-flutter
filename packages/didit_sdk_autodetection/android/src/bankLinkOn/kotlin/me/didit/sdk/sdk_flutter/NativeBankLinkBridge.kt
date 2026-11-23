@@ -10,7 +10,7 @@ import me.didit.sdk.features.bank.link.BankLinkResult
  * The hand-off into the native Android Bank Link, written against the public
  * API of the Android native issue (`DiditSdk.presentBankLink(activity, token,
  * configuration, onEvent, onResult)`, sealed `BankLinkResult.Success`/`.Exit`,
- * `DiditSdk.resumeBankLink(activity)`, `DiditSdk.handleBankLinkReturn(uri)`).
+ * `DiditSdk.resumeBankLink(activity, configuration, onEvent, onResult)`, `DiditSdk.handleBankLinkReturn(uri)`).
  *
  * Compiled only with `-PdiditSdkBankLink=true`, which is also the moment the
  * native AAR in `build.gradle.kts` moves to the version that carries Bank Link;
@@ -42,10 +42,12 @@ internal class NativeBankLinkBridge : BankLinkBridge {
 
     override fun resume(
         activity: Activity,
+        configuration: Configuration?,
         onEvent: (BankLinkWire.Event) -> Unit,
         onResult: (BankLinkWire.Outcome) -> Unit
     ): Boolean = DiditSdk.resumeBankLink(
         activity = activity,
+        configuration = configuration,
         onEvent = { event -> onEvent(BankLinkWire.Event(event.name.wire, event.payload)) },
         onResult = { result -> onResult(result.toWire()) }
     )

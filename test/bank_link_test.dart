@@ -267,6 +267,22 @@ void main() {
   });
 
   group('resumeBankLink', () {
+    test(
+      'hands the host configuration to native, like a presentation',
+      () async {
+        await DiditSdk.resumeBankLink(
+          options: const BankLinkOptions(
+            config: DiditConfig(languageCode: 'es', fontFamily: 'Inter'),
+          ),
+        );
+
+        final arguments = nativeCalls.single.arguments as Map;
+        final config = (arguments['options'] as Map)['config'] as Map;
+        expect(config['languageCode'], 'es');
+        expect(config['fontFamily'], 'Inter');
+      },
+    );
+
     test('answers null while a link is open without reaching native', () async {
       final first = Completer<Map<String, dynamic>>();
       TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger

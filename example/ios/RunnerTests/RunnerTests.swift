@@ -283,6 +283,41 @@ class RunnerTests: XCTestCase {
     XCTAssertEqual(answers.count, 1)
   }
 
+  func testBankLinkTheNativeSdkCouldNotOpenAnswersUnavailableInsteadOfHanging() {
+    let native = FakeBankLinkBridge()
+    native.starts = false
+    plugin.bankLinkBridge = native
+
+    let error = reply(to: "presentBankLink", arguments: ["token": bankLinkToken]) as? FlutterError
+
+    XCTAssertEqual(error?.code, "unavailable")
+  }
+
+  func testAResumeTheNativeSdkCannotPresentAnswersNilInsteadOfHanging() {
+    let native = FakeBankLinkBridge()
+    native.resumes = false
+    plugin.bankLinkBridge = native
+
+    XCTAssertNil(reply(to: "resumeBankLink", arguments: nil))
+  }
+
+#if DIDIT_BANK_LINK
+  // Without a view controller to present from, the real bridge calls nothing
+  // in the native SDK and declines, so neither call can wait for a result that
+  // never comes.
+  func testTheNativeBridgeDeclinesWhenThereIsNoViewControllerToPresentFrom() {
+    let bridge = DiditBankLinkBridge(presenter: { nil })
+
+    let presented = bridge.present(
+      token: bankLinkToken, configuration: nil, onEvent: { _ in }, onResult: { _ in XCTFail("no result") }
+    )
+    let resumed = bridge.resume(onEvent: { _ in }, onResult: { _ in XCTFail("no result") })
+
+    XCTAssertFalse(presented)
+    XCTAssertFalse(resumed)
+  }
+#endif
+
   func testASecondBankLinkWhileOneIsOpenFailsWithoutReachingTheNativeSdk() {
     let bridge = fakeBankLink()
 
