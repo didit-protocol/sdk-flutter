@@ -492,6 +492,73 @@ Workflows can include a Bank verification step and a Location verification step.
 - **Location:** the SDK explains why it needs the position, asks for location permission, reads the position once while the step is on screen and never tracks it in the background. On iOS it needs the opt-in `$DiditSdkIosLocationEnabled` flag and usage strings from [Location Configuration](#location-configuration-for-the-location-verification-step); on Android `didit-sdk-core` declares the location permissions and they are merged into your app (see [Android](#android); remove them with `tools:node="remove"` if you never run the step). Without the iOS flag or usage string, or with the Android permissions removed, the step shows no prompt: it reports that the device cannot place the person and the workflow's own settings decide what happens next.
 - **Bank:** the person picks their bank and the SDK opens the bank's page (or a page Didit hosts) in the system browser, then returns to the SDK, which reads the outcome from Didit. Your app needs no setup, permission, URL scheme or intent filter for it.
 
+## Bank Link
+
+Bank Link connects a bank account once, verifies who owns it, and keeps reading balances and transactions for as long as the person allows. Every screen, string and the 54 languages are the native SDKs': this wrapper opens the flow, hands it the configuration and reports the events and the result. It adds no copy of its own.
+
+The token is the link's `client_token` (`blt_...`), minted by your backend with `POST /v3/bank/links/`. **The API key stays on your server**: the app only ever receives that client token.
+
+> **Availability:** Bank Link ships with a native SDK release that carries it. Until your app depends on such a version, `presentBankLink` settles as a `failed` exit, `resumeBankLink` returns `null` and `handleBankLinkReturn` answers `false` for every address; the Dart API below is the same one you will call then. Nothing else of the SDK changes, so wiring the calls now is safe.
+
+```dart
+final result = await DiditSdk.presentBankLink(
+  clientToken, // blt_...
+  options: const BankLinkOptions(
+    config: DiditConfig(languageCode: 'es'),
+  ),
+);
+
+switch (result) {
+  case BankLinkSuccess(:final linkId, :final connectionId):
+    // A convenience only: the webhook and GET /v3/bank/links/{id}/ are authoritative.
+    print('Connected $linkId ($connectionId)');
+  case BankLinkExit(:final reason, :final step):
+    // closed, cancelled, bankUnavailable, expired or failed
+    print('Ended: ${reason.name}, step: ${step ?? 'none'}');
+}
+```
+
+A link that has already finished cannot be opened again: the service answers `410 link_ended` with the link's status (`completed` or `failed`), the native SDK shows the matching ending, and the result is a `failed` exit. `409 link_already_redeemed` only means the link is open in another instance.
+
+### Resume after the bank
+
+Only the bank's own sign-in page opens in the system browser sheet. When the person comes back through your registered app link or universal link, hand the address to the SDK, unchanged:
+
+```dart
+// From onOpenURL (iOS) / the intent (Android): true when it was a Bank Link return.
+final handled = await DiditSdk.handleBankLinkReturn(uri.toString());
+```
+
+If the app was closed while the person was at their bank, pick the link up on startup or when the app returns to the foreground. The same step is restored and the result carries `resumed: true`; `null` means there was nothing to resume.
+
+Calling it from both places is safe: while one resume is in flight, a second call gets the same future and native is asked once. While a resume or a presented link is in flight, `presentBankLink` settles as a `failed` exit without opening a second link.
+
+```dart
+final resumed = await DiditSdk.resumeBankLink();
+if (resumed is BankLinkSuccess) {
+  print('Resumed ${resumed.linkId}, replayed: ${resumed.resumed}');
+}
+```
+
+### Events
+
+`DiditSdk.bankLinkEvents` is a broadcast stream of `BankLinkEvent`, with the same names and payload keys as native and the web SDK. `success` and `exit` arrive on the stream and also settle the `presentBankLink` future, exactly once.
+
+| Event | Payload keys |
+|-------|--------------|
+| `opened` | `link_id`, `mode`, `access`, `presentation` |
+| `consent_shown` | `link_id`, `consent_version` |
+| `consent_accepted` | `link_id`, `consent_version` |
+| `institution_selected` | `link_id`, `institution_id`, `country` |
+| `bank_redirect` | `link_id`, `via` |
+| `bank_returned` | `link_id`, `result` |
+| `accounts_selected` | `link_id`, `count` |
+| `success` | `link_id`, `connection_id`, `check_id` |
+| `exit` | `link_id`, `reason`, `step` |
+| `error` | `link_id`, `code` |
+
+Events carry ids only: never a name, a token, an email or an account number. A name a newer native SDK adds reaches the stream as it is. Once a bank is picked, the native screens show its name from the session state (`detail.institution_name`); the stream still carries only its `institution_id`.
+
 ## Verification Results
 
 Both `startVerification` and `startVerificationWithWorkflow` return a `Future<VerificationResult>`. The result is a sealed class — use pattern matching to determine the outcome.
@@ -651,6 +718,33 @@ Fetch the current state of a transaction previously submitted with the same toke
 | `options` | `DiditTransactionOptions` | No | `baseUrl` override |
 
 Returns: `Future<DiditTransactionResult>`
+
+### `DiditSdk.presentBankLink(token, {options})`
+
+Open a Bank Link with the link's `client_token`. The native SDK draws every screen.
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `token` | `String` | Yes | The link's `client_token` (`blt_...`) from your backend |
+| `options` | `BankLinkOptions?` | No | `config` (`DiditConfig`) for language, fonts and logging |
+
+Returns: `Future<BankLinkResult>` — a `BankLinkSuccess(linkId, connectionId?, checkId?, resumed)` or a `BankLinkExit(reason, step?, resumed)`; `reason` is `closed`, `cancelled`, `bankUnavailable`, `expired` or `failed`. A bridge failure settles as `failed`, never as an exception, and a second call while a link is open resolves the same way without opening a second link.
+
+### `DiditSdk.resumeBankLink()`
+
+Pick up a link whose bank trip outlived the app, restoring the step the person was on.
+
+Returns: `Future<BankLinkResult?>` — the replayed result with `resumed: true`, or `null` when nothing is pending. A call while a resume is in flight returns that same future; a call while a presented link is open returns `null` without reaching native.
+
+### `DiditSdk.handleBankLinkReturn(url)`
+
+Hand the SDK an address the app was opened with. `url` is passed on unchanged.
+
+Returns: `Future<bool>` — `true` when the address was a Bank Link return.
+
+### `DiditSdk.bankLinkEvents`
+
+The events of the running link, as a broadcast `Stream<BankLinkEvent>`; each event has a `name` and a `Map<String, Object?> data`.
 
 ## Running the Example App
 
