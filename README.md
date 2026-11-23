@@ -728,19 +728,19 @@ Open a Bank Link with the link's `client_token`. The native SDK draws every scre
 | `token` | `String` | Yes | The link's `client_token` (`blt_...`) from your backend |
 | `options` | `BankLinkOptions?` | No | `config` (`DiditConfig`) for language, fonts and logging |
 
-Returns: `Future<BankLinkResult>` — a `BankLinkSuccess(linkId, connectionId?, checkId?, resumed)` or a `BankLinkExit(reason, step?, resumed)`; `reason` is `closed`, `cancelled`, `bankUnavailable`, `expired` or `failed`. A bridge failure settles as `failed`, never as an exception, and a second call while a link is open resolves the same way without opening a second link.
+Returns: `Future<BankLinkResult>`: a `BankLinkSuccess(linkId, connectionId?, checkId?, resumed)` or a `BankLinkExit(reason, step?, resumed)`; `reason` is `closed`, `cancelled`, `bankUnavailable`, `expired` or `failed`. A bridge failure settles as `failed`, never as an exception, and a second call while a link is open resolves the same way without opening a second link.
 
 ### `DiditSdk.resumeBankLink()`
 
 Pick up a link whose bank trip outlived the app, restoring the step the person was on.
 
-Returns: `Future<BankLinkResult?>` — the replayed result with `resumed: true`, or `null` when nothing is pending. A call while a resume is in flight returns that same future; a call while a presented link is open returns `null` without reaching native.
+Returns: `Future<BankLinkResult?>`: the replayed result with `resumed: true`, or `null` when nothing is pending. A call while a resume is in flight returns that same future; a call while a presented link is open returns `null` without reaching native.
 
 ### `DiditSdk.handleBankLinkReturn(url)`
 
 Hand the SDK an address the app was opened with. `url` is passed on unchanged.
 
-Returns: `Future<bool>` — `true` when the address was a Bank Link return.
+Returns: `Future<bool>`: `true` when the address was a Bank Link return.
 
 ### `DiditSdk.bankLinkEvents`
 

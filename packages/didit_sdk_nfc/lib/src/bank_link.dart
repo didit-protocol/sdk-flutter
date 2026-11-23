@@ -70,7 +70,7 @@ sealed class BankLinkResult {
 
   /// Maps the result map the platform channel sends.
   ///
-  /// Anything else — a missing type, an empty map — is an [BankLinkExit] with
+  /// Anything else (a missing type, an empty map) is a [BankLinkExit] with
   /// [BankLinkExitReason.failed]: a caller always gets exactly one result and
   /// never an exception from a malformed bridge answer.
   factory BankLinkResult.fromMap(Map<String, dynamic> map) {

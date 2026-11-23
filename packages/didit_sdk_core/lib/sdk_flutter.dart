@@ -19,9 +19,9 @@ export 'src/types.dart';
 /// - [startVerificationWithWorkflow] — with a workflow ID (SDK creates the session)
 ///
 /// And the Bank Link wrapper over the native Bank Link flow:
-/// - [presentBankLink] — open a link with the link's `client_token`
-/// - [resumeBankLink] — pick the link up after the app was closed at the bank
-/// - [bankLinkEvents] — the flow's events, identical to native and web
+/// - [presentBankLink]: open a link with the link's `client_token`
+/// - [resumeBankLink]: pick the link up after the app was closed at the bank
+/// - [bankLinkEvents]: the flow's events, identical to native and web
 ///
 /// And two methods to submit and read transactions from the device:
 /// - [submitTransaction] — with a transaction SDK token from your backend
