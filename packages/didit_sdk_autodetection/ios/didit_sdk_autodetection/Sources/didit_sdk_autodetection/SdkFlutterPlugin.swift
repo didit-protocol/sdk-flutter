@@ -3,18 +3,58 @@ import UIKit
 import SwiftUI
 @preconcurrency import DiditSDK
 
-public class SdkFlutterPlugin: NSObject, FlutterPlugin {
+public class SdkFlutterPlugin: NSObject, FlutterPlugin, FlutterStreamHandler {
 
     private var hostingController: UIViewController?
     private var channel: FlutterMethodChannel?
+    var bankLinkEvents: FlutterEventSink?
     private var presentationGeneration = 0
     private var hasDeliveredResult = false
+
+    /// The Bank Link hand-off. The build picks the bridge of the pinned native
+    /// version or the one that calls a native SDK carrying Bank Link; tests
+    /// replace it with a fake native module.
+    var bankLinkBridge: BankLinkBridging = BankLinkBridgeFactory.make()
+
+    /// The link on screen, so a result reaches Dart exactly once.
+    private var openBankLink: BankLinkCall?
+
+    /// One `presentBankLink`/`resumeBankLink` call and its one answer to Dart.
+    private final class BankLinkCall {
+        let result: FlutterResult
+        var delivered = false
+
+        init(result: @escaping FlutterResult) {
+            self.result = result
+        }
+    }
 
     public static func register(with registrar: FlutterPluginRegistrar) {
         let channel = FlutterMethodChannel(name: "didit_sdk", binaryMessenger: registrar.messenger())
         let instance = SdkFlutterPlugin()
         instance.channel = channel
         registrar.addMethodCallDelegate(instance, channel: channel)
+
+        let events = FlutterEventChannel(
+            name: "didit_sdk/bank_link_events",
+            binaryMessenger: registrar.messenger()
+        )
+        events.setStreamHandler(instance)
+    }
+
+    // MARK: - Bank Link events
+
+    public func onListen(
+        withArguments arguments: Any?,
+        eventSink events: @escaping FlutterEventSink
+    ) -> FlutterError? {
+        bankLinkEvents = events
+        return nil
+    }
+
+    public func onCancel(withArguments arguments: Any?) -> FlutterError? {
+        bankLinkEvents = nil
+        return nil
     }
 
     public func handle(_ call: FlutterMethodCall, result: @escaping FlutterResult) {
@@ -27,6 +67,12 @@ public class SdkFlutterPlugin: NSObject, FlutterPlugin {
             handleSubmitTransaction(call, result: result)
         case "getTransaction":
             handleGetTransaction(call, result: result)
+        case "presentBankLink":
+            handlePresentBankLink(call, result: result)
+        case "resumeBankLink":
+            handleResumeBankLink(result: result)
+        case "handleBankLinkReturn":
+            handleBankLinkReturn(call, result: result)
         default:
             result(FlutterMethodNotImplemented)
         }
@@ -77,6 +123,107 @@ public class SdkFlutterPlugin: NSObject, FlutterPlugin {
                 }
             }
         }
+    }
+
+    // MARK: - Bank Link
+
+    // The wrapper adds no flow of its own: the native SDK owns every screen of
+    // Bank Link, its copy and its state machine. The plugin owns the seam: it
+    // hands the token and the configuration over, forwards every event to the
+    // `didit_sdk/bank_link_events` channel, and settles the Dart future with
+    // the one result the native flow delivers.
+
+    func handlePresentBankLink(_ call: FlutterMethodCall, result: @escaping FlutterResult) {
+        guard let args = call.arguments as? [String: Any],
+              let token = args["token"] as? String,
+              !token.isEmpty else {
+            result(FlutterError(code: "INVALID_ARGUMENT", message: "Token is required", details: nil))
+            return
+        }
+        // One link at a time, like a verification: a second call settles as a
+        // failed exit instead of opening a second flow.
+        guard openBankLink == nil else {
+            result(BankLinkWire.Outcome.exit(reason: "failed", step: nil, resumed: false).map)
+            return
+        }
+
+        let options = args["options"] as? [String: Any]
+        let configuration = parseConfiguration(options?["config"] as? [String: Any])
+        let link = BankLinkCall(result: result)
+        openBankLink = link
+
+        let started = bankLinkBridge.present(
+            token: token,
+            configuration: configuration,
+            onEvent: { [weak self] event in self?.emitBankLinkEvent(event) },
+            onResult: { [weak self] outcome in self?.resolveBankLink(link, outcome: outcome) }
+        )
+
+        if !started {
+            if openBankLink === link { openBankLink = nil }
+            if !link.delivered {
+                result(FlutterError(
+                    code: "unavailable",
+                    message: "This version of the native Didit SDK does not carry Bank Link.",
+                    details: nil
+                ))
+            }
+        }
+    }
+
+    func handleResumeBankLink(result: @escaping FlutterResult) {
+        // One link at a time: native keeps one set of callbacks, so resuming
+        // over an open link or another resume would hand the running flow's
+        // result to this call and leave the earlier one unanswered.
+        guard openBankLink == nil else {
+            result(nil)
+            return
+        }
+
+        let link = BankLinkCall(result: result)
+        openBankLink = link
+
+        let resumed = bankLinkBridge.resume(
+            onEvent: { [weak self] event in self?.emitBankLinkEvent(event) },
+            onResult: { [weak self] outcome in self?.resolveBankLink(link, outcome: outcome) }
+        )
+
+        if !resumed {
+            if openBankLink === link { openBankLink = nil }
+            // Nothing pending: a native layer without Bank Link kept no link,
+            // and Dart reads nil as "nothing pending". Marked answered, so a
+            // late native callback cannot answer this call a second time.
+            if !link.delivered {
+                link.delivered = true
+                result(nil)
+            }
+        }
+    }
+
+    func handleBankLinkReturn(_ call: FlutterMethodCall, result: @escaping FlutterResult) {
+        guard let args = call.arguments as? [String: Any],
+              let url = args["url"] as? String,
+              !url.isEmpty else {
+            result(FlutterError(code: "INVALID_ARGUMENT", message: "url is required", details: nil))
+            return
+        }
+        // The address reaches the native handler unchanged: a resume code
+        // carries a dot and arrives in a query parameter, so nothing here
+        // splits or validates it.
+        result(bankLinkBridge.handleReturn(url))
+    }
+
+    /// Every event of the running link, ids only, in the contract's shape.
+    private func emitBankLinkEvent(_ event: BankLinkWire.Event) {
+        bankLinkEvents?(event.map)
+    }
+
+    /// The one result of one call: a late or repeated answer is dropped.
+    private func resolveBankLink(_ link: BankLinkCall, outcome: BankLinkWire.Outcome) {
+        guard !link.delivered else { return }
+        link.delivered = true
+        if openBankLink === link { openBankLink = nil }
+        link.result(outcome.map)
     }
 
     // MARK: - Presentation Logic
@@ -159,7 +306,7 @@ public class SdkFlutterPlugin: NSObject, FlutterPlugin {
 
     // MARK: - View Controller Helpers
 
-    private static func findRootViewController() -> UIViewController? {
+    static func findRootViewController() -> UIViewController? {
         guard let windowScene = UIApplication.shared.connectedScenes
             .compactMap({ $0 as? UIWindowScene })
             .first,

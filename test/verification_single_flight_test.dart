@@ -62,6 +62,25 @@ class _SynchronouslyThrowingPlatform
   void setTransactionUpdateHandler(
     void Function(String callId, Map<String, dynamic> result)? handler,
   ) {}
+
+  @override
+  Future<Map<String, dynamic>> presentBankLink(
+    String token,
+    Map<String, dynamic> options,
+  ) => throw StateError('bridge unavailable');
+
+  @override
+  Future<Map<String, dynamic>?> resumeBankLink({
+    Map<String, dynamic>? config,
+  }) => throw StateError('bridge unavailable');
+
+  @override
+  Future<bool> handleBankLinkReturn(String url) =>
+      throw StateError('bridge unavailable');
+
+  @override
+  Stream<BankLinkEvent> get bankLinkEvents =>
+      throw StateError('bridge unavailable');
 }
 
 void main() {

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter/widgets.dart';
 import 'package:didit_sdk/sdk_flutter.dart';
@@ -20,6 +22,13 @@ class RecordingSdkPlatform
   Map<String, dynamic> workflowResponse = <String, dynamic>{};
   void Function(String callId, Map<String, dynamic> result)?
   transactionUpdateHandler;
+  String? lastBankLinkToken;
+  Map<String, dynamic>? lastBankLinkOptions;
+  String? lastBankLinkReturnUrl;
+  Map<String, dynamic> bankLinkResponse = <String, dynamic>{};
+  Map<String, dynamic>? bankLinkResumeResponse;
+  bool bankLinkHandlesReturn = false;
+  final bankLinkEventController = StreamController<BankLinkEvent>.broadcast();
 
   @override
   Future<Map<String, dynamic>> startVerification(
@@ -76,6 +85,30 @@ class RecordingSdkPlatform
   ) {
     transactionUpdateHandler = handler;
   }
+
+  @override
+  Future<Map<String, dynamic>> presentBankLink(
+    String token,
+    Map<String, dynamic> options,
+  ) async {
+    lastBankLinkToken = token;
+    lastBankLinkOptions = options;
+    return bankLinkResponse;
+  }
+
+  @override
+  Future<Map<String, dynamic>?> resumeBankLink({
+    Map<String, dynamic>? config,
+  }) async => bankLinkResumeResponse;
+
+  @override
+  Future<bool> handleBankLinkReturn(String url) async {
+    lastBankLinkReturnUrl = url;
+    return bankLinkHandlesReturn;
+  }
+
+  @override
+  Stream<BankLinkEvent> get bankLinkEvents => bankLinkEventController.stream;
 }
 
 const _everyOption = DiditConfig(
@@ -140,6 +173,29 @@ void main() {
       expect(platform.workflowId, 'workflow');
       expect(platform.vendorData, 'user-1');
     });
+
+    test(
+      'the Bank Link entry point forwards the token and every option',
+      () async {
+        platform.bankLinkResponse = <String, dynamic>{
+          'type': 'success',
+          'linkId': 'link-1',
+          'resumed': false,
+        };
+
+        final result = await DiditSdk.presentBankLink(
+          'blt_Hs8Pa4Rb6Ye0Gf2Jc7Qm3Zx9Vd2Lc5W',
+          options: const BankLinkOptions(config: _everyOption),
+        );
+
+        expect(
+          platform.lastBankLinkToken,
+          'blt_Hs8Pa4Rb6Ye0Gf2Jc7Qm3Zx9Vd2Lc5W',
+        );
+        expect(platform.lastBankLinkOptions?['config'], _everyOptionMap);
+        expect(result, isA<BankLinkSuccess>());
+      },
+    );
 
     test('unset native defaults are omitted and the documented defaults '
         'are sent explicitly', () async {

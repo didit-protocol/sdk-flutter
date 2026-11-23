@@ -4,9 +4,11 @@ import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 
 import 'sdk_flutter_platform_interface.dart';
+import 'src/bank_link.dart';
 import 'src/transactions.dart';
 import 'src/types.dart';
 
+export 'src/bank_link.dart';
 export 'src/transactions.dart';
 export 'src/types.dart';
 
@@ -15,6 +17,11 @@ export 'src/types.dart';
 /// Provides two methods to start verification:
 /// - [startVerification] — with an existing session token from your backend
 /// - [startVerificationWithWorkflow] — with a workflow ID (SDK creates the session)
+///
+/// And the Bank Link wrapper over the native Bank Link flow:
+/// - [presentBankLink]: open a link with the link's `client_token`
+/// - [resumeBankLink]: pick the link up after the app was closed at the bank
+/// - [bankLinkEvents]: the flow's events, identical to native and web
 ///
 /// And two methods to submit and read transactions from the device:
 /// - [submitTransaction] — with a transaction SDK token from your backend
@@ -184,6 +191,136 @@ class DiditSdk {
       ),
     );
   }
+
+  /// The Bank Link in flight, if any: a link owns the screen until its native
+  /// presentation goes away, exactly like a verification. A presentation and
+  /// a resume share this one slot, because the native SDKs keep one set of
+  /// callbacks for both: a second call would replace the first one's and leave
+  /// its future unsettled.
+  static Future<BankLinkResult?>? _activeBankLink;
+
+  /// The resume in flight, if any: the same future every concurrent
+  /// [resumeBankLink] caller gets.
+  static Future<BankLinkResult?>? _activeBankLinkResume;
+
+  static BankLinkResult _bankLinkAlreadyInProgress() =>
+      const BankLinkExit(reason: BankLinkExitReason.failed, resumed: false);
+
+  /// Holds [link] as the active Bank Link until it settles, however it
+  /// settles.
+  static void _holdBankLink(Future<BankLinkResult?> link) {
+    _activeBankLink = link;
+    void release() {
+      if (identical(_activeBankLink, link)) _activeBankLink = null;
+      if (identical(_activeBankLinkResume, link)) _activeBankLinkResume = null;
+    }
+
+    link.then((_) => release(), onError: (Object _) => release());
+  }
+
+  /// Open a Bank Link.
+  ///
+  /// [token] is the link's `client_token` (`blt_...`) from the customer's
+  /// backend; the API key never reaches the app. Everything the person sees is
+  /// native UI: the wrapper adds no screen, no copy and no language of its own.
+  ///
+  /// The future settles once with a [BankLinkSuccess] or a [BankLinkExit]; a
+  /// bridge failure settles it as [BankLinkExitReason.failed], never as an
+  /// exception. Calling it again while a link is open or a [resumeBankLink] is
+  /// in flight resolves the same way without opening a second link.
+  ///
+  /// Example:
+  /// ```dart
+  /// final result = await DiditSdk.presentBankLink(clientToken);
+  /// if (result is BankLinkSuccess) {
+  ///   print('Connected: ${result.connectionId}');
+  /// }
+  /// ```
+  static Future<BankLinkResult> presentBankLink(
+    String token, {
+    BankLinkOptions? options,
+  }) {
+    if (_activeBankLink != null) {
+      return Future<BankLinkResult>.value(_bankLinkAlreadyInProgress());
+    }
+
+    final config = _verificationConfig(options?.config);
+    final result =
+        Future<Map<String, dynamic>>.sync(
+          () => SdkFlutterPlatform.instance.presentBankLink(token, {
+            'config': config,
+          }),
+        ).then<BankLinkResult>(
+          BankLinkResult.fromMap,
+          onError: (Object _) => _bankLinkAlreadyInProgress(),
+        );
+    _holdBankLink(result);
+    return result;
+  }
+
+  /// Pick up a link whose bank trip outlived the app.
+  ///
+  /// Call it from the host's startup and from its app-link handler: the native
+  /// SDK restores the step the person was on, and the result comes back with
+  /// `resumed: true`. `null` when there is nothing to resume, which is also
+  /// what a bridge that cannot answer says, so a host never has to special-case
+  /// an SDK version without Bank Link.
+  ///
+  /// One resume reaches native at a time: callers that ask while a resume is
+  /// in flight get that same future, and a [presentBankLink] during it is
+  /// refused as during a presentation. While a presented link is open this
+  /// answers `null` without calling native.
+  ///
+  /// [options] takes the same [BankLinkOptions] as [presentBankLink] (language,
+  /// fonts, logging), so a resumed link looks like the presented one; a caller
+  /// that joins a resume already in flight gets that resume's configuration.
+  /// The Android SDK applies it; the iOS SDK's resume takes none and keeps its
+  /// own, so it is ignored there.
+  static Future<BankLinkResult?> resumeBankLink({BankLinkOptions? options}) {
+    final inFlight = _activeBankLinkResume;
+    if (inFlight != null) return inFlight;
+    // A link is already open: calling native here would replace the running
+    // flow's callbacks before native knows whether anything is pending, and
+    // the presenting future would never settle.
+    if (_activeBankLink != null) return Future<BankLinkResult?>.value(null);
+
+    final result =
+        Future<Map<String, dynamic>?>.sync(
+              () => SdkFlutterPlatform.instance.resumeBankLink(
+                config: _verificationConfig(options?.config),
+              ),
+            )
+            .then<BankLinkResult?>(
+              (raw) => raw == null ? null : BankLinkResult.fromMap(raw),
+            )
+            // Nothing pending, or a bridge that cannot answer: never an exception.
+            .catchError((Object _) => null);
+    _activeBankLinkResume = result;
+    _holdBankLink(result);
+    return result;
+  }
+
+  /// Hand the SDK an address the app was opened with, for hosts whose bank
+  /// return is an app link or universal link handled by the app itself.
+  ///
+  /// `true` when the address was a Bank Link return. The address is passed on
+  /// unchanged: a resume code carries a dot and arrives in a query parameter,
+  /// so nothing here splits or validates it.
+  static Future<bool> handleBankLinkReturn(String url) async {
+    try {
+      return await SdkFlutterPlatform.instance.handleBankLinkReturn(url);
+    } catch (_) {
+      return false;
+    }
+  }
+
+  /// The events of the running link, identical to native and web.
+  ///
+  /// Each event carries ids only (`link_id`, `institution_id`,
+  /// `consent_version`, ...). `success` and `exit` also reach this stream, next
+  /// to settling the [presentBankLink] future.
+  static Stream<BankLinkEvent> get bankLinkEvents =>
+      SdkFlutterPlatform.instance.bankLinkEvents;
 
   static int _transactionCallCounter = 0;
   static bool _transactionUpdateHandlerRegistered = false;

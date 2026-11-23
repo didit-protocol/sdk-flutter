@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -14,6 +16,13 @@ class MockSdkFlutterPlatform
   Map<String, dynamic>? lastVerificationConfig;
   Map<String, dynamic>? lastWorkflowConfig;
   bool throwValidationError = false;
+  String? lastBankLinkToken;
+  Map<String, dynamic>? lastBankLinkOptions;
+  String? lastBankLinkReturnUrl;
+  Map<String, dynamic> bankLinkResponse = <String, dynamic>{};
+  Map<String, dynamic>? bankLinkResumeResponse;
+  bool bankLinkHandlesReturn = false;
+  final bankLinkEventController = StreamController<BankLinkEvent>.broadcast();
 
   @override
   Future<Map<String, dynamic>> startVerification(
@@ -86,6 +95,30 @@ class MockSdkFlutterPlatform
   ) {
     transactionUpdateHandler = handler;
   }
+
+  @override
+  Future<Map<String, dynamic>> presentBankLink(
+    String token,
+    Map<String, dynamic> options,
+  ) async {
+    lastBankLinkToken = token;
+    lastBankLinkOptions = options;
+    return bankLinkResponse;
+  }
+
+  @override
+  Future<Map<String, dynamic>?> resumeBankLink({
+    Map<String, dynamic>? config,
+  }) async => bankLinkResumeResponse;
+
+  @override
+  Future<bool> handleBankLinkReturn(String url) async {
+    lastBankLinkReturnUrl = url;
+    return bankLinkHandlesReturn;
+  }
+
+  @override
+  Stream<BankLinkEvent> get bankLinkEvents => bankLinkEventController.stream;
 }
 
 void main() {

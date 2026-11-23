@@ -6,6 +6,7 @@ import io.flutter.embedding.engine.plugins.activity.ActivityAware
 import io.flutter.embedding.engine.plugins.activity.ActivityPluginBinding
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
+import io.flutter.plugin.common.EventChannel
 import io.flutter.plugin.common.MethodChannel.MethodCallHandler
 import io.flutter.plugin.common.MethodChannel.Result
 import kotlinx.coroutines.CoroutineScope
@@ -37,7 +38,18 @@ class SdkFlutterPlugin :
     ActivityAware {
 
     private lateinit var channel: MethodChannel
+    internal var bankLinkEvents: EventChannel.EventSink? = null
     private var activity: Activity? = null
+
+    /**
+     * The Bank Link hand-off. The build picks the released-AAR bridge or the one
+     * that calls a native version carrying Bank Link; tests replace it with a
+     * fake native module.
+     */
+    internal var bankLinkBridge: BankLinkBridge = newBankLinkBridge()
+
+    /** The link on screen, so a result reaches Dart exactly once. */
+    private var openBankLink: BankLinkCall? = null
     private var applicationContext: android.content.Context? = null
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
 
@@ -46,6 +58,16 @@ class SdkFlutterPlugin :
     override fun onAttachedToEngine(binding: FlutterPlugin.FlutterPluginBinding) {
         channel = MethodChannel(binding.binaryMessenger, "didit_sdk")
         channel.setMethodCallHandler(this)
+        EventChannel(binding.binaryMessenger, "didit_sdk/bank_link_events")
+            .setStreamHandler(object : EventChannel.StreamHandler {
+                override fun onListen(arguments: Any?, events: EventChannel.EventSink?) {
+                    bankLinkEvents = events
+                }
+
+                override fun onCancel(arguments: Any?) {
+                    bankLinkEvents = null
+                }
+            })
         applicationContext = binding.applicationContext
 
         if (!DiditSdk.isInitialized()) {
@@ -55,6 +77,7 @@ class SdkFlutterPlugin :
 
     override fun onDetachedFromEngine(binding: FlutterPlugin.FlutterPluginBinding) {
         channel.setMethodCallHandler(null)
+        bankLinkEvents = null
         applicationContext = null
     }
 
@@ -84,6 +107,9 @@ class SdkFlutterPlugin :
             "startVerificationWithWorkflow" -> handleStartVerificationWithWorkflow(call, result)
             "submitTransaction" -> handleSubmitTransaction(call, result)
             "getTransaction" -> handleGetTransaction(call, result)
+            "presentBankLink" -> handlePresentBankLink(call, result)
+            "resumeBankLink" -> handleResumeBankLink(call, result)
+            "handleBankLinkReturn" -> handleBankLinkReturn(call, result)
             else -> result.notImplemented()
         }
     }
@@ -255,6 +281,141 @@ class SdkFlutterPlugin :
             "errorMessage" to (e.message ?: "An unexpected error occurred.")
         )
         result.success(errorResult)
+    }
+
+    // ── Bank Link ────────────────────────────────────────────────────────────
+    //
+    // The wrapper adds no flow of its own: the native SDK owns every screen of
+    // Bank Link, its copy and its state machine. The plugin owns the seam: it
+    // hands the token and the configuration over, forwards every event to the
+    // `didit_sdk/bank_link_events` channel, and settles the Dart future with the
+    // one result the native flow delivers.
+
+    /** One `presentBankLink`/`resumeBankLink` call, and its one answer to Dart. */
+    private class BankLinkCall(val result: Result) {
+        var delivered = false
+    }
+
+    private fun handlePresentBankLink(call: MethodCall, result: Result) {
+        val token = call.argument<String>("token")
+        if (token.isNullOrEmpty()) {
+            result.error("INVALID_ARGUMENT", "Token is required", null)
+            return
+        }
+        val host = activity
+        if (host == null) {
+            result.error(
+                "unavailable",
+                "No active Activity to present a Bank Link from.",
+                null
+            )
+            return
+        }
+        // One link at a time, like a verification: a second call settles as a
+        // failed exit instead of opening a second flow.
+        if (openBankLink != null) {
+            result.success(
+                BankLinkWire.Outcome.Exit(
+                    reason = "failed",
+                    step = null,
+                    resumed = false
+                ).toMap()
+            )
+            return
+        }
+
+        val options = call.argument<Map<String, Any?>>("options")
+        val configuration = parseConfiguration(
+            options?.get("config") as? Map<String, Any>
+        )
+
+        val link = BankLinkCall(result)
+        openBankLink = link
+        val started = bankLinkBridge.present(
+            host,
+            token,
+            configuration,
+            onEvent = ::emitBankLinkEvent
+        ) { outcome -> resolveBankLink(link, outcome) }
+
+        if (!started) {
+            if (openBankLink === link) openBankLink = null
+            if (!link.delivered) {
+                result.error(
+                    "unavailable",
+                    "This version of the native Didit SDK does not carry Bank Link.",
+                    null
+                )
+            }
+        }
+    }
+
+    private fun handleResumeBankLink(call: MethodCall, result: Result) {
+        val host = activity
+        if (host == null) {
+            // Nothing to resume: a native layer without a screen kept no link,
+            // and Dart reads null as "nothing pending".
+            result.success(null)
+            return
+        }
+
+        // One link at a time: native keeps one set of callbacks, so resuming
+        // over an open link or another resume would hand the running flow's
+        // result to this call and leave the earlier one unanswered.
+        if (openBankLink != null) {
+            result.success(null)
+            return
+        }
+
+        // The same configuration a presented link takes, so a resumed link
+        // looks like the one the person started.
+        val options = call.argument<Map<String, Any?>>("options")
+        val configuration = parseConfiguration(
+            options?.get("config") as? Map<String, Any>
+        )
+
+        val link = BankLinkCall(result)
+        openBankLink = link
+        val resumed = bankLinkBridge.resume(
+            host,
+            configuration,
+            onEvent = ::emitBankLinkEvent
+        ) { outcome -> resolveBankLink(link, outcome) }
+
+        if (!resumed) {
+            if (openBankLink === link) openBankLink = null
+            // Marked answered, so a late native callback cannot answer this
+            // call a second time.
+            if (!link.delivered) {
+                link.delivered = true
+                result.success(null)
+            }
+        }
+    }
+
+    private fun handleBankLinkReturn(call: MethodCall, result: Result) {
+        val url = call.argument<String>("url")
+        if (url.isNullOrEmpty()) {
+            result.error("INVALID_ARGUMENT", "url is required", null)
+            return
+        }
+        // The address reaches the native handler unchanged: a resume code
+        // carries a dot and arrives in a query parameter, so nothing here
+        // splits or validates it.
+        result.success(bankLinkBridge.handleReturn(url))
+    }
+
+    /** Every event of the running link, ids only, in the contract's shape. */
+    private fun emitBankLinkEvent(event: BankLinkWire.Event) {
+        bankLinkEvents?.success(event.toMap())
+    }
+
+    /** The one result of one call: a late or repeated answer is dropped. */
+    private fun resolveBankLink(link: BankLinkCall, outcome: BankLinkWire.Outcome) {
+        if (link.delivered) return
+        link.delivered = true
+        if (openBankLink === link) openBankLink = null
+        link.result.success(outcome.toMap())
     }
 
     // ── Transactions ─────────────────────────────────────────────────────────
